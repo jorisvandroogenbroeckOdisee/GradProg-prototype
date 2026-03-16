@@ -1,0 +1,3800 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AlgoFlow — Programmeerfundamenten | Odisee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    /* ── Odisee huisstijl kleuren ─────────────────── */
+    --navy:    #1f416b;   /* Nachtblauw  — primair     */
+    --navy2:   #163256;   /* Nachtblauw donker          */
+    --mint:    #3cb497;   /* Muntgroen   — interactief  */
+    --mint2:   #2a9078;   /* Muntgroen donker           */
+    --storm:   #00639c;   /* Stormblauw  — secondair    */
+    --red-od:  #e73f16;   /* Warmrood    — waarschuwing */
+    --mistb:   #d3ddf2;   /* Mistblauw   — licht accent */
+    /* ── Thema variabelen ────────────────────────── */
+    --bg:      #f0f3f8;
+    --bg2:     #e6ebf2;
+    --bg3:     #d8dfea;
+    --card:    #ffffff;
+    --border:  #c2ccd8;
+    --cyan:    #3cb497;   /* maps op mint voor bestaande code */
+    --cyan2:   #2a9078;
+    --orange:  #e73f16;   /* warmrood  */
+    --purple:  #1f416b;   /* nachtblauw */
+    --green:   #3cb497;
+    --yellow:  #d97706;   /* amber — leesbaar op wit */
+    --red:     #dc2626;
+    --text:    #181716;   /* Printerzwart */
+    --text2:   #3a4d62;
+    --text3:   #7a8fa0;
+    /* ── Code-editor dark background ────────────── */
+    --code-bg:  #0d1117;
+    --code-bg2: #080c14;
+  }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  h1,h2,h3,h4,h5 { font-family:'Sora',sans-serif; }
+  code,.code-font { font-family:'Fira Code',monospace; font-feature-settings:"liga" 0,"calt" 0; font-variant-ligatures:none; }
+  /* Odisee-style card elevations */
+  .od-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(31,65,107,.07);
+  }
+  /* Scrollbar licht */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg2); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--mint); }
+  /* Keyframes */
+  @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  @keyframes xpGain  { 0%{opacity:0;transform:scale(.5) translateY(0)} 60%{opacity:1;transform:scale(1.2) translateY(-30px)} 100%{opacity:0;transform:translateY(-60px)} }
+  @keyframes badgePop{ 0%{opacity:0;transform:scale(.3) rotate(-15deg)} 60%{transform:scale(1.15) rotate(5deg)} 100%{opacity:1;transform:scale(1)} }
+  @keyframes shine   { 0%{left:-100%} 100%{left:200%} }
+  @keyframes spin    { to{transform:rotate(360deg)} }
+  @keyframes pulse   { 0%,100%{box-shadow:0 0 6px var(--mint)} 50%{box-shadow:0 0 20px var(--mint)} }
+  .fade-in { animation:fadeIn .3s ease both; }
+  /* Wide-screen layout helpers */
+  .content-wrap { max-width:1400px; margin:0 auto; padding:36px 32px; }
+  @media(max-width:700px) { .content-wrap { padding:20px 14px; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════════════════════
+const MODULES = [
+  {
+    id:1, title:"Algoritmen & Flowcharts", emoji:"🗺️", color:"#00E5C3",
+    week:"Week 1", hours:6, tagline:"Van probleem naar stap-voor-stap plan",
+    theory:[
+      { title:"Wat is een algoritme?", content:"Een algoritme is een eindige reeks precieze instructies om een probleem op te lossen. Net als een recept beschrijft het EXACT wat gedaan moet worden en IN WELKE VOLGORDE.", example:"Algoritme: 'Maak thee'\n1. Zet de waterkoker aan\n2. Wacht tot het water kookt\n3. Giet water in de kop\n4. Doe een theezakje in\n5. Wacht 3 minuten\n6. Haal het zakje eruit\n→ De VOLGORDE is cruciaal!" },
+      { title:"Flowchart-symbolen", content:"Een flowchart is een visuele voorstelling van een algoritme. Er zijn 5 standaardsymbolen:", example:"⬭  OVAAL          → Start / Stop\n□  RECHTHOEK      → Actie/berekening\n◇  RUIT            → Beslissing (Ja/Nee)\n▱  PARALLELOGRAM   → Invoer/Uitvoer\n→  PIJL            → Richting van de stroom" },
+      { title:"Waarom flowcharts?", content:"Flowcharts helpen je DENKEN voor je programmeert. Ze dwingen je om elke stap te benoemen en beslissingen bewust te maken.", example:"Tip: Een goede programmeur besteedt 70% van de tijd aan nadenken en schetsen, slechts 30% aan typen." },
+      { title:"Invoer en uitvoer in Python", content:"Een programma communiceert via INVOER (wat de gebruiker intypt) en UITVOER (wat het programma toont). In Python gebruik je:\n• input() — vraagt iets aan de gebruiker\n• print() — toont iets op het scherm\n\nDit zijn de twee basisacties voor communicatie met de buitenwereld. In een flowchart stellen ze het parallelogram ▱ voor.", example:"# Uitvoer: toon iets op het scherm\nprint('Hallo wereld!')          # → Hallo wereld!\nprint('2 + 2 =', 2 + 2)         # → 2 + 2 = 4\n\n# Invoer: vraag iets aan de gebruiker\nnaam = input('Wat is jouw naam? ')\nprint('Hallo,', naam)" },
+      { title:"Wat is een string?", content:"Een string (str) is een stuk TEKST in Python. Je herkent het aan aanhalingstekens — enkel of dubbel. Elke letter, cijfer of spatie daartussen is deel van de tekst.\n\nBelangrijk: '42' is NIET hetzelfde als 42! De eerste is tekst, de tweede is een getal waarmee je kunt rekenen.", example:"# Strings maken\ngroeting = 'Hallo Joris'\nzin = \"Python is leuk!\"\n\n# Tekst samenvoegen (concatenatie) met +\nprint('Hallo' + ' ' + 'wereld')   # Hallo wereld\n\n# Strings herhalen met *\nprint('-' * 20)   # --------------------\n\n# Let op het verschil:\nprint('42' + '8')   # → 428   (tekst!)\nprint(42   +  8)    # → 50    (getal!)" },
+      { title:"Invoer inlezen & type-conversie", content:"input() geeft ALTIJD een string terug, ook als de gebruiker een getal intypt. Als je wilt rekenen, moet je die string omzetten naar een getal met int() of float().", example:"# input() geeft altijd str terug:\ntekst = input('Getal: ')    # Stel: '42'\n\n# str kan je niet optellen bij een getal:\n# print(tekst + 10)  → FOUT!\n\n# Omzetten naar int (geheel getal):\nn = int(input('Getal: '))    # 42\n\n# Omzetten naar float (kommagetal):\nprijs = float(input('Prijs: '))   # 9.99\n\n# Controleer zelf:\nprint(type('42'))    # <class 'str'>\nprint(type(42))      # <class 'int'>\nprint(type(9.99))    # <class 'float'>" },
+    ],
+    flowchartProblem:{
+      title:"Flowchart: Begroetingsprogramma",
+      description:"Stel een flowchart op voor een begroetingsprogramma: 'Vraag de naam van de gebruiker, bereken een persoonlijke begroeting en druk die af.' Bouw de flowchart en voer hem daarna uit.",
+      nodes:[
+        { id:'s', type:'terminal', label:'START' },
+        { id:'a', type:'io',      label:'Invoer: naam' },
+        { id:'b', type:'process', label:'groet = "Hallo, " + naam + "!"' },
+        { id:'c', type:'io',      label:'Uitvoer: groet' },
+        { id:'e', type:'terminal', label:'STOP' },
+      ],
+      traceActive:()=>['s','a','b','c','e'],
+    },
+    codeTemplate:`# Module 1 — Eerste Python-programma
+# Druk op ▶ Uitvoeren. Het programma vraagt om invoer.
+
+naam = input("Wat is jouw naam? ")
+leeftijd = input("Hoe oud ben je? ")
+print("Hallo, " + naam + "!")
+print("Je bent " + leeftijd + " jaar oud.")
+print("Welkom bij Programmeerfundamenten!")
+`,
+    quiz:[
+      { type:"mc", q:"Welk flowchart-symbool gebruik je voor INVOER of UITVOER?", options:["Ovaal","Rechthoek","Ruit","Parallelogram"], answer:3, xp:20 },
+      { type:"mc", q:"Wat is de EERSTE stap bij het oplossen van een programmeertaak?", options:["Meteen beginnen typen","Het algoritme (plan) opstellen","De programmeertaal installeren","Zoeken op Google"], answer:1, xp:20 },
+      { type:"trace",
+        q:(v)=>`Wat is de uitvoer van dit programma als de gebruiker "${v[0]}" intypt?\n\nnaam = input("Wat is jouw naam? ")\nprint("Hallo, " + naam + "!")`,
+        vals:()=>[['Joris','Emma','Liam','Sara','Alex'][Math.floor(Math.random()*5)]],
+        answer:(v)=>`Hallo, ${v[0]}!`,
+        options:(v)=>[`Hallo, ${v[0]}!`, `naam`, `${v[0]}`, `"Hallo, " + naam + "!"`], xp:30 },
+      { type:"mc", q:"Welk symbool stelt de START of STOP voor?", options:["Rechthoek","Ruit","Parallelogram","Ovaal"], answer:3, xp:20 },
+      { type:"fill", q:"Vul het Python-commando in om 'Hallo Wereld' af te drukken:", answer:['print("Hallo Wereld")',"print('Hallo Wereld')"], xp:25 },
+    ],
+    connectionCode:[
+      {code:'# ⬭ START — het programma begint', type:'terminal'},
+      {code:'naam = input("Wat is jouw naam? ")', type:'io', note:'▱ Invoer: naam'},
+      {code:'groet = "Hallo, " + naam + "!"', type:'process', note:'□ Berekening: groet samenvoegen'},
+      {code:'print(groet)', type:'io', note:'▱ Uitvoer: groet'},
+      {code:'# ⬭ STOP — het programma eindigt', type:'terminal'},
+    ],
+  },
+  {
+    id:2, title:"Variabelen & Datatypes", emoji:"📦", color:"#9B5CF6",
+    week:"Week 2", hours:6, tagline:"Data opslaan, types herkennen, berekenen",
+    theory:[
+      { title:"Wat is een variabele?", content:"Een variabele is een benoemde 'doos' in het geheugen. Je geeft de doos een naam en stopt er een waarde in.", example:"leeftijd = 18        # int\nnaam = 'Joris'       # str\nprijs = 4.99         # float\nis_student = True    # bool" },
+      { title:"Datatypes", content:"Python heeft 4 basistypes:\n• int   – gehele getallen (1, 42, -7)\n• float – kommagetallen (3.14, -0.5)\n• str   – tekst ('hallo')\n• bool  – True of False", example:"type(42)     → int\ntype(3.14)   → float\ntype('hi')   → str\ntype(True)   → bool" },
+      { title:"Rekenkundige operatoren", content:"Python volgt de wiskundige volgorde (PEMDAS).", example:"a, b = 10, 3\nprint(a + b)   # 13\nprint(a - b)   # 7\nprint(a * b)   # 30\nprint(a / b)   # 3.333\nprint(a // b)  # 3  (gehele deling)\nprint(a % b)   # 1  (rest)\nprint(a ** b)  # 1000 (macht)" },
+      { title:"F-strings", content:"F-strings laten je variabelen netjes in tekst verwerken.", example:"naam = 'Joris'\nleeftijd = 18\nprint(f'Hallo {naam}, je bent {leeftijd} jaar.')\n# → 'Hallo Joris, je bent 18 jaar.'\n\nprijs = 9.5\nprint(f'Totaal: {prijs * 2:.2f} euro')\n# → 'Totaal: 19.00 euro'" },
+      { title:"Type-conversie: int(), float(), str()", content:"Je kunt waarden omzetten van het ene type naar het andere. Dit is essentieel bij input() (levert altijd str) en bij het mixen van getallen en tekst.", example:"# str → int of float\nn = int('42')         # 42\nx = float('3.14')     # 3.14\n\n# Veel gebruikte combinatie:\nleeftijd = int(input('Leeftijd: '))\nprijs    = float(input('Prijs:    '))\n\n# Getal → str (voor concatenatie)\nresultaat = 'De prijs is ' + str(prijs)\n\n# Opsomming van conversies:\nint(3.9)   # → 3   (afkappen, niet afronden)\nfloat(5)   # → 5.0\nstr(42)    # → '42'\nbool(0)    # → False\nbool(1)    # → True" },
+    ],
+    flowchartProblem:{
+      title:"Flowchart: BTW-berekening",
+      description:"Teken een flowchart die een netto prijs inleest, 21% BTW berekent, en het totaal afdrukt.",
+      nodes:[
+        { id:'s', type:'terminal', label:'START' },
+        { id:'a', type:'io', label:'Invoer: netto' },
+        { id:'b', type:'process', label:'btw = netto * 0.21' },
+        { id:'c', type:'process', label:'totaal = netto + btw' },
+        { id:'d', type:'io', label:'Uitvoer: totaal' },
+        { id:'e', type:'terminal', label:'STOP' },
+      ],
+      traceActive:()=>['s','a','b','c','d','e'],
+    },
+    codeTemplate:`# Module 2 — Variabelen & Berekeningen
+# Bereken omtrek en oppervlakte van een rechthoek
+
+breedte = float(input("Breedte in cm: "))
+hoogte = float(input("Hoogte in cm: "))
+
+omtrek = 2 * (breedte + hoogte)
+oppervlakte = breedte * hoogte
+
+print(f"Omtrek:      {omtrek:.2f} cm")
+print(f"Oppervlakte: {oppervlakte:.2f} cm²")
+`,
+    quiz:[
+      { type:"mc", q:"Wat is het datatype van de waarde 3.14?", options:["int","float","str","bool"], answer:1, xp:20 },
+      { type:"trace",
+        q:(v)=>`Wat print dit programma?\n\nx = ${v[0]}\ny = ${v[1]}\nresultaat = x * y + ${v[2]}\nprint(resultaat)`,
+        vals:()=>[Math.floor(Math.random()*9)+2, Math.floor(Math.random()*9)+2, Math.floor(Math.random()*9)+1],
+        answer:(v)=>String(v[0]*v[1]+v[2]),
+        options:(v)=>[String(v[0]*v[1]+v[2]),String(v[0]+v[1]+v[2]),String(v[0]*v[1]),String(v[0]+v[1])], xp:30 },
+      { type:"mc", q:"Welke operator is voor GEHELE DELING (zonder rest)?", options:["/","//","%","**"], answer:1, xp:25 },
+      { type:"trace",
+        q:(v)=>`Wat is de output?\n\na = ${v[0]}\nb = ${v[1]}\nprint(f"Som: {a + b}, Product: {a * b}")`,
+        vals:()=>[Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1],
+        answer:(v)=>`Som: ${v[0]+v[1]}, Product: ${v[0]*v[1]}`,
+        options:(v)=>[`Som: ${v[0]+v[1]}, Product: ${v[0]*v[1]}`,`Som: ${v[0]*v[1]}, Product: ${v[0]+v[1]}`,`${v[0]+v[1]} ${v[0]*v[1]}`,`a+b a*b`], xp:30 },
+    ],
+    connectionCode:[
+      {code:'# ⬭ START', type:'terminal'},
+      {code:'netto = float(input("Netto prijs (€): "))', type:'io', note:'▱ Invoer: netto'},
+      {code:'btw    = netto * 0.21    # □ Berekening', type:'process', note:'□ btw = netto × 0,21'},
+      {code:'totaal = netto + btw     # □ Berekening', type:'process', note:'□ totaal = netto + btw'},
+      {code:'print(f"Totaal: {totaal:.2f} €")', type:'io', note:'▱ Uitvoer: totaal'},
+      {code:'# ⬭ STOP', type:'terminal'},
+    ],
+  },
+  {
+    id:3, title:"Selectie (If/Elif/Else)", emoji:"🔀", color:"#FF6D35",
+    week:"Week 3", hours:6, tagline:"Laat je programma beslissingen nemen",
+    theory:[
+      { title:"Selectie: if en else", content:"Een programma moet soms een keuze maken afhankelijk van een conditie. Dat heet selectie. De eenvoudigste vorm is if/else: als de conditie True is, wordt het eerste blok uitgevoerd, anders het else-blok.\n\nLet op de inspringing (indentatie) van 4 spaties — Python gebruikt dit om te weten welke code bij de if hoort.", example:"# Basis if/else\nleeftijd = int(input('Leeftijd: '))\n\nif leeftijd >= 18:\n    print('Je bent meerderjarig.')\n    print('Je mag stemmen.')\nelse:\n    print('Je bent minderjarig.')\n    print('Nog even wachten.')\n\n# Enkel if (geen else verplicht)\nscore = float(input('Score: '))\nif score >= 10:\n    print('Gefeliciteerd, geslaagd!')\n# als score < 10: niets bijzonders" },
+      { title:"Meer keuzes: elif", content:"Soms heb je meer dan twee paden. Gebruik elif (else if) voor extra voorwaarden. Python controleert ze van boven naar beneden en stopt bij de eerste die True is.\n\nElif mag je zoveel keer herhalen als nodig. De else aan het einde is optioneel maar handig als 'anders'-geval.", example:"score = float(input('Score (0-20): '))\n\nif score >= 16:\n    print('Onderscheiding!')\nelif score >= 14:\n    print('Verdienste')\nelif score >= 10:\n    print('Voldoende')\nelse:\n    print('Onvoldoende — probeer opnieuw')\n\n# Hoe werkt het?\n# Python checkt van boven:\n#   score=17 → 17>=16 → 'Onderscheiding!' → STOP\n#   score=12 → 12<16, 12<14, 12>=10 → 'Voldoende'\n#   score=8  → geen enkel pad True → 'Onvoldoende'" },
+      { title:"Vergelijkingsoperatoren", content:"Een conditie vergelijkt twee waarden en geeft True of False terug. Er zijn zes vergelijkingsoperatoren. Let op het verschil tussen = (toewijzing) en == (vergelijking)!", example:"# Alle zes vergelijkingsoperatoren:\na, b = 7, 10\n\nprint(a == b)   # False   — gelijk aan?\nprint(a != b)   # True    — niet gelijk?\nprint(a <  b)   # True    — kleiner dan?\nprint(a >  b)   # False   — groter dan?\nprint(a <= b)   # True    — kleiner of gelijk?\nprint(a >= b)   # False   — groter of gelijk?\n\n# Vergelijking geeft altijd bool terug:\nresultaat = (a < b)\nprint(type(resultaat))   # <class 'bool'>\nprint(resultaat)         # True\n\n# Veelgemaakte fout:\nx = 5\nif x = 10:   # FOUT! Dit is toewijzing, niet vergelijking\nif x == 10:  # CORRECT" },
+      { title:"Logische operatoren: and, or, not", content:"Met logische operatoren combineer je meerdere condities tot één grote conditie. Zo kun je complexere regels uitdrukken.\n\n• and  — allebei moeten True zijn\n• or   — minstens één moet True zijn\n• not  — keert True/False om", example:"# AND — beide condities True?\nleeftijd = 20\nticket = True\n\nif leeftijd >= 18 and ticket:\n    print('Welkom aan boord!')\nelse:\n    print('Toegang geweigerd.')\n\n# OR — minstens één True?\ndag = 'zaterdag'\nif dag == 'zaterdag' or dag == 'zondag':\n    print('Weekend!')\nelse:\n    print('Weekdag — werken maar.')\n\n# NOT — keert om\ngeregistreerd = False\nif not geregistreerd:\n    print('Meld je eerst aan.')\n\n# Combinatie met haakjes:\nx = 15\nif (x > 10 and x < 20) or x == 0:\n    print('x ligt tussen 10 en 20, of is nul.')\n\n# Waarheidstabel and/or:\n# True  and True  → True\n# True  and False → False\n# False and True  → False\n# True  or  False → True\n# False or  False → False" },
+    ],
+    flowchartProblem:{
+      title:"Flowchart: Geslaagd of gezakt?",
+      description:"Maak een flowchart die een score inleest. Als score >= 10 druk 'Geslaagd' af, anders 'Niet geslaagd'.",
+      nodes:[
+        { id:'s', type:'terminal', label:'START' },
+        { id:'a', type:'io', label:'Invoer: score' },
+        { id:'b', type:'decision', label:'score >= 10 ?',
+          yesBranch:[{ id:'c', type:'io', label:'"Geslaagd"' }],
+          noBranch :[{ id:'d', type:'io', label:'"Niet geslaagd"' }] },
+        { id:'e', type:'terminal', label:'STOP' },
+      ],
+      traceActive:(n)=> n>=10 ? ['s','a','b','c','e'] : ['s','a','b','d','e'],
+    },
+    codeTemplate:`# Module 3 — Selectie
+# BMI-calculator met categorie
+
+gewicht = float(input("Gewicht in kg: "))
+lengte = float(input("Lengte in meter (bv. 1.75): "))
+
+bmi = gewicht / (lengte ** 2)
+print(f"Jouw BMI is: {bmi:.1f}")
+
+if bmi < 18.5:
+    print("Categorie: Ondergewicht")
+elif bmi < 25:
+    print("Categorie: Normaal gewicht")
+elif bmi < 30:
+    print("Categorie: Overgewicht")
+else:
+    print("Categorie: Zwaarlijvig")
+`,
+    quiz:[
+      { type:"mc", q:"Welke operator test of twee waarden GELIJK zijn?", options:["=","==","!=","≡"], answer:1, xp:20 },
+      { type:"trace",
+        q:(v)=>`Welke output geeft dit?\n\nx = ${v[0]}\nif x > 10:\n    print("A")\nelif x > 5:\n    print("B")\nelse:\n    print("C")`,
+        vals:()=>[Math.floor(Math.random()*15)+1],
+        answer:(v)=> v[0]>10 ? "A" : v[0]>5 ? "B" : "C",
+        options:()=>["A","B","C","D"], xp:30 },
+      { type:"mc", q:"Wat doet de 'and' operator?", options:["Één van beide True","Beide moeten True zijn","Keert de conditie om","Vergelijkt twee strings"], answer:1, xp:25 },
+      { type:"trace",
+        q:(v)=>`Wat print dit?\n\na = ${v[0]}\nb = ${v[1]}\nif a > b and b > 0:\n    print("OK")\nelse:\n    print("NOK")`,
+        vals:()=>[Math.floor(Math.random()*10)+5, Math.floor(Math.random()*10)-3],
+        answer:(v)=>(v[0]>v[1] && v[1]>0) ? "OK" : "NOK",
+        options:()=>["OK","NOK","True","False"], xp:30 },
+    ],
+    connectionCode:[
+      {code:'# ⬭ START', type:'terminal'},
+      {code:'score = float(input("Score (0-20): "))', type:'io', note:'▱ Invoer: score'},
+      {code:'if score >= 10:         # ◇ score >= 10?', type:'decision', note:'◇ Is score >= 10?'},
+      {code:'    print("Geslaagd!")  # ✓ Ja-tak', type:'io', note:'▱ Uitvoer (Ja-pad)'},
+      {code:'else:                   # ✗ Nee-tak', type:'decision', note:'◇ Anders'},
+      {code:'    print("Niet geslaagd")', type:'io', note:'▱ Uitvoer (Nee-pad)'},
+      {code:'# ⬭ STOP', type:'terminal'},
+    ],
+  },
+  {
+    id:4, title:"Iteratie — Herhaling", emoji:"🔄", color:"#059669",
+    week:"Week 4", hours:6, tagline:"Laat de computer herhalen voor jou",
+    theory:[
+      { title:"Waarom iteratie?", content:"Stel je wil 1000 getallen optellen. Zonder loops: 1000 regels. Met een loop: 3 regels!", example:"# ZONDER loop:\nprint(1)\nprint(2)  # 998 regels meer...\n\n# MET for-loop:\nfor i in range(1, 1001):\n    print(i)" },
+      { title:"De for-loop", content:"De for-loop herhaalt een blok code een vooraf bepaald aantal keren.", example:"for i in range(5):        # 0,1,2,3,4\n    print(i)\n\nfor i in range(1, 6):     # 1,2,3,4,5\n    print(i)\n\nfor i in range(0, 10, 2): # 0,2,4,6,8\n    print(i)" },
+      { title:"De while-loop", content:"De while-loop herhaalt zolang een conditie True is. LET OP: vergeet je de update, dan krijg je een ONEINDIGE lus!", example:"getal = 1\nwhile getal <= 5:\n    print(getal)\n    getal += 1  # VERGEET DIT NIET!\n\n# Accumulatorpatroon:\nsom = 0\nfor i in range(1, 6):\n    som += i\nprint(som)  # 15" },
+    ],
+    flowchartProblem:{
+      title:"Flowchart: Tel van 1 tot n",
+      description:"Maak een flowchart die van 1 tot een ingegeven getal n telt en elke waarde afdrukt.",
+      nodes:[
+        { id:'s', type:'terminal', label:'START' },
+        { id:'a', type:'io', label:'Invoer: n' },
+        { id:'b', type:'process', label:'i = 1' },
+        { id:'c', type:'decision', label:'i <= n ?',
+          yesBranch:[
+            { id:'d', type:'io',      label:'Uitvoer: i' },
+            { id:'e', type:'process', label:'i = i + 1' },
+          ],
+          noBranch:[] },
+        { id:'f', type:'terminal', label:'STOP' },
+      ],
+      traceActive:(n)=>{
+        const path=['s','a','b'];
+        const cap=Math.min(Math.max(Math.floor(parseFloat(n)||1),1),20);
+        for(let i=1;i<=cap;i++) path.push('c','d','e');
+        path.push('c','f');
+        return path;
+      },
+    },
+    codeTemplate:`# Module 4 — Iteratie met Turtle
+# Teken veelhoeken met een for-loop
+# Pas de waarden aan en klik op ▶ Uitvoeren!
+
+import turtle
+
+t = turtle.Turtle()
+t.speed(10)        # snelheid: 1 (traag) tot 10 (snel)
+
+# Teken een vierkant
+for i in range(4):
+    t.forward(100)
+    t.right(90)
+
+# Probeer ook: range(6) voor hexagoon, range(3) voor driehoek
+`,
+    quiz:[
+      { type:"mc", q:"Welke loop gebruik je als je PRECIES weet hoeveel keer je wilt herhalen?", options:["while-loop","for-loop","if-statement","repeat"], answer:1, xp:20 },
+      { type:"trace",
+        q:(v)=>`Hoe vaak print deze lus?\n\ni = ${v[0]}\nwhile i < ${v[1]}:\n    print(i)\n    i += ${v[2]}`,
+        vals:()=>{ const s=Math.floor(Math.random()*5)+1; const e=s+Math.floor(Math.random()*10)+3; const st=Math.floor(Math.random()*3)+1; return [s,e,st]; },
+        answer:(v)=>{ let c=0,i=v[0]; while(i<v[1]){c++;i+=v[2];} return String(c); },
+        options:(v)=>{ let c=0,i=v[0]; while(i<v[1]){c++;i+=v[2];} return [String(c),String(c-1),String(c+1),String(v[1]-v[0])]; }, xp:35 },
+      { type:"mc", q:"Wat is het gevaar bij een while-loop?", options:["Te snel","Oneindige lus als stopconditie nooit False wordt","Te weinig iteraties","Float-fouten"], answer:1, xp:25 },
+      { type:"trace",
+        q:(v)=>`Wat is de output?\n\nsom = 0\nfor i in range(1, ${v[0]+1}):\n    som += i\nprint(som)`,
+        vals:()=>[Math.floor(Math.random()*8)+3],
+        answer:(v)=>{ let s=0; for(let i=1;i<=v[0];i++) s+=i; return String(s); },
+        options:(v)=>{ let s=0; for(let i=1;i<=v[0];i++) s+=i; return [String(s),String(v[0]*(v[0]-1)/2),String(v[0]),String(v[0]*v[0])]; }, xp:30 },
+    ],
+    connectionCode:[
+      {code:'# ⬭ START', type:'terminal'},
+      {code:'n = int(input("Tel tot: "))   # ▱ Invoer', type:'io', note:'▱ Invoer: n'},
+      {code:'i = 1               # □ initialisatie', type:'process', note:'□ i = 1'},
+      {code:'while i <= n:       # ◇ i <= n?', type:'decision', note:'◇ Herhaling: i <= n?'},
+      {code:'    print(i)        # ▱ Ja-tak: druk i af', type:'io', note:'▱ Uitvoer: i'},
+      {code:'    i += 1          # □ i = i + 1', type:'process', note:'□ Verhoog teller'},
+      {code:'# (Nee-tak → lus stopt)', type:'decision', note:'◇ Lus eindigt hier'},
+      {code:'# ⬭ STOP', type:'terminal'},
+    ],
+  },
+  {
+    id:5, title:"Lijsten & Geneste Structuren", emoji:"📋", color:"#d97706",
+    week:"Week 5", hours:6, tagline:"Meerdere waarden samen beheren",
+    theory:[
+      { title:"Wat is een lijst?", content:"Een lijst (list) slaat meerdere waarden op in één variabele. Index begint bij 0!", example:"cijfers = [8, 7, 9, 6, 10]\n\nprint(cijfers[0])   # 8 (eerste)\nprint(cijfers[-1])  # 10 (laatste)\nprint(len(cijfers)) # 5\n\ncijfers.append(8)   # voeg toe\ncijfers.remove(6)   # verwijder" },
+      { title:"Lijst doorlopen", content:"Met een for-loop kun je elk element verwerken.", example:"scores = [75, 82, 91, 68, 88]\n\nfor score in scores:\n    if score >= 70:\n        print(f'{score} → Geslaagd')\n    else:\n        print(f'{score} → Gezakt')" },
+    ],
+    flowchartProblem:{
+      title:"Flowchart: Maximum zoeken",
+      description:"Maak een flowchart die het maximum vindt in een lijst getallen [8, 3, 15, 6, 11].",
+      nodes:[
+        { id:'s', type:'terminal', label:'START' },
+        { id:'a', type:'process', label:'getallen = [8,3,15,6,11]' },
+        { id:'b', type:'process', label:'max_val = getallen[0]' },
+        { id:'c', type:'decision', label:'meer elementen?',
+          yesBranch:[
+            { id:'d', type:'decision', label:'element > max_val?',
+              yesBranch:[{ id:'e', type:'process', label:'max_val = element' }],
+              noBranch:[] },
+          ],
+          noBranch:[] },
+        { id:'f', type:'io', label:'Uitvoer: max_val' },
+        { id:'g', type:'terminal', label:'STOP' },
+      ],
+      // [8,3,15,6,11]: element>max_val? 3>8=nee, 15>8=ja(update), 6>15=nee, 11>15=nee, daarna stop
+      traceActive:()=>['s','a','b','c','d','c','d','e','c','d','c','d','c','f','g'],
+    },
+    codeTemplate:`# Module 5 — Lijsten
+# Rapport-generator
+
+namen = ["Joris", "Emma", "Luca", "Sara"]
+scores = [78, 85, 62, 91]
+
+print("=" * 32)
+print("   RAPPORT OVERZICHT")
+print("=" * 32)
+
+for i in range(len(namen)):
+    naam = namen[i]
+    score = scores[i]
+    if score >= 70:
+        status = "Geslaagd"
+    else:
+        status = "Niet geslaagd"
+    print(naam + " - " + str(score) + "/100 - " + status)
+
+print("-" * 32)
+gemiddelde = sum(scores) / len(scores)
+print("Gemiddelde: " + str(round(gemiddelde, 1)) + "/100")
+`,
+    quiz:[
+      { type:"mc", q:"Welke index heeft het LAATSTE element van een lijst?", options:["0","len(lijst)","len(lijst)-1","-0"], answer:2, xp:20 },
+      { type:"trace",
+        q:(v)=>`Wat is de output?\n\ngetallen = [${v.join(', ')}]\nprint(getallen[${v.length-1}])`,
+        vals:()=>Array.from({length:5},()=>Math.floor(Math.random()*20)+1),
+        answer:(v)=>String(v[v.length-1]),
+        options:(v)=>[String(v[v.length-1]),String(v[0]),String(v.length),String(v[v.length-2])], xp:30 },
+      { type:"mc", q:"Welke methode voegt een element TOE aan een lijst?", options:["add()","append()","push()","insert()"], answer:1, xp:20 },
+      { type:"trace",
+        q:(v)=>`Wat print dit?\n\ns = [${v.join(',')}]\nprint(sum(s))`,
+        vals:()=>Array.from({length:4},()=>Math.floor(Math.random()*10)+1),
+        answer:(v)=>String(v.reduce((a,b)=>a+b,0)),
+        options:(v)=>[String(v.reduce((a,b)=>a+b,0)),String(Math.max(...v)),String(v.length),String(v[0])], xp:30 },
+    ],
+    connectionCode:[
+      {code:'# ⬭ START', type:'terminal'},
+      {code:'getallen = [8, 3, 15, 6, 11]   # □ Lijst', type:'process', note:'□ Lijst aanmaken'},
+      {code:'max_val  = getallen[0]          # □ Begin', type:'process', note:'□ max_val = eerste element'},
+      {code:'for element in getallen:  # ◇ Meer elementen?', type:'decision', note:'◇ Itereer over lijst'},
+      {code:'    if element > max_val:  # ◇ Groter?', type:'decision', note:'◇ Is element groter dan max?'},
+      {code:'        max_val = element  # □ Ja-tak', type:'process', note:'□ max_val bijwerken'},
+      {code:'print(f"Maximum: {max_val}")', type:'io', note:'▱ Uitvoer: max_val'},
+      {code:'# ⬭ STOP', type:'terminal'},
+    ],
+  },
+  {
+    id:6, title:"Functies & Integratie", emoji:"🧩", color:"#F472B6",
+    week:"Week 6", hours:6, tagline:"Herbruikbare bouwblokken bouwen",
+    theory:[
+      { title:"Wat is een functie?", content:"Een functie is een herbruikbaar codeblok. Je definieert het eenmalig met 'def' en roept het daarna zo vaak aan als je wilt.", example:"def begroet(naam):\n    print(f'Hallo, {naam}!')\n\nbegroet('Joris')  # Hallo, Joris!\nbegroet('Emma')   # Hallo, Emma!" },
+      { title:"Parameters en return", content:"Functies kunnen gegevens ontvangen (parameters) en resultaat teruggeven (return).", example:"def bereken_bmi(gewicht, lengte):\n    bmi = gewicht / (lengte ** 2)\n    return round(bmi, 1)\n\nmijn_bmi = bereken_bmi(70, 1.75)\nprint(f'BMI: {mijn_bmi}')\n# → BMI: 22.9" },
+    ],
+    flowchartProblem:{
+      title:"Flowchart: Functie aanroep",
+      description:"Teken een flowchart voor een programma dat een functie 'is_geslaagd(score)' aanroept en het resultaat afdrukt.",
+      nodes:[
+        { id:'s', type:'terminal', label:'START' },
+        { id:'a', type:'io', label:'Invoer: score' },
+        { id:'b', type:'process', label:'aanroep: is_geslaagd(score)' },
+        { id:'c', type:'decision', label:'score >= 10 ?',
+          yesBranch:[{ id:'d', type:'process', label:'return True' }],
+          noBranch:[{ id:'e', type:'process', label:'return False' }] },
+        { id:'f', type:'io', label:'Druk resultaat af' },
+        { id:'g', type:'terminal', label:'STOP' },
+      ],
+      traceActive:(n)=> n>=10 ? ['s','a','b','c','d','f','g'] : ['s','a','b','c','e','f','g'],
+    },
+    codeTemplate:`# Module 6 — Functies & Eindproject
+
+def is_geslaagd(score, drempel=10):
+    return score >= drempel
+
+def classificeer(score):
+    if score >= 16: return "Onderscheiding"
+    elif score >= 14: return "Verdienste"
+    elif score >= 10: return "Voldoende"
+    else: return "Onvoldoende"
+
+def toon_rapport(naam, scores):
+    gemiddelde = sum(scores) / len(scores)
+    print("=" * 35)
+    print(" RAPPORT: " + naam)
+    print("=" * 35)
+    for i in range(len(scores)):
+        klassi = classificeer(scores[i])
+        print("  Vak " + str(i+1) + ": " + str(scores[i]) + "/20 - " + klassi)
+    print("-" * 35)
+    print("  Gemiddelde: " + str(round(gemiddelde, 1)) + "/20")
+    if is_geslaagd(gemiddelde):
+        print("  GESLAAGD")
+    else:
+        print("  NIET GESLAAGD")
+
+toon_rapport("Joris", [14, 17, 18, 13, 15])
+`,
+    quiz:[
+      { type:"mc", q:"Wat doet 'return' in een functie?", options:["Stopt het programma","Geeft een waarde terug","Print de waarde","Herhaalt de functie"], answer:1, xp:20 },
+      { type:"trace",
+        q:(v)=>`Wat returnt deze functie?\n\ndef verdubbel(x):\n    return x * 2\n\nprint(verdubbel(${v[0]}))`,
+        vals:()=>[Math.floor(Math.random()*20)+1],
+        answer:(v)=>String(v[0]*2),
+        options:(v)=>[String(v[0]*2),String(v[0]+2),String(v[0]),String(v[0]*v[0])], xp:25 },
+      { type:"mc", q:"Wat is een 'parameter' van een functie?", options:["Het resultaat","De naam van de functie","Een waarde die je meegeeft","Het aantal regels"], answer:2, xp:20 },
+    ],
+    connectionCode:[
+      {code:'# ⬭ START', type:'terminal'},
+      {code:'def is_geslaagd(score):   # □ Functiedefinitie', type:'process', note:'□ Functie definiëren'},
+      {code:'    if score >= 10:       # ◇ score >= 10?', type:'decision', note:'◇ Beslissing in functie'},
+      {code:'        return True       # ✓ Ja-tak', type:'process', note:'□ return True'},
+      {code:'    return False          # ✗ Nee-tak', type:'process', note:'□ return False'},
+      {code:'', type:null},
+      {code:'score = float(input("Score: "))   # ▱', type:'io', note:'▱ Invoer: score'},
+      {code:'res = is_geslaagd(score)          # □ Aanroep', type:'process', note:'□ Functie aanroepen'},
+      {code:'print(res)                        # ▱ Uitvoer', type:'io', note:'▱ Uitvoer: resultaat'},
+      {code:'# ⬭ STOP', type:'terminal'},
+    ],
+  },
+];
+
+const BADGES = [
+  { id:"first_blood", emoji:"⚡", name:"Eerste Stap", desc:"Voltooi je eerste vraag", earnedBy:"quiz_first" },
+  { id:"perfect",    emoji:"🎯", name:"Perfecte Score", desc:"100% in een quiz-ronde", earnedBy:"quiz_perfect" },
+  { id:"level5",     emoji:"🔥", name:"Op Dreef", desc:"Bereik level 5", earnedBy:"level_5" },
+  { id:"level10",    emoji:"💎", name:"Diamant", desc:"Bereik level 10", earnedBy:"level_10" },
+  { id:"theory_all", emoji:"📚", name:"Theoreticus", desc:"Alle theorie van een module gelezen", earnedBy:"theory_all" },
+  { id:"code_3",     emoji:"🐍", name:"Python Slang", desc:"Code 3× uitgevoerd", earnedBy:"code_3" },
+  { id:"streak_3",   emoji:"🏃", name:"Op Stoom", desc:"3 vragen op rij correct", earnedBy:"streak_3" },
+  { id:"module_done",emoji:"✅", name:"Module Master", desc:"Module volledig doorlopen", earnedBy:"module_complete" },
+  { id:"exercise_done",emoji:"🎯", name:"Oefenaar", desc:"Alle testen van een oefening gehaald", earnedBy:"exercise_pass" },
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MICROSOFT AUTH CONFIGURATIE
+//  TODO: Maak een App Registration aan op https://portal.azure.com
+//  → Azure Active Directory → App registrations → New registration
+//  → Stel Redirect URI in op de URL van deze pagina
+//  → Kopieer de Application (client) ID hieronder
+// ══════════════════════════════════════════════════════════════════════════════
+const MSAL_CONFIG = {
+  auth: {
+    clientId:  'JOUW_CLIENT_ID',   // ← vervang door jouw Azure App Registration Client ID
+    authority: 'https://login.microsoftonline.com/organizations',
+    redirectUri: typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '/',
+  },
+  cache: { cacheLocation:'localStorage', storeAuthStateInCookie:false },
+};
+// E-mailadressen die docent-rechten krijgen:
+const TEACHER_EMAILS = [
+  // 'docent@odisee.be',  // ← voeg docenten toe
+];
+const IS_DEMO_MODE = MSAL_CONFIG.auth.clientId === 'JOUW_CLIENT_ID';
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  OEFENINGEN PER MODULE
+// ══════════════════════════════════════════════════════════════════════════════
+const EXERCISES = {
+  1:[
+    { id:'e1_1', title:'👋 Naam begroeten',
+      desc:'Vraag de naam van de gebruiker en druk "Hallo, [naam]!" af.',
+      starter:'# Vraag de naam\nnaam = input("Wat is jouw naam? ")\n\n# Druk de begroeting af\nprint(f"Hallo, {naam}!")',
+      hint:'Gebruik een f-string: print(f"Hallo, {naam}!")',
+      tests:[{input:'Joris',output:'Hallo, Joris!'},{input:'Emma',output:'Hallo, Emma!'}] },
+    { id:'e1_2', title:'📏 Tekstlengte',
+      desc:'Vraag een woord en druk af: "Het woord heeft [n] letters."',
+      starter:'woord = input("Geef een woord: ")\n# Gebruik len() om de lengte te bepalen\nprint(f"Het woord heeft {len(woord)} letters.")',
+      hint:'len(woord) geeft het aantal tekens.',
+      tests:[{input:'python',output:'Het woord heeft 6 letters.'},{input:'ai',output:'Het woord heeft 2 letters.'}] },
+    { id:'e1_3', title:'🔁 Tekst omgooien',
+      desc:'Vraag een woord en druk het omgekeerd af.',
+      starter:'woord = input("Geef een woord: ")\n# Keer het woord om met slicing [::-1]\nprint(woord[::-1])',
+      hint:'woord[::-1] keert de string om.',
+      tests:[{input:'hallo',output:'ollah'},{input:'code',output:'edoc'}] },
+  ],
+  2:[
+    { id:'e2_1', title:'🌡️ Celsius → Fahrenheit',
+      desc:'Vraag een temperatuur in Celsius. Druk af: "[C] °C = [F] °F". Formule: F = C × 1.8 + 32',
+      starter:'celsius = float(input("Temperatuur in Celsius: "))\nfahrenheit = celsius * 1.8 + 32\nprint(f"{celsius} °C = {fahrenheit} °F")',
+      hint:'fahrenheit = celsius * 1.8 + 32',
+      tests:[{input:'0',output:'0.0 °C = 32.0 °F'},{input:'100',output:'100.0 °C = 212.0 °F'}] },
+    { id:'e2_2', title:'⏱️ Minuten → Uren en minuten',
+      desc:'Vraag een aantal minuten (geheel getal). Druk af: "[x] minuten = [u] uur en [m] minuten".\nGebruik gehele deling // voor de uren en rest % voor de resterende minuten.',
+      starter:'minuten = int(input("Aantal minuten: "))\nuren = minuten // 60\nrest = minuten % 60\nprint(f"{minuten} minuten = {uren} uur en {rest} minuten")',
+      hint:'uren = minuten // 60  →  gehele deling\nrest = minuten % 60   →  rest na deling',
+      tests:[{input:'90',output:'90 minuten = 1 uur en 30 minuten'},{input:'125',output:'125 minuten = 2 uur en 5 minuten'}] },
+    { id:'e2_3', title:'💶 Eurocent → Euro en cent',
+      desc:'Vraag een bedrag in eurocent (geheel getal). Druk af: "[x] eurocent = [e] euro en [c] cent".\nGebruik // voor het aantal volledige euro en % voor de resterende cent.',
+      starter:'centen = int(input("Bedrag in eurocent: "))\neuro = centen // 100\ncent = centen % 100\nprint(f"{centen} eurocent = {euro} euro en {cent} cent")',
+      hint:'euro = centen // 100  →  gehele deling door 100\ncent = centen % 100   →  rest na deling door 100',
+      tests:[{input:'175',output:'175 eurocent = 1 euro en 75 cent'},{input:'300',output:'300 eurocent = 3 euro en 0 cent'}] },
+  ],
+  3:[
+    { id:'e3_1', title:'🔢 Even of oneven',
+      desc:'Vraag een geheel getal. Druk "even" of "oneven" af.',
+      starter:'getal = int(input("Geef een getal: "))\nif getal % 2 == 0:\n    print("even")\nelse:\n    print("oneven")',
+      hint:'Een getal is even als getal % 2 == 0',
+      tests:[{input:'4',output:'even'},{input:'7',output:'oneven'}] },
+    { id:'e3_2', title:'🏆 Grootste getal',
+      desc:'Vraag twee getallen. Druk het grootste af, of "gelijk" als ze gelijk zijn.',
+      starter:'a = int(input("Getal 1: "))\nb = int(input("Getal 2: "))\nif a > b:\n    print(a)\nelif b > a:\n    print(b)\nelse:\n    print("gelijk")',
+      hint:'Gebruik if/elif/else voor drie gevallen.',
+      tests:[{input:'8\n3',output:'8'},{input:'5\n9',output:'9'},{input:'4\n4',output:'gelijk'}] },
+    { id:'e3_3', title:'📊 Score naar letter',
+      desc:'Vraag score (0-100). Druk lettergraad af: A(>=90), B(>=75), C(>=60), D(>=50), F(<50).',
+      starter:'score = int(input("Score: "))\nif score >= 90:\n    print("A")\nelif score >= 75:\n    print("B")\nelif score >= 60:\n    print("C")\nelif score >= 50:\n    print("D")\nelse:\n    print("F")',
+      hint:'Begin met de hoogste drempel en werk naar beneden.',
+      tests:[{input:'95',output:'A'},{input:'80',output:'B'},{input:'42',output:'F'}] },
+  ],
+  4:[
+    { id:'e4_1', title:'⏬ Aftellen',
+      desc:'Vraag getal n. Tel af van n naar 1, druk daarna "Start!" af.',
+      starter:'n = int(input("Start bij: "))\nfor i in range(n, 0, -1):\n    print(i)\nprint("Start!")',
+      hint:'range(n, 0, -1) telt van n tot 1.',
+      tests:[{input:'3',output:'3\n2\n1\nStart!'},{input:'5',output:'5\n4\n3\n2\n1\nStart!'}] },
+    { id:'e4_2', title:'∑ Som 1 t/m n',
+      desc:'Vraag getal n. Bereken en druk de som af van 1 t/m n.',
+      starter:'n = int(input("n: "))\nsom = 0\nfor i in range(1, n + 1):\n    som += i\nprint(som)',
+      hint:'for i in range(1, n+1): som += i',
+      tests:[{input:'5',output:'15'},{input:'10',output:'55'}] },
+    { id:'e4_3', title:'✖️ Tafel van vermenigvuldiging',
+      desc:'Vraag n. Druk tafel af: "1 × 3 = 3" t/m "10 × 3 = 30".',
+      starter:'n = int(input("Tafel van: "))\nfor i in range(1, 11):\n    print(f"{i} × {n} = {i*n}")',
+      hint:'for i in range(1, 11): print(f"{i} × {n} = {i*n}")',
+      tests:[{input:'3',output:'1 × 3 = 3\n2 × 3 = 6\n3 × 3 = 9\n4 × 3 = 12\n5 × 3 = 15\n6 × 3 = 18\n7 × 3 = 21\n8 × 3 = 24\n9 × 3 = 27\n10 × 3 = 30'}] },
+    { id:'e4_4', title:'🐢 Vierkant tekenen',
+      visual: true,
+      desc:'Gebruik turtle en een for-loop om een vierkant te tekenen.\nElke zijde is 120 pixels lang. Een vierkant heeft 4 zijden van elk 90°.',
+      starter:'import turtle\nt = turtle.Turtle()\nt.speed(8)\n\n# Teken een vierkant: 4 zijden, elke keer 90° draaien\nfor i in range(4):\n    t.forward(120)\n    t.right(90)',
+      hint:'Gebruik range(4) voor 4 herhalingen. t.forward(120) en t.right(90) per stap.' },
+    { id:'e4_5', title:'🐢 Spiraal tekenen',
+      visual: true,
+      desc:'Teken een uitdijende spiraal: begin met een korte stap en maak elke stap iets langer.\nGebruik een for-loop met range(36). Begin met lengte = 5, verhoog met 8 per stap, draai 89°.',
+      starter:'import turtle\nt = turtle.Turtle()\nt.speed(10)\n\nlengte = 5\nfor i in range(36):\n    t.forward(lengte)\n    t.right(89)\n    lengte = lengte + 8',
+      hint:'lengte groeit elke iteratie: lengte = lengte + 8. Draai niet 90° maar 89° voor een spiraal-effect.' },
+  ],
+  5:[
+    { id:'e5_1', title:'📋 Lijst bouwen',
+      desc:'Vraag 3 namen. Sla ze op in een lijst en druk de lijst af.',
+      starter:'namen = []\nfor i in range(3):\n    naam = input(f"Naam {i+1}: ")\n    namen.append(naam)\nprint(namen)',
+      hint:'Gebruik list.append() om elementen toe te voegen.',
+      tests:[{input:'Joris\nEmma\nLuc',output:"['Joris', 'Emma', 'Luc']"}] },
+    { id:'e5_2', title:'📊 Gemiddelde',
+      desc:'Vraag 4 getallen. Bereken en druk het gemiddelde af (1 decimaal).',
+      starter:'getallen = []\nfor i in range(4):\n    g = float(input(f"Getal {i+1}: "))\n    getallen.append(g)\ngemiddelde = sum(getallen) / len(getallen)\nprint(round(gemiddelde, 1))',
+      hint:'sum(getallen) / len(getallen) geeft het gemiddelde.',
+      tests:[{input:'10\n20\n30\n40',output:'25.0'},{input:'1\n2\n3\n4',output:'2.5'}] },
+    { id:'e5_3', title:'🔝 Maximum zonder max()',
+      desc:'Vraag 5 getallen. Druk het grootste af zonder de max()-functie.',
+      starter:'getallen = []\nfor i in range(5):\n    getallen.append(int(input(f"Getal {i+1}: ")))\nmaximum = getallen[0]\nfor g in getallen[1:]:\n    if g > maximum:\n        maximum = g\nprint(maximum)',
+      hint:'Vergelijk elk getal met het huidige maximum.',
+      tests:[{input:'3\n8\n1\n9\n4',output:'9'},{input:'5\n2\n7\n1\n6',output:'7'}] },
+  ],
+  6:[
+    { id:'e6_1', title:'👋 Functie begroet()',
+      desc:'Schrijf een functie begroet(naam) die "Hallo, [naam]!" drukt. Roep ze op met "Joris" en "Emma".',
+      starter:'def begroet(naam):\n    print(f"Hallo, {naam}!")\n\nbegroet("Joris")\nbegroet("Emma")',
+      hint:'def begroet(naam): print(f"Hallo, {naam}!")',
+      tests:[{input:'',output:'Hallo, Joris!\nHallo, Emma!'}] },
+    { id:'e6_2', title:'🔢 Functie kwadraat()',
+      desc:'Schrijf kwadraat(n) die n² teruggeeft. Test met 4 en 7.',
+      starter:'def kwadraat(n):\n    return n ** 2\n\nprint(kwadraat(4))\nprint(kwadraat(7))',
+      hint:'return n ** 2',
+      tests:[{input:'',output:'16\n49'}] },
+    { id:'e6_3', title:'➕✖️ Som en product',
+      desc:'Schrijf som(a,b) en product(a,b). Vraag twee getallen, druk som en product af.',
+      starter:'def som(a, b):\n    return a + b\n\ndef product(a, b):\n    return a * b\n\na = int(input("a: "))\nb = int(input("b: "))\nprint(som(a, b))\nprint(product(a, b))',
+      hint:'Twee aparte functies, elk met return.',
+      tests:[{input:'3\n4',output:'7\n12'},{input:'5\n6',output:'11\n30'}] },
+  ],
+};
+
+const NODE_TYPE_DEFS = [
+  { type:'terminal',  label:'Start/Stop',     color:'#00E5C3', symbol:'⬭' },
+  { type:'process',   label:'Actie',          color:'#9B5CF6', symbol:'□' },
+  { type:'io',        label:'Invoer/Uitvoer', color:'#FCD34D', symbol:'▱' },
+  { type:'decision',  label:'Beslissing',     color:'#FF6D35', symbol:'◇' },
+];
+
+// Helpinfo per bloktype — uitleg + voorbeeldlabel
+const NODE_HELP = {
+  terminal: {
+    title:'Start / Stop (ovaal ⬭)',
+    tip:'Elke flowchart begint met START en eindigt met STOP. Er is altijd precies één van elk. Typ gewoon "START" of "STOP".',
+    examples:['START','STOP'],
+  },
+  process: {
+    title:'Actie / Berekening (rechthoek □)',
+    tip:'Een stap die de computer uitvoert: een berekening, een toewijzing aan een variabele. Geen invoer, geen uitvoer.',
+    examples:['som = som + i','hoek = 360 / zijden','teller = 0','max_val = getallen[0]'],
+  },
+  io: {
+    title:'Invoer / Uitvoer (parallelogram ▱)',
+    tip:'Gegevens die van buiten komen (input) of naar buiten gaan (print/uitvoer). Schrijf wat ingelezen of afgedrukt wordt.',
+    examples:['Invoer: naam','Invoer: getal n','Uitvoer: resultaat','Druk score af'],
+  },
+  decision: {
+    title:'Beslissing (ruit ◇)',
+    tip:'Een ja/nee-vraag. Eindigt altijd op een vraagteken. Leidt tot twee paden: Ja-tak en Nee-tak.',
+    examples:['n > 0 ?','score >= 10 ?','i <= n ?','element > max_val ?'],
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PYTHON — via Skulpt (echte CPython-compatibele interpreter in de browser)
+// ══════════════════════════════════════════════════════════════════════════════
+function extractInputCalls(code) {
+  const re = /input\s*\(([^)]*)\)/g;
+  const prompts = [];
+  let m;
+  while ((m = re.exec(code)) !== null) {
+    const raw = m[1].trim().replace(/^['"`]|['"`]$/g,'') || 'Waarde:';
+    prompts.push(raw);
+  }
+  return prompts;
+}
+
+// Legacy stub — kept so older quiz traces still compile; real execution uses Skulpt in CodeSection
+function runPython(code) {
+  const output = [];
+  const vars = {};
+  let lineCount = 0;
+  const MAX = 300;
+
+  function toNum(v) { const n = parseFloat(v); return isNaN(n) ? v : n; }
+
+  function evalExpr(expr) {
+    expr = expr.trim();
+    if (!expr) return '';
+
+    // f-string
+    if (/^f['"]/.test(expr)) {
+      const q = expr[1];
+      const inner = expr.slice(2, expr.lastIndexOf(q));
+      return inner.replace(/\{([^}]+)\}/g, (_, part) => {
+        const [e, fmt] = part.split(':');
+        let val = evalExpr(e.trim());
+        if (fmt) {
+          const m = fmt.match(/(\d*)([dfsf<>^])/);
+          if (m) {
+            const width = parseInt(m[1]) || 0;
+            const spec = m[2];
+            if (spec === 'f') { const dec = parseInt(fmt) || 2; val = parseFloat(val).toFixed(dec); }
+            else if (spec === 'd') { val = Math.floor(parseFloat(val)); }
+            else if (spec === '<') { val = String(val).padEnd(width); }
+            else if (spec === '>') { val = String(val).padStart(width); }
+          }
+        }
+        return val === undefined ? '' : val;
+      });
+    }
+
+    // Quoted string (single or double, multichar)
+    if (/^(['"]).*\1$/.test(expr)) return expr.slice(1,-1);
+
+    // True/False/None
+    if (expr === 'True') return true;
+    if (expr === 'False') return false;
+    if (expr === 'None') return null;
+
+    // int(), float(), str(), len(), sum(), round(), min(), max()
+    const fnMatch = expr.match(/^(\w+)\((.+)\)$/s);
+    if (fnMatch) {
+      const [, fn, arg] = fnMatch;
+      const v = evalExpr(arg);
+      if (fn === 'int')   return Math.floor(parseFloat(v)) || 0;
+      if (fn === 'float') return parseFloat(v) || 0;
+      if (fn === 'str')   return String(v);
+      if (fn === 'len')   return Array.isArray(v) ? v.length : String(v).length;
+      if (fn === 'sum')   return Array.isArray(v) ? v.reduce((a,b)=>a+b,0) : 0;
+      if (fn === 'min')   return Array.isArray(v) ? Math.min(...v) : v;
+      if (fn === 'max')   return Array.isArray(v) ? Math.max(...v) : v;
+      if (fn === 'round') {
+        const parts = arg.split(',');
+        const num = parseFloat(evalExpr(parts[0]));
+        const dec = parts[1] ? parseInt(evalExpr(parts[1])) : 0;
+        return parseFloat(num.toFixed(dec));
+      }
+      if (fn === 'range') {
+        const parts = arg.split(',').map(p => parseInt(evalExpr(p.trim())));
+        const [a,b,s] = parts.length===1?[0,parts[0],1]:parts.length===2?[parts[0],parts[1],1]:parts;
+        const arr = []; for(let i=a;i<b;i+=s) arr.push(i); return arr;
+      }
+      if (fn === 'list') return Array.isArray(v) ? v : [];
+      if (fn === 'abs')  return Math.abs(parseFloat(v));
+    }
+
+    // List literal
+    if (expr.startsWith('[') && expr.endsWith(']')) {
+      const inner = expr.slice(1,-1).trim();
+      if (!inner) return [];
+      return inner.split(',').map(p => evalExpr(p.trim()));
+    }
+
+    // String concatenation
+    if (expr.includes(' + ') && (expr.includes('"') || expr.includes("'"))) {
+      return expr.split(' + ').map(p => evalExpr(p.trim())).join('');
+    }
+
+    // Numeric expression
+    if (/^[\d\s+\-*/(). ,a-zA-Z_]+$/.test(expr)) {
+      const substituted = expr.replace(/[a-zA-Z_]\w*/g, id => {
+        if (['True','False','None'].includes(id)) return id === 'True' ? 'true' : id === 'False' ? 'false' : 'null';
+        return vars[id] !== undefined ? JSON.stringify(vars[id]) : 'undefined';
+      });
+      try { return Function('"use strict"; return (' + substituted.replace(/\*\*/g,'**') + ')')(); }
+      catch(e) {}
+    }
+
+    // Variable lookup
+    if (/^[a-zA-Z_]\w*(\[[-\d]+\])?$/.test(expr)) {
+      const idxMatch = expr.match(/^([a-zA-Z_]\w*)\[([-\d]+)\]$/);
+      if (idxMatch) {
+        const arr = vars[idxMatch[1]];
+        if (Array.isArray(arr)) { let i = parseInt(idxMatch[2]); if(i<0) i=arr.length+i; return arr[i]; }
+      }
+      return vars[expr] !== undefined ? vars[expr] : expr;
+    }
+
+    // Fallback
+    try {
+      const s = expr.replace(/[a-zA-Z_]\w*/g, id => vars[id] !== undefined ? JSON.stringify(vars[id]) : '0');
+      return Function('"use strict"; return (' + s + ')')();
+    } catch(e) {}
+    return expr;
+  }
+
+  function execLines(lines, depth=0) {
+    let i = 0;
+    while (i < lines.length && lineCount < MAX) {
+      lineCount++;
+      const raw = lines[i];
+      const line = raw.trimStart();
+      const indent = raw.length - line.length;
+
+      if (!line || line.startsWith('#') || line.startsWith('import') || line.startsWith('from') || line.includes('turtle') || line.startsWith('def ')) { i++; continue; }
+
+      // print
+      if (line.startsWith('print(')) {
+        const inner = line.replace(/^print\s*\(/, '').replace(/\)\s*$/, '');
+        const val = evalExpr(inner);
+        output.push(val === null ? 'None' : String(val));
+        i++; continue;
+      }
+
+      // augmented assignment
+      const augMatch = line.match(/^([a-zA-Z_]\w*)\s*(\+=|-=|\*=|\/=|\/\/=|%=)\s*(.+)$/);
+      if (augMatch) {
+        const [, name, op, expr] = augMatch;
+        const v = evalExpr(expr);
+        const cur = vars[name] || 0;
+        if (op==='+=') vars[name] = (typeof cur==='string'||typeof v==='string') ? String(cur)+String(v) : cur+v;
+        else if (op==='-=') vars[name] = cur - v;
+        else if (op==='*=') vars[name] = cur * v;
+        else if (op==='/=') vars[name] = cur / v;
+        else if (op==='//=') vars[name] = Math.floor(cur / v);
+        else if (op==='%=') vars[name] = cur % v;
+        i++; continue;
+      }
+
+      // simple assignment (no if/for/while prefix)
+      const assignMatch = line.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/) ;
+      if (assignMatch && !line.startsWith('if') && !line.startsWith('elif') && !line.startsWith('while') && !line.startsWith('for') && !line.startsWith('else')) {
+        const [, name, expr] = assignMatch;
+        vars[name] = evalExpr(expr);
+        i++; continue;
+      }
+
+      // for loop
+      if (line.startsWith('for ')) {
+        const forMatch = line.match(/^for\s+(\w+)\s+in\s+(.+):$/);
+        if (forMatch) {
+          const [, loopVar, iterExpr] = forMatch;
+          const iterable = evalExpr(iterExpr);
+          const body = [];
+          const baseIndent = indent;
+          let j = i + 1;
+          while (j < lines.length && (lines[j].trimStart() === '' || (lines[j].length - lines[j].trimStart().length) > baseIndent)) {
+            body.push(lines[j]);
+            j++;
+          }
+          if (Array.isArray(iterable)) {
+            for (const val of iterable) {
+              if (lineCount >= MAX) break;
+              vars[loopVar] = val;
+              execLines(body.map(l => l.slice(4)), depth+1);
+            }
+          }
+          i = j; continue;
+        }
+      }
+
+      // while loop
+      if (line.startsWith('while ')) {
+        const whileMatch = line.match(/^while\s+(.+):$/);
+        if (whileMatch) {
+          const condExpr = whileMatch[1];
+          const body = [];
+          const baseIndent = indent;
+          let j = i + 1;
+          while (j < lines.length && (lines[j].trimStart() === '' || (lines[j].length - lines[j].trimStart().length) > baseIndent)) {
+            body.push(lines[j]);
+            j++;
+          }
+          let guard = 0;
+          while (guard++ < 200 && lineCount < MAX) {
+            const cond = evalExpr(condExpr);
+            if (!cond && cond !== 0) break;
+            execLines(body.map(l => l.slice(4 > baseIndent+4 ? 4 : baseIndent+4)), depth+1);
+          }
+          i = j; continue;
+        }
+      }
+
+      // if/elif/else
+      if (line.startsWith('if ') || line.startsWith('elif ') || line.startsWith('else:')) {
+        // Collect the if-elif-else chain
+        const chain = [];
+        let j = i;
+        while (j < lines.length) {
+          const l = lines[j].trimStart();
+          const li = lines[j].length - l.length;
+          if (li !== indent && j > i) break;
+          let cond = null;
+          let body = [];
+          if (l.startsWith('if ') || l.startsWith('elif ')) {
+            cond = l.replace(/^(if|elif)\s+/, '').replace(/:$/, '');
+          } else if (l.startsWith('else:')) {
+            cond = null; // else
+          } else if (j > i) { break; }
+          // collect body
+          let k = j + 1;
+          while (k < lines.length && (lines[k].trimStart() === '' || (lines[k].length - lines[k].trimStart().length) > indent)) {
+            body.push(lines[k]);
+            k++;
+          }
+          chain.push({ cond, body });
+          j = k;
+        }
+        // Execute first matching branch
+        let executed = false;
+        for (const branch of chain) {
+          if (executed) break;
+          if (branch.cond === null || executed) {
+            if (!executed) { execLines(branch.body.map(l => l.slice(4 > indent+4 ? 4 : indent+4)), depth+1); executed = true; }
+            else execLines(branch.body.map(l => l.slice(4 > indent+4 ? 4 : indent+4)), depth+1);
+          } else {
+            const result = evalExpr(branch.cond);
+            if (result) {
+              execLines(branch.body.map(l => l.slice(4 > indent+4 ? 4 : indent+4)), depth+1);
+              executed = true;
+            }
+          }
+        }
+        i = j; continue;
+      }
+
+      i++;
+    }
+  }
+
+  try { execLines(code.split('\n')); }
+  catch(e) { output.push('❌ Fout: ' + e.message); }
+  return output.length > 0 ? output.join('\n') : '(geen uitvoer)';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SVG FLOWCHART RENDERER
+// ══════════════════════════════════════════════════════════════════════════════
+function wrapLabel(text, maxChars=16) {
+  if (text.length <= maxChars) return [text];
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  for (const w of words) {
+    if ((cur+' '+w).trim().length > maxChars && cur) { lines.push(cur.trim()); cur = w; }
+    else cur = (cur+' '+w).trim();
+  }
+  if (cur) lines.push(cur.trim());
+  return lines;
+}
+
+function FlowchartSVG({ flowNodes, activeIds=[], doneIds=[], color='#00E5C3', width=640 }) {
+  if (!flowNodes || flowNodes.length === 0) return <text fill="#666" x="50" y="50">Geen flowchart</text>;
+
+  const SVG_W = width;
+  const CX = SVG_W / 2;
+  const LX = 90;  // yes-branch center x
+  const RX = SVG_W - 90; // no-branch center x
+  const GAP = 40;
+
+  const DIM = {
+    terminal:{ w:130, h:42 },
+    process: { w:175, h:50 },
+    io:      { w:175, h:50 },
+    decision:{ w:170, h:80, hw:85, hh:40 },
+  };
+
+  const elems = [];   // { type, id, cx, cy, w, h, label, nodeType }
+  const arrows = [];  // { d, arrowEnd, label, labelX, labelY, fromId, toId }
+  let y = 25;
+
+  function addNode(node, cx) {
+    const d = DIM[node.type] || DIM.process;
+    const cy = y + d.h / 2;
+    elems.push({ ...d, ...node, cx, cy, nodeType: node.type });
+    const top = y; const bot = y + d.h;
+    y += d.h;
+    return { top, bot, cy, d };
+  }
+
+  function arrowDown(x, fromY, toY, fromId, toId) {
+    if (fromY >= toY) return;
+    arrows.push({ d:`M${x},${fromY} L${x},${toY}`, arrowEnd:true, fromId, toId });
+  }
+
+  let prevBot = null, prevId = null;
+
+  for (let i = 0; i < flowNodes.length; i++) {
+    const node = flowNodes[i];
+    if (node.type === 'decision') {
+      if (prevBot !== null) arrowDown(CX, prevBot + 4, y + 4, prevId, node.id);
+      const pos = addNode(node, CX);
+      prevBot = null; prevId = node.id;
+      const decMidY = pos.cy;
+      const decBot = pos.bot;
+      const d = DIM.decision;
+
+      const branchTopY = decBot + GAP;
+      let yesBot = branchTopY, noBot = branchTopY;
+
+      const yesBranch = node.yesBranch || [];
+      const noBranch  = node.noBranch  || [];
+
+      // Yes branch (left)
+      let yy = branchTopY;
+      let prevYesBot = null, prevYesId = null;
+      for (const yn of yesBranch) {
+        if (prevYesBot !== null) arrowDown(LX, prevYesBot + 4, yy + 4, prevYesId, yn.id);
+        const yd = DIM[yn.type] || DIM.process;
+        const ync = yy + yd.h / 2;
+        elems.push({ ...yd, ...yn, cx: LX, cy: ync, nodeType: yn.type });
+        prevYesBot = yy + yd.h; prevYesId = yn.id;
+        yy += yd.h + (GAP * 0.6);
+      }
+      yesBot = yy;
+
+      // No branch (right)
+      let ny = branchTopY;
+      let prevNoBot = null, prevNoId = null;
+      for (const nn of noBranch) {
+        if (prevNoBot !== null) arrowDown(RX, prevNoBot + 4, ny + 4, prevNoId, nn.id);
+        const nd = DIM[nn.type] || DIM.process;
+        const nnc = ny + nd.h / 2;
+        elems.push({ ...nd, ...nn, cx: RX, cy: nnc, nodeType: nn.type });
+        prevNoBot = ny + nd.h; prevNoId = nn.id;
+        ny += nd.h + (GAP * 0.6);
+      }
+      noBot = ny;
+
+      // Arrows from decision tips
+      // YES arrow: left diamond tip → left → down to yes branch
+      const firstYes = yesBranch[0];
+      if (yesBranch.length > 0) {
+        arrows.push({
+          d:`M${CX - d.hw},${decMidY} L${LX},${decMidY} L${LX},${branchTopY}`,
+          arrowEnd:true, label:'Ja', labelX:(CX-d.hw+LX)/2, labelY:decMidY-10, fromId:node.id, toId:firstYes?.id,
+        });
+      } else {
+        arrows.push({
+          d:`M${CX - d.hw},${decMidY} L${LX},${decMidY} L${LX},${branchTopY}`,
+          arrowEnd:false, label:'Ja', labelX:(CX-d.hw+LX)/2, labelY:decMidY-10,
+        });
+      }
+
+      // NO arrow: right diamond tip → right → down to no branch
+      const firstNo = noBranch[0];
+      if (noBranch.length > 0) {
+        arrows.push({
+          d:`M${CX + d.hw},${decMidY} L${RX},${decMidY} L${RX},${branchTopY}`,
+          arrowEnd:true, label:'Nee', labelX:(CX+d.hw+RX)/2, labelY:decMidY-10, fromId:node.id, toId:firstNo?.id,
+        });
+      } else {
+        // No branch is empty: draw loop-back arrow or just end
+        arrows.push({
+          d:`M${CX + d.hw},${decMidY} L${RX},${decMidY}`,
+          arrowEnd:false, label:'Nee', labelX:(CX+d.hw+RX)/2, labelY:decMidY-10,
+        });
+      }
+
+      // Merge paths back to center
+      const mergeY = Math.max(yesBot, noBot) + (GAP * 0.6);
+      if (yesBranch.length > 0) {
+        arrows.push({ d:`M${LX},${yesBot} L${LX},${mergeY} L${CX},${mergeY}`, arrowEnd:false, merge:true });
+      }
+      if (noBranch.length > 0) {
+        arrows.push({ d:`M${RX},${noBot} L${RX},${mergeY} L${CX},${mergeY}`, arrowEnd:false, merge:true });
+      }
+
+      // Next node will start from mergeY
+      y = mergeY + GAP * 0.5;
+      prevBot = mergeY; prevId = null;
+
+    } else {
+      if (prevBot !== null) arrowDown(CX, prevBot + 4, y + 4, prevId, node.id);
+      const pos = addNode(node, CX);
+      prevBot = pos.bot; prevId = node.id;
+      y += GAP;
+    }
+  }
+
+  const totalH = y + 20;
+  const isActive = id => id && activeIds.includes(id);
+  const isDone   = id => id && doneIds.includes(id);
+
+  function getNodeColor(id) {
+    if (isActive(id)) return color;
+    if (isDone(id))   return color + '55';
+    return '#1A2535';
+  }
+  function getStroke(id) {
+    if (isActive(id)) return color;
+    if (isDone(id))   return color + '88';
+    return '#2E3F52';
+  }
+  function getTextCol(id) {
+    if (isActive(id) || isDone(id)) return '#fff';
+    return '#8BA0B8';
+  }
+  function getArrowColor(fromId, toId) {
+    if ((isDone(fromId)||isActive(fromId)) && (isDone(toId)||isActive(toId)||!toId)) return color;
+    return '#2E3F52';
+  }
+
+  const markerId = `ah-${color.replace(/[^a-z0-9]/gi,'')}`;
+
+  return (
+    <svg width={SVG_W} height={totalH} viewBox={`0 0 ${SVG_W} ${totalH}`} style={{display:'block',maxWidth:'100%',margin:'0 auto'}}>
+      <defs>
+        <marker id={markerId} markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0, 9 3.5, 0 7" fill={color} />
+        </marker>
+        <marker id="ah-gray" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0, 9 3.5, 0 7" fill="#2E3F52" />
+        </marker>
+      </defs>
+
+      {/* Arrows (below nodes) */}
+      {arrows.map((a, i) => {
+        const ac = a.merge ? '#2E3F52' : getArrowColor(a.fromId, a.toId);
+        const isLit = ac === color;
+        return (
+          <g key={i}>
+            <path d={a.d} fill="none" stroke={ac} strokeWidth={isLit?2:1.5}
+              markerEnd={a.arrowEnd ? `url(#${isLit ? markerId : 'ah-gray'})` : undefined}
+              strokeLinejoin="round" />
+            {a.label && <text x={a.labelX} y={a.labelY} textAnchor="middle"
+              fill={ac} fontSize="12" fontFamily="DM Sans, sans-serif" fontWeight="600">{a.label}</text>}
+          </g>
+        );
+      })}
+
+      {/* Nodes */}
+      {elems.map((el) => {
+        const fill = getNodeColor(el.id);
+        const stroke = getStroke(el.id);
+        const textC = getTextCol(el.id);
+        const sw = isActive(el.id) ? 2.5 : 1.5;
+        const { cx, cy, w, h, nodeType, id, label } = el;
+        const hw = w/2, hh = h/2;
+        const lines = wrapLabel(label);
+        const lineH = 16;
+        const startY = cy - ((lines.length-1)*lineH)/2;
+
+        let shape;
+        if (nodeType === 'terminal') {
+          shape = <rect x={cx-hw} y={cy-hh} width={w} height={h} rx={hh} fill={fill} stroke={stroke} strokeWidth={sw}/>;
+        } else if (nodeType === 'process') {
+          shape = <rect x={cx-hw} y={cy-hh} width={w} height={h} rx={6} fill={fill} stroke={stroke} strokeWidth={sw}/>;
+        } else if (nodeType === 'io') {
+          const sk = 12;
+          const pts = `${cx-hw+sk},${cy-hh} ${cx+hw},${cy-hh} ${cx+hw-sk},${cy+hh} ${cx-hw},${cy+hh}`;
+          shape = <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={sw}/>;
+        } else if (nodeType === 'decision') {
+          const pts = `${cx},${cy-hh} ${cx+hw},${cy} ${cx},${cy+hh} ${cx-hw},${cy}`;
+          shape = <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={sw}/>;
+        }
+
+        return (
+          <g key={id || label}>
+            {shape}
+            {isActive(id) && <rect x={cx-hw-4} y={cy-hh-4} width={w+8} height={h+8}
+              rx={nodeType==='terminal'?hh+4:8} fill="none" stroke={color}
+              strokeWidth={1.5} opacity={0.35} strokeDasharray="4,2"/>}
+            {lines.map((ln, li) => (
+              <text key={li} x={cx} y={startY + li*lineH} textAnchor="middle" dominantBaseline="middle"
+                fill={textC} fontSize="12" fontFamily="Fira Code, monospace"
+                fontWeight={isActive(id)?'700':'500'}>{ln}</text>
+            ))}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  FLOWCHART BUILDER
+// ══════════════════════════════════════════════════════════════════════════════
+let _nextFCId = 100;
+function newId() { return ++_nextFCId; }
+
+function FlowchartBuilder({ problem, color }) {
+  const [nodes, setNodes] = useState([
+    { id: newId(), type:'terminal', label:'START' },
+    { id: newId(), type:'terminal', label:'STOP'  },
+  ]);
+  const [showSolution, setShowSolution] = useState(false);
+  const [dragIdx, setDragIdx]           = useState(null);
+  const [dropIdx, setDropIdx]           = useState(null);
+  const [showHelp, setShowHelp]         = useState(false);
+  const [helpType, setHelpType]         = useState(null);
+  // ── Uitvoer-state (trace op de door de student gebouwde flowchart) ──────────
+  const [runInput, setRunInput]         = useState('');
+  const [runStep, setRunStep]           = useState(-1);
+  const [runPath, setRunPath]           = useState([]);
+  const [runLog, setRunLog]             = useState([]);
+  const [runTracing, setRunTracing]     = useState(false);
+  const [runError, setRunError]         = useState('');
+
+  const isProtected = (node) =>
+    node.type === 'terminal' && (node.label === 'START' || node.label === 'STOP');
+
+  const addNode = (type) => {
+    const labels = {terminal:'Label', process:'Actie', io:'Invoer/Uitvoer', decision:'Conditie?'};
+    const node = { id: newId(), type, label: labels[type] || 'Blok' };
+    setNodes(ns => {
+      const arr = [...ns];
+      arr.splice(arr.length - 1, 0, node); // vóór STOP invoegen
+      return arr;
+    });
+    setChecked(null);
+  };
+
+  const update   = (id, val) => setNodes(ns => ns.map(n => n.id===id ? {...n, label:val} : n));
+  const del      = (id)      => { setNodes(ns => ns.filter(n => n.id !== id)); setChecked(null); };
+
+  const addBranchNode    = (decId, branch, type='process') => {
+    const defaultLabels = {process:'Actie', io:'Invoer/Uitvoer', decision:'Conditie?'};
+    const bn = { id: newId(), type, label: defaultLabels[type] || 'Stap' };
+    setNodes(ns => ns.map(n => n.id===decId ? {...n, [branch]:[...(n[branch]||[]), bn]} : n));
+  };
+  const removeBranchNode = (decId, branch, bnId) =>
+    setNodes(ns => ns.map(n => n.id===decId
+      ? {...n, [branch]:(n[branch]||[]).filter(b => b.id !== bnId)} : n));
+  const updateBranchNode = (decId, branch, bnId, label) =>
+    setNodes(ns => ns.map(n => n.id===decId
+      ? {...n, [branch]:(n[branch]||[]).map(b => b.id===bnId ? {...b,label} : b)} : n));
+
+  // ── Drag-and-drop handlers ──────────────────────────────────────────────────
+  const onDragStart = (e, idx) => {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const onDragOver  = (e, idx) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropIdx(idx);
+  };
+  const onDrop      = (e, targetIdx) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === targetIdx) { setDragIdx(null); setDropIdx(null); return; }
+    setNodes(ns => {
+      const arr = [...ns];
+      const [moved] = arr.splice(dragIdx, 1);
+      const insertAt = targetIdx > dragIdx ? targetIdx - 1 : targetIdx;
+      arr.splice(insertAt, 0, moved);
+      // START altijd eerst, STOP altijd als laatste
+      const start  = arr.find(n => isProtected(n) && n.label==='START');
+      const stop   = arr.find(n => isProtected(n) && n.label==='STOP');
+      const middle = arr.filter(n => n !== start && n !== stop);
+      return [start, ...middle, stop].filter(Boolean);
+    });
+    setDragIdx(null); setDropIdx(null); setChecked(null);
+  };
+  const onDragEnd   = () => { setDragIdx(null); setDropIdx(null); };
+
+  const reset = () => {
+    setNodes([
+      { id: newId(), type:'terminal', label:'START' },
+      { id: newId(), type:'terminal', label:'STOP'  },
+    ]);
+    setRunStep(-1); setRunTracing(false); setRunPath([]); setRunLog([]); setRunError('');
+  };
+
+  // ── Animatie-timer voor de uitvoer in de builder ────────────────────────────
+  useEffect(() => {
+    if (!runTracing || runStep < 0) return;
+    if (runStep >= runPath.length - 1) { setRunTracing(false); return; }
+    const t = setTimeout(() => setRunStep(s => s + 1), 700);
+    return () => clearTimeout(t);
+  }, [runTracing, runStep, runPath]);
+
+  // ── Valideer en voer de door de student gemaakte flowchart uit ──────────────
+  const validateAndRun = () => {
+    const hasStart = nodes.some(n => n.label === 'START' && n.type === 'terminal');
+    const hasStop  = nodes.some(n => n.label === 'STOP'  && n.type === 'terminal');
+    if (!hasStart) {
+      setRunError('❗ Je flowchart mist een START-blok. Voeg een blok van het type Start/Stop toe met label "START".');
+      return;
+    }
+    if (!hasStop) {
+      setRunError('❗ Je flowchart mist een STOP-blok. Voeg een blok van het type Start/Stop toe met label "STOP".');
+      return;
+    }
+    if (nodes.length < 3) {
+      setRunError('❗ Je flowchart is te leeg. Voeg minstens één stap toe tussen START en STOP.');
+      return;
+    }
+    setRunError('');
+
+    // Verzamel variabelen: lees de naam van Invoer-nodes en ken de invoerwaarde toe
+    const vars = {};
+    const inputNum = parseFloat(runInput);
+    nodes.forEach(node => {
+      if (node.type === 'io') {
+        const lbl = (node.label || '').trim();
+        if (/invoer/i.test(lbl)) {
+          const varName = lbl.replace(/invoer:?\s*/i, '').trim();
+          if (varName) vars[varName] = isNaN(inputNum) ? runInput : inputNum;
+        }
+      }
+      // Voer process-nodes uit als JS om afgeleide variabelen te berekenen (bv. btw = netto * 0.21)
+      if (node.type === 'process') {
+        const expr = (node.label || '').replace(/\s*#.*$/, '').trim(); // strip comments
+        if (/^\w+\s*=\s*/.test(expr)) {
+          try {
+            // Vervang variabelenamen door hun waarden en voer de toewijzing uit
+            let jsExpr = expr;
+            Object.entries(vars).forEach(([k, v]) => {
+              jsExpr = jsExpr.replace(new RegExp(`\\b${k}\\b`, 'g'), String(v));
+            });
+            const varName = expr.split('=')[0].trim();
+            // eslint-disable-next-line no-new-func
+            vars[varName] = new Function(`return (${jsExpr.split('=').slice(1).join('=').trim()})`)();
+          } catch (_) {}
+        }
+      }
+    });
+
+    // Evalueer de beslissingsconditie van de student echt, zodat de juiste tak gekozen wordt
+    const evalCond = (label) => {
+      let expr = (label || '').replace(/\s*\?+\s*$/, '').trim(); // verwijder trailing ?
+      // Vervang variabelenamen door hun actuele waarden
+      Object.entries(vars).forEach(([k, v]) => {
+        expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), String(v));
+      });
+      try {
+        // eslint-disable-next-line no-new-func
+        return Boolean(new Function(`return (${expr})`)());
+      } catch (_) {
+        return true; // bij fout: neem Ja-tak als fallback
+      }
+    };
+
+    // Bouw het pad door de nodes van de student op basis van echte conditie-evaluatie
+    const userPath = [];
+    nodes.forEach(node => {
+      userPath.push(node.id);
+      if (node.type === 'decision') {
+        const condTrue = evalCond(node.label);
+        const branch = condTrue ? 'yesBranch' : 'noBranch';
+        (node[branch] || []).forEach(bn => userPath.push(bn.id));
+      }
+    });
+
+    setRunPath(userPath);
+    setRunLog(buildTraceLog(userPath, nodes, runInput));
+    setRunStep(0);
+    setRunTracing(true);
+  };
+
+  const runDone = runStep >= runPath.length - 1 && !runTracing && runStep >= 0;
+  const runActiveIds = runStep >= 0 ? [runPath[runStep]] : [];
+  const runDoneIds   = runStep > 0  ? runPath.slice(0, runStep) : [];
+
+  return (
+    <div style={{display:'flex',gap:20,flexWrap:'wrap',alignItems:'flex-start'}}>
+      {/* ── Left: Editor ── */}
+      <div style={{flex:'1 1 260px',minWidth:240}}>
+        <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,color:'var(--text2)',marginBottom:10}}>
+          📐 Bouw je flowchart
+        </div>
+
+        {/* Palette – 2×2 raster */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
+          {NODE_TYPE_DEFS.map(def => (
+            <div key={def.type} style={{display:'flex',gap:2}}>
+              <button onClick={() => addNode(def.type)}
+                title={`Voeg ${def.label} toe`}
+                style={{flex:1,padding:'8px 10px',borderRadius:'8px 0 0 8px',border:`1.5px solid ${def.color}55`,
+                  borderRight:'none',background:`${def.color}12`,color:def.color,fontSize:12,
+                  fontFamily:'Fira Code,monospace',cursor:'pointer',textAlign:'left',
+                  display:'flex',alignItems:'center',gap:7}}>
+                <span style={{fontSize:16}}>{def.symbol}</span>
+                <span>{def.label}</span>
+              </button>
+              <button onClick={() => { setHelpType(def.type); setShowHelp(true); }}
+                title={`Uitleg ${def.label}`}
+                style={{padding:'0 7px',borderRadius:'0 8px 8px 0',border:`1.5px solid ${def.color}55`,
+                  background:`${def.color}18`,color:def.color,fontSize:13,cursor:'pointer',
+                  fontFamily:'sans-serif',lineHeight:1}}>?</button>
+            </div>
+          ))}
+        </div>
+        <div style={{fontSize:11,color:'var(--text3)',fontFamily:'Sora,sans-serif',marginBottom:12}}>
+          Klik <strong style={{color:'var(--text2)'}}>?</strong> naast een bloktype voor uitleg en voorbeelden
+        </div>
+
+        {/* Help-modal */}
+        {showHelp && helpType && (() => {
+          const h = NODE_HELP[helpType];
+          const def = NODE_TYPE_DEFS.find(d => d.type===helpType);
+          return (
+            <div className="fade-in" style={{marginBottom:14,background:'var(--bg)',borderRadius:10,
+              border:`1.5px solid ${def.color}66`,padding:'12px 14px',position:'relative'}}>
+              <button onClick={() => setShowHelp(false)}
+                style={{position:'absolute',top:6,right:8,background:'none',border:'none',
+                  color:'var(--text3)',cursor:'pointer',fontSize:16,lineHeight:1}}>×</button>
+              <div style={{color:def.color,fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,marginBottom:6}}>
+                {def.symbol} {h.title}
+              </div>
+              <div style={{color:'var(--text2)',fontSize:12,fontFamily:'DM Sans,sans-serif',lineHeight:1.5,marginBottom:8}}>
+                {h.tip}
+              </div>
+              <div style={{fontSize:11,color:'var(--text3)',fontFamily:'Sora,sans-serif',marginBottom:4,fontWeight:600}}>Voorbeeldlabels:</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                {h.examples.map((ex,i) => (
+                  <span key={i} style={{background:`${def.color}18`,color:def.color,borderRadius:5,
+                    padding:'3px 8px',fontSize:11,fontFamily:'Fira Code,monospace',cursor:'pointer'}}
+                    title="Klik om te kopiëren"
+                    onClick={() => navigator.clipboard?.writeText(ex)}>
+                    {ex}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Node list met drag-and-drop */}
+        <div style={{display:'flex',flexDirection:'column',gap:2}}>
+          {nodes.map((node, i) => {
+            const def        = NODE_TYPE_DEFS.find(d => d.type===node.type) || NODE_TYPE_DEFS[1];
+            const prot       = isProtected(node);
+            const isDragging = dragIdx === i;
+            const isTarget   = dropIdx === i && dragIdx !== null && dragIdx !== i;
+            return (
+              <div key={node.id}>
+                {/* Drop-indicator */}
+                {isTarget && (
+                  <div style={{height:3,borderRadius:2,background:color,margin:'2px 0',
+                    boxShadow:`0 0 8px ${color}88`}}/>
+                )}
+
+                <div
+                  draggable={!prot}
+                  onDragStart={e => !prot && onDragStart(e, i)}
+                  onDragOver={e  => onDragOver(e, i)}
+                  onDrop={e      => onDrop(e, i)}
+                  onDragEnd={onDragEnd}
+                  style={{
+                    background: isDragging ? `${def.color}20` : 'var(--bg3)',
+                    border: `1.5px solid ${isTarget ? color : def.color+'33'}`,
+                    borderRadius:8, padding:'8px 10px',
+                    display:'flex', alignItems:'center', gap:8,
+                    opacity: isDragging ? 0.45 : 1,
+                    cursor: prot ? 'default' : 'grab',
+                    transition:'opacity .15s,border-color .15s',
+                    userSelect:'none',
+                  }}>
+                  {/* Sleepgreep */}
+                  <span style={{color:'var(--text3)',fontSize:15,lineHeight:1,
+                    visibility: prot ? 'hidden' : 'visible', cursor:'grab', flexShrink:0}}>⠿</span>
+                  <span style={{color:def.color,fontSize:14,minWidth:18,flexShrink:0}}>{def.symbol}</span>
+                  <input
+                    value={node.label}
+                    onChange={e => update(node.id, e.target.value)}
+                    disabled={prot}
+                    style={{flex:1,background:'transparent',border:'none',
+                      color: prot ? 'var(--text3)' : 'var(--text)',
+                      fontFamily:'Fira Code,monospace',fontSize:13,outline:'none',
+                      cursor: prot ? 'default' : 'text'}}/>
+                  {!prot && (
+                    <button onClick={() => del(node.id)}
+                      style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',
+                        fontSize:16,lineHeight:1,padding:'0 2px',opacity:.7,flexShrink:0}}>×</button>
+                  )}
+                </div>
+
+                {/* Beslissing-branches */}
+                {node.type === 'decision' && (
+                  <div style={{marginLeft:16,marginTop:4,marginBottom:2,display:'flex',gap:8}}>
+                    {[['yesBranch','✓ Ja-tak','#34D399'],['noBranch','✗ Nee-tak','#F87171']].map(([branch, bLabel, bc]) => (
+                      <div key={branch} style={{flex:1,background:`${bc}08`,borderRadius:6,
+                        padding:'6px 8px',border:`1px dashed ${bc}33`}}>
+                        <div style={{color:bc,fontSize:11,fontWeight:700,marginBottom:4}}>{bLabel}</div>
+
+                        {/* Branch nodes met type-symbool */}
+                        {(node[branch]||[]).map(bn => {
+                          const bnDef = NODE_TYPE_DEFS.find(d => d.type===bn.type) || NODE_TYPE_DEFS[1];
+                          return (
+                            <div key={bn.id} style={{display:'flex',gap:4,marginBottom:4,alignItems:'center'}}>
+                              <span title={bnDef.label} style={{color:bnDef.color,fontSize:13,minWidth:14,textAlign:'center',cursor:'default'}}>{bnDef.symbol}</span>
+                              <input value={bn.label}
+                                onChange={e => updateBranchNode(node.id, branch, bn.id, e.target.value)}
+                                style={{flex:1,background:'var(--bg)',border:`1px solid ${bc}33`,borderRadius:4,
+                                  padding:'3px 8px',color:'var(--text)',fontFamily:'Fira Code,monospace',
+                                  fontSize:12,outline:'none'}}/>
+                              <button onClick={() => removeBranchNode(node.id, branch, bn.id)}
+                                style={{background:'none',border:'none',color:'var(--red)',
+                                  cursor:'pointer',fontSize:14,padding:0}}>×</button>
+                            </div>
+                          );
+                        })}
+
+                        {/* Type-picker: 3 mini-knoppen (geen terminal in branch) */}
+                        <div style={{display:'flex',gap:3,marginTop:4}}>
+                          {NODE_TYPE_DEFS.filter(d => d.type !== 'terminal').map(td => (
+                            <button key={td.type}
+                              onClick={() => addBranchNode(node.id, branch, td.type)}
+                              title={`Voeg ${td.label} toe`}
+                              style={{flex:1,padding:'3px 4px',borderRadius:5,
+                                border:`1px dashed ${bc}55`,background:`${td.color}10`,
+                                color:td.color,fontSize:12,cursor:'pointer',lineHeight:1,
+                                fontFamily:'Fira Code,monospace', display:'flex',
+                                alignItems:'center',justifyContent:'center',gap:3}}>
+                              {td.symbol}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Uitvoeren + hulpknoppen ── */}
+        <div style={{marginTop:14}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:6}}>
+            <input
+              type="number"
+              placeholder="Testwaarde (getal)..."
+              value={runInput}
+              onChange={e => { setRunInput(e.target.value); setRunStep(-1); setRunTracing(false); setRunError(''); }}
+              style={{flex:1,minWidth:130,background:'var(--card)',border:'1px solid var(--border)',
+                borderRadius:8,padding:'8px 12px',color:'var(--text)',
+                fontFamily:'Fira Code,monospace',fontSize:13,outline:'none'}}/>
+            <button onClick={validateAndRun} disabled={runTracing}
+              style={{padding:'8px 16px',borderRadius:8,border:'none',
+                cursor:runTracing?'default':'pointer',
+                background:runTracing?'var(--bg3)':color,
+                color:runTracing?'var(--text3)':'#fff',
+                fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,transition:'all .2s',
+                whiteSpace:'nowrap'}}>
+              {runTracing ? '⟳ Bezig...' : '▶ Uitvoeren'}
+            </button>
+            <button onClick={() => setShowSolution(s => !s)}
+              style={{padding:'8px 12px',borderRadius:8,border:`1px solid var(--border)`,cursor:'pointer',
+                background:'var(--bg3)',color:'var(--text2)',fontFamily:'Sora,sans-serif',fontSize:13}}>
+              {showSolution ? '🙈 Verberg' : '💡 Oplossing'}
+            </button>
+            <button onClick={reset}
+              style={{padding:'8px 10px',borderRadius:8,border:`1px solid var(--border)`,cursor:'pointer',
+                background:'var(--bg3)',color:'var(--text3)',fontFamily:'Sora,sans-serif',fontSize:13}}>
+              🗑️
+            </button>
+          </div>
+
+          {/* Validatiefout met gerichte tip */}
+          {runError && (
+            <div className="fade-in" style={{padding:'10px 14px',borderRadius:8,marginTop:6,
+              background:'#e73f1610',border:'1px solid #e73f1640',
+              color:'#c0320f',fontFamily:'Sora,sans-serif',fontSize:13,lineHeight:1.5}}>
+              {runError}
+            </div>
+          )}
+
+          {/* Uitvoerlog — progressief zichtbaar tijdens animatie */}
+          {runStep >= 0 && (
+            <div className="fade-in" style={{marginTop:8,padding:'12px 14px',borderRadius:8,
+              background:'var(--code-bg2)',border:'1px solid var(--border)'}}>
+              <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:11,
+                color:'var(--text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:.8}}>
+                🖥️ Uitvoer
+              </div>
+              {runLog.map((entry, i) => (
+                <div key={i} style={{
+                  fontFamily:'Fira Code,monospace',fontSize:12,lineHeight:1.8,
+                  color: i <= runStep ? (LOG_COLORS[entry.kind] || '#aab') : '#555',
+                  opacity: i <= runStep ? 1 : 0.2,
+                  transition:'opacity .3s,color .3s',
+                  fontWeight: entry.kind === 'output' ? 700 : 400,
+                }}>{entry.text}</div>
+              ))}
+              {runDone && (
+                <div style={{marginTop:8,color:'var(--mint)',fontFamily:'Sora,sans-serif',
+                  fontWeight:700,fontSize:12}}>✓ Klaar!</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Right: Preview ── */}
+      <div style={{flex:'1 1 300px',minWidth:300}}>
+        <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,color:'var(--text2)',marginBottom:10}}>
+          👁️ {showSolution ? 'Oplossing' : 'Jouw flowchart'}
+        </div>
+        <div style={{background:'#080C14',borderRadius:12,padding:16,overflowX:'auto'}}>
+          <FlowchartSVG
+            flowNodes={showSolution ? problem.nodes : nodes}
+            activeIds={!showSolution && runStep >= 0 ? runActiveIds : []}
+            doneIds={!showSolution && runStep > 0 ? runDoneIds : []}
+            color={color} width={580}/>
+        </div>
+        <div style={{marginTop:8,fontSize:11,color:'var(--text3)',fontFamily:'Sora,sans-serif',textAlign:'center'}}>
+          Sleep blokken in de lijst om ze te herordenen · Voer in om te testen
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  FLOWCHART TRACE SECTION
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Zoek een node op basis van id, ook diep in branches ──────────────────────
+function findNodeById(nodes, id) {
+  for (const n of (nodes || [])) {
+    if (n.id === id) return n;
+    const inYes = findNodeById(n.yesBranch, id);
+    if (inYes) return inYes;
+    const inNo  = findNodeById(n.noBranch, id);
+    if (inNo)  return inNo;
+  }
+  return null;
+}
+
+// ── Bouw een uitvoerlog op basis van het trace-pad ────────────────────────────
+function buildTraceLog(path, allNodes, inputVal, computedOutputs = []) {
+  const log = [];
+  let outIdx = 0;
+  path.forEach((id, idx) => {
+    const node = findNodeById(allNodes, id);
+    if (!node) return;
+    switch (node.type) {
+      case 'terminal':
+        log.push({ kind:'terminal', text: node.label === 'START' ? '▶ Programma start' : '■ Programma klaar' });
+        break;
+      case 'io': {
+        const lbl = (node.label || '').trim();
+        if (/invoer/i.test(lbl)) {
+          // Invoer-node: toon de ingetypte waarde
+          const varName = lbl.replace(/invoer:?\s*/i,'').trim() || 'waarde';
+          log.push({ kind:'input', text:`📥 Invoer:  ${varName} = ${inputVal}` });
+        } else {
+          // Uitvoer-node: toon werkelijk berekende waarde indien beschikbaar
+          const computed = computedOutputs[outIdx++];
+          const fallback = lbl.replace(/uitvoer:?\s*/i,'').replace(/^["']|["']$/g,'').trim();
+          const display  = computed !== undefined ? computed : fallback;
+          log.push({ kind:'output', text:`📤 Uitvoer: ${display}` });
+        }
+        break;
+      }
+      case 'process':
+        log.push({ kind:'process', text:`⚙  Actie:   ${node.label}` });
+        break;
+      case 'decision': {
+        // Bepaal of de volgende stap in de Ja- of Nee-tak zit
+        const nextId = path[idx + 1];
+        const yesIds = (node.yesBranch || []).flatMap(b => [b.id, ...(b.yesBranch||[]).map(x=>x.id)]);
+        const noIds  = (node.noBranch  || []).flatMap(b => [b.id, ...(b.noBranch ||[]).map(x=>x.id)]);
+        // Bij while-lus is noBranch leeg; als nextId niet in yesBranch zit, is het de Nee-tak
+        const branch = yesIds.includes(nextId) ? '→ Ja'
+                     : noIds.includes(nextId)  ? '→ Nee'
+                     : nextId                  ? '→ Nee'   // lus-exit of impliciete nee-tak
+                     : '';
+        log.push({ kind:'decision', text:`◇  Vraag:   ${node.label}  ${branch}` });
+        break;
+      }
+    }
+  });
+  return log;
+}
+
+const LOG_COLORS = {
+  terminal: '#A78BFA',
+  input:    '#38BDF8',
+  output:   '#34D399',
+  process:  '#9B5CF6',
+  decision: '#FCD34D',
+};
+
+function FlowchartSection({ module }) {
+  const [inputVal, setInputVal] = useState('');
+  const [tracing, setTracing]   = useState(false);
+  const [step, setStep]         = useState(-1);
+  const [tracePath, setTracePath] = useState([]);
+  const [traceLog, setTraceLog]   = useState([]);
+  const [tab, setTab]           = useState('trace'); // 'trace' | 'build'
+  const problem = module.flowchartProblem;
+
+  const startTrace = async () => {
+    const n    = parseFloat(inputVal) || 0;
+    const path = problem.traceActive
+      ? problem.traceActive(n)
+      : problem.nodes.map(nd => nd.id).filter(Boolean);
+    setTracePath(path);
+
+    // Synthetiseer Python-code uit de flowchart-nodes zodat we echte waarden kunnen berekenen
+    const flowLines = [];
+    path.forEach(id => {
+      const node = findNodeById(problem.nodes, id);
+      if (!node) return;
+      if (node.type === 'io') {
+        const lbl = (node.label || '').trim();
+        if (/invoer/i.test(lbl)) {
+          const varName = lbl.replace(/invoer:?\s*/i, '').trim() || 'waarde';
+          // Probeer float; val terug op string als het niet werkt
+          flowLines.push(`try:\n  ${varName} = float(input())\nexcept:\n  ${varName} = input()`);
+        } else {
+          const varName = lbl.replace(/uitvoer:?\s*/i, '').replace(/^["']|["']$/g,'').trim();
+          flowLines.push(`print(${varName})`);
+        }
+      } else if (node.type === 'process') {
+        flowLines.push((node.label || '').trim());
+      } else if (node.type === 'decision') {
+        // Beslissings-conditie hoeft niet opnieuw geëvalueerd: pad is al bepaald via traceActive
+      }
+    });
+
+    // Voer de gesynthetiseerde code uit via Skulpt om echte uitvoerwaarden te krijgen
+    const computedOutputs = [];
+    try {
+      const flowCode = flowLines.join('\n');
+      const skOut = [];
+      Sk.configure({
+        output: txt => { skOut.push(txt); },
+        read: x => {
+          if (Sk.builtinFiles?.files?.[x]) return Sk.builtinFiles.files[x];
+          throw new Error(x + ': not found');
+        },
+        inputfun: () => Promise.resolve(String(inputVal)),
+        inputfunTakesPrompt: true,
+        __future__: Sk.python3,
+      });
+      await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody('<stdin>', false, flowCode, true));
+      // Splits gecombineerde output op newlines, verwijder lege regels
+      skOut.join('').split('\n').forEach(l => { if (l !== '') computedOutputs.push(l); });
+    } catch (_) { /* bij fout: toon fallback-labels */ }
+
+    setTraceLog(buildTraceLog(path, problem.nodes, inputVal, computedOutputs));
+    setStep(0);
+    setTracing(true);
+  };
+
+  const reset = () => { setStep(-1); setTracing(false); setTracePath([]); setTraceLog([]); };
+
+  useEffect(() => {
+    if (!tracing || step < 0) return;
+    if (step >= tracePath.length - 1) { setTracing(false); return; }
+    const t = setTimeout(() => setStep(s => s+1), 700);
+    return () => clearTimeout(t);
+  }, [tracing, step, tracePath]);
+
+  const activeIds = tracing || step >= 0 ? [tracePath[step]] : [];
+  const doneIds   = step > 0 ? tracePath.slice(0, step) : [];
+  const isDone    = step >= tracePath.length - 1 && !tracing && step >= 0;
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
+        <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,marginBottom:6,color:module.color}}>{problem.title}</h3>
+        <p style={{color:'var(--text2)',lineHeight:1.7,marginBottom:16,fontSize:14}}>{problem.description}</p>
+
+        {/* Tab switch */}
+        <div style={{display:'flex',gap:4,background:'var(--bg2)',borderRadius:8,padding:3,
+          border:'1px solid var(--border)',marginBottom:16,width:'fit-content'}}>
+          {[['trace','▶ Uitvoeren'],['build','🔨 Zelf bouwen']].map(([t,l]) => (
+            <button key={t} onClick={()=>setTab(t)}
+              style={{padding:'7px 16px',borderRadius:6,border:'none',cursor:'pointer',
+                background:tab===t?'var(--card)':'transparent',
+                color:tab===t?module.color:'var(--text3)',
+                fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:13,transition:'all .2s'}}>
+              {l}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'trace' && (
+          <div>
+            {/* Invoer + knoppen */}
+            <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+              <input type="number" placeholder="Geef een getal in..." value={inputVal}
+                onChange={e=>{ setInputVal(e.target.value); reset(); }}
+                style={{flex:1,minWidth:180,background:'var(--card)',border:'1px solid var(--border)',
+                  borderRadius:8,padding:'10px 14px',color:'var(--text)',
+                  fontFamily:'Fira Code,monospace',fontSize:14,outline:'none'}}/>
+              <button onClick={startTrace} disabled={tracing||!inputVal}
+                style={{padding:'10px 24px',borderRadius:8,border:'none',
+                  cursor:!inputVal||tracing?'default':'pointer',
+                  background:!inputVal||tracing?'var(--bg3)':module.color,
+                  color:!inputVal||tracing?'var(--text3)':'#000',
+                  fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14,transition:'all .2s'}}>
+                {tracing?'⟳ Bezig...':'▶ Uitvoeren'}
+              </button>
+              {step >= 0 && (
+                <button onClick={reset}
+                  style={{padding:'10px 16px',borderRadius:8,border:'1px solid var(--border)',
+                    background:'transparent',color:'var(--text3)',cursor:'pointer',fontSize:13}}>
+                  ↺ Reset
+                </button>
+              )}
+            </div>
+
+            {/* Flowchart SVG + uitvoerlog naast elkaar */}
+            <div style={{display:'flex',gap:16,flexWrap:'wrap',alignItems:'flex-start'}}>
+              {/* SVG */}
+              <div style={{flex:'1 1 300px',background:'#080C14',borderRadius:12,padding:12,overflowX:'auto'}}>
+                <FlowchartSVG flowNodes={problem.nodes} activeIds={activeIds} doneIds={doneIds}
+                  color={module.color} width={480}/>
+              </div>
+
+              {/* Uitvoer-console */}
+              {step >= 0 && (
+                <div className="fade-in" style={{flex:'0 0 220px',minWidth:200}}>
+                  <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+                    color:'var(--text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:.8}}>
+                    🖥️ Uitvoer
+                  </div>
+                  <div style={{background:'#080C14',borderRadius:10,padding:'12px 14px',
+                    border:'1px solid var(--border)',minHeight:120}}>
+                    {traceLog.map((entry, i) => (
+                      <div key={i} style={{
+                        fontFamily:'Fira Code,monospace',fontSize:12,lineHeight:1.8,
+                        color: i <= step ? (LOG_COLORS[entry.kind] || 'var(--text)') : 'var(--text3)',
+                        opacity: i <= step ? 1 : 0.2,
+                        transition:'opacity .3s, color .3s',
+                        fontWeight: entry.kind==='output' ? 700 : 400,
+                      }}>
+                        {entry.text}
+                      </div>
+                    ))}
+                  </div>
+                  {isDone && (
+                    <div className="fade-in" style={{marginTop:8,padding:'7px 12px',borderRadius:8,
+                      background:`${module.color}18`,border:`1px solid ${module.color}44`,
+                      color:module.color,fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+                      textAlign:'center'}}>
+                      ✓ Klaar!
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'build' && (
+          <FlowchartBuilder problem={problem} color={module.color}/>
+        )}
+      </div>
+
+      {/* Symbolen */}
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
+        <h4 style={{fontFamily:'Sora,sans-serif',fontWeight:700,marginBottom:12,fontSize:14}}>💡 Flowchart-symbolen</h4>
+        {[['⬭','Ovaal','Start / Stop','#00E5C3'],['□','Rechthoek','Actie of berekening','#9B5CF6'],
+          ['◇','Ruit','Beslissing (Ja/Nee)','#FF6D35'],['▱','Parallellogram','Invoer of Uitvoer','#FCD34D']].map(([s,n,d,c])=>(
+          <div key={s} style={{display:'flex',gap:12,alignItems:'center',padding:'7px 0',borderBottom:'1px solid var(--border)'}}>
+            <span style={{fontFamily:'Fira Code,monospace',fontSize:18,color:c,minWidth:28}}>{s}</span>
+            <span style={{fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:13,color:c,minWidth:100}}>{n}</span>
+            <span style={{color:'var(--text2)',fontSize:13}}>{d}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CODE SECTION — Skulpt (echte Python)
+// ══════════════════════════════════════════════════════════════════════════════
+function CodeSection({ module, onRun }) {
+  const [code, setCode] = useState(module.codeTemplate);
+  const [output, setOutput] = useState('');
+  const [running, setRunning] = useState(false);
+  const [inputPrompts, setInputPrompts] = useState([]);
+  const [inputVals, setInputVals] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const inputQueueRef = useRef([]);
+  const canvasRef = useRef(null);
+
+  const hasTurtle = code.includes('import turtle') || code.includes('from turtle');
+
+  const handleRun = () => {
+    const prompts = extractInputCalls(code);
+    if (prompts.length > 0) {
+      setInputPrompts(prompts);
+      setInputVals(new Array(prompts.length).fill(''));
+      setShowModal(true);
+    } else {
+      executeCode([]);
+    }
+  };
+
+  const executeCode = (vals) => {
+    setShowModal(false);
+    setRunning(true);
+    setOutput('');
+    inputQueueRef.current = [...vals];
+    let outputText = '';
+
+    if (hasTurtle && canvasRef.current) {
+      // Skulpt maakt zelf een <canvas> aan BINNEN het target-element.
+      // Verwijder vorige tekening voor een nieuwe run.
+      canvasRef.current.innerHTML = '';
+      const cw = canvasRef.current.offsetWidth || 640;
+      const ch = Math.max(cw, 480);   // minimaal 480px hoog, groeit mee met breedte
+      Sk.TurtleGraphics = { target: canvasRef.current, width: cw, height: ch };
+    }
+
+    Sk.configure({
+      output: (text) => { outputText += text; setOutput(outputText); },
+      read: (x) => {
+        if (!Sk.builtinFiles || !Sk.builtinFiles['files'][x])
+          throw 'File not found: "' + x + '"';
+        return Sk.builtinFiles['files'][x];
+      },
+      inputfun: (_prompt) => new Promise(resolve => {
+        resolve(String(inputQueueRef.current.shift() ?? ''));
+      }),
+      inputfunTakesPrompt: true,
+      __future__: Sk.python3,
+    });
+
+    Sk.misceval.asyncToPromise(
+      () => Sk.importMainWithBody('<stdin>', false, code, true)
+    ).then(() => {
+      if (!outputText.trim() && !hasTurtle) setOutput('(geen uitvoer)');
+      setRunning(false);
+      onRun();
+    }).catch(e => {
+      const msg = e.tp$str ? e.tp$str().v : (e.toString ? e.toString() : 'Onbekende fout');
+      setOutput((outputText || '') + '\n\n⚠️ Python-fout:\n' + msg);
+      setRunning(false);
+    });
+  };
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      {/* Input modal */}
+      {showModal && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1000,
+          display:'flex',alignItems:'center',justifyContent:'center'}} onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
+          <div className="fade-in" style={{background:'var(--bg2)',border:'1px solid var(--border)',
+            borderRadius:16,padding:32,width:420,maxWidth:'90vw'}}>
+            <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,marginBottom:6}}>⌨️ Programma-invoer</h3>
+            <p style={{color:'var(--text2)',fontSize:14,marginBottom:20,lineHeight:1.6}}>
+              Dit programma vraagt invoer. Geef de waarden in die de gebruiker zou typen:
+            </p>
+            {inputPrompts.map((prompt, i) => (
+              <div key={i} style={{marginBottom:14}}>
+                <label style={{display:'block',color:module.color,fontSize:13,fontFamily:'Fira Code,monospace',marginBottom:6}}>
+                  {prompt}
+                </label>
+                <input value={inputVals[i]} onChange={e=>{ const nv=[...inputVals]; nv[i]=e.target.value; setInputVals(nv); }}
+                  onKeyDown={e=>e.key==='Enter' && i===inputPrompts.length-1 && executeCode(inputVals)}
+                  placeholder={`Invoer voor: ${prompt}`} autoFocus={i===0}
+                  style={{width:'100%',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,
+                    padding:'10px 14px',color:'var(--text)',fontFamily:'Fira Code,monospace',
+                    fontSize:14,outline:'none',transition:'border .2s'}}/>
+              </div>
+            ))}
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button onClick={()=>setShowModal(false)} style={{padding:'9px 18px',borderRadius:8,
+                border:'1px solid var(--border)',background:'transparent',color:'var(--text2)',cursor:'pointer'}}>
+                Annuleer
+              </button>
+              <button onClick={()=>executeCode(inputVals)}
+                style={{padding:'9px 20px',borderRadius:8,border:'none',cursor:'pointer',
+                  background:module.color,color:'#000',fontFamily:'Sora,sans-serif',fontWeight:700}}>
+                ▶ Uitvoeren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editor */}
+      <div style={{background:'#080C14',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+          padding:'10px 16px',borderBottom:'1px solid var(--border)',background:'#0D1117'}}>
+          <div style={{display:'flex',gap:6}}>
+            <div style={{width:12,height:12,borderRadius:999,background:'#F87171'}}/>
+            <div style={{width:12,height:12,borderRadius:999,background:'#FCD34D'}}/>
+            <div style={{width:12,height:12,borderRadius:999,background:'#34D399'}}/>
+          </div>
+          <span style={{fontFamily:'Fira Code,monospace',fontSize:12,color:'var(--text3)'}}>module{module.id}.py</span>
+          <button onClick={handleRun} disabled={running}
+            style={{padding:'6px 16px',borderRadius:6,border:'none',
+              cursor:running?'default':'pointer',
+              background:running?'var(--bg3)':'var(--mint)',
+              color:running?'var(--text3)':'#fff',
+              fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+              display:'flex',alignItems:'center',gap:6}}>
+            {running
+              ? <span style={{display:'inline-block',animation:'spin 1s linear infinite'}}>⟳</span>
+              : '▶'}
+            {running ? 'Uitvoeren...' : 'Uitvoeren'}
+          </button>
+        </div>
+        <textarea value={code} onChange={e=>setCode(e.target.value)} spellCheck={false}
+          style={{width:'100%',minHeight:280,background:'transparent',border:'none',outline:'none',
+            padding:'18px 20px',fontFamily:'Fira Code,monospace',fontSize:13.5,
+            color:'#A8D8A8',lineHeight:1.7,resize:'vertical',tabSize:4}}/>
+      </div>
+
+      {output && (
+        <div className="fade-in" style={{background:'#080C14',border:`1px solid ${output.includes('⚠️')?'#3A1E1E':'#1E3A2A'}`,borderRadius:12,overflow:'hidden'}}>
+          <div style={{padding:'9px 16px',background:'#0D1117',borderBottom:`1px solid ${output.includes('⚠️')?'#3A1E1E':'#1E3A2A'}`,
+            fontFamily:'Sora,sans-serif',fontSize:12,color:output.includes('⚠️')?'#F87171':'#34D399',fontWeight:700}}>
+            {output.includes('⚠️') ? '⚠️ Python-fout' : '● Output'}
+          </div>
+          <pre style={{padding:'16px 20px',fontFamily:'Fira Code,monospace',fontSize:13.5,
+            color:output.includes('⚠️')?'#F87171':'#E2EBF5',lineHeight:1.7,overflow:'auto',whiteSpace:'pre-wrap'}}>{output}</pre>
+        </div>
+      )}
+
+      {hasTurtle && (
+        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,padding:14}}>
+          <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,color:'#34D399',marginBottom:10}}>🐢 Turtle-canvas</div>
+          <div ref={canvasRef}
+            style={{background:'#fff',borderRadius:8,width:'100%',minHeight:200,
+              overflow:'auto'}}/>
+        </div>
+      )}
+
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:10,padding:14}}>
+        <p style={{color:'var(--text2)',fontSize:13,lineHeight:1.7}}>
+          💡 <strong style={{color:'var(--text)'}}>Tip:</strong> Pas de code aan en klik op <span style={{color:'#34D399',fontFamily:'Fira Code,monospace'}}>▶ Uitvoeren</span>.
+          De code draait als <strong style={{color:'var(--text)'}}>echte Python</strong> via Skulpt.
+          {hasTurtle && <span style={{color:'#FCD34D'}}> De turtle tekening verschijnt in de canvas hieronder. Gebruik <code>t.speed(10)</code> voor snelle animatie.</span>}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  QUIZ — gegenereerde vragen + shuffle + hints + retry
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Contextgevoelige tips — NOOIT het antwoord verklappen!
+function generateHint(q, _selectedIdx) {
+  if (q.type === 'trace') {
+    return '📝 Neem pen en papier. Schrijf elke variabele op en voer de code STAP VOOR STAP uit met de gegeven waarden. Welke regels worden uitgevoerd? Wat verandert er per stap?';
+  }
+  if (q.type === 'fill') {
+    const answers = Array.isArray(q.answer) ? q.answer : [q.answer];
+    const ans = answers[0];
+    return `🔡 Het antwoord heeft precies ${ans.length} tekens. Het begint met "${ans.slice(0, Math.min(5, ans.length))}...". Python is hoofdlettergevoelig: 'P' ≠ 'p'.`;
+  }
+  if (q.type === 'mc') {
+    const t = (q.q || '').toLowerCase();
+    if (t.includes('symbool') || t.includes('flowchart')) return '🔷 Denk aan de VORM: ⬭ ovaal = start/stop, □ rechthoek = actie, ◇ ruit = beslissing, ▱ parallellogram = in/uitvoer.';
+    if (t.includes('gehele deling') || t.includes('//') || t.includes('rest') || t.includes('modulo')) return '➗ / = echte deling (kan float geven), // = gehele deling (altijd int, geen rest), % = modulo (enkel de rest).';
+    if (t.includes('return')) return '📤 "return" stuurt een waarde TERUG naar de aanroeper. Zonder return geeft een functie automatisch None terug.';
+    if (t.includes('for') || t.includes('while') || t.includes('loop') || t.includes('lus') || t.includes('herhaal')) return '🔄 for-loop = voor een GEKEND aantal stappen. while-loop = zolang een CONDITIE True is (pas op: vergeet de update niet!).';
+    if (t.includes('index') || t.includes('lijst') || t.includes('element')) return '📋 Python-indices starten bij 0. Eerste = lijst[0], laatste = lijst[-1] of lijst[len(lijst)-1].';
+    if (t.includes('and') || t.includes('or') || t.includes('logisch')) return '🔗 "and" = beide condities moeten True zijn. "or" = minstens één True. "not" keert de waarde om.';
+    if (t.includes('type') || t.includes('int') || t.includes('float') || t.includes('str')) return '📦 4 basistypes: int (hele getallen), float (kommagetallen), str (tekst), bool (True/False). Gebruik type() om te controleren.';
+    if (t.includes('parameter') || t.includes('argument') || t.includes('functie') || t.includes('def')) return '🧩 Parameters staan tussen de haakjes van def. Ze zijn tijdelijke variabelen die hun waarde krijgen bij de aanroep.';
+    if (t.includes('gevaar') || t.includes('oneindig')) return '⚠️ Een while-loop moet ALTIJD een manier hebben om te stoppen: de conditie moet op een moment False worden. Wat zorgt voor die verandering?';
+    return '🔍 Lees de vraag opnieuw. Welk sleutelwoord geeft een hint? Raadpleeg indien nodig de theorie van dit module.';
+  }
+  return '💡 Bekijk de theorie-sectie van dit module nog eens voor dit onderwerp.';
+}
+
+// Shuffle + randomiseer elke ronde: volgorde vragen EN antwoordopties
+function generateQuestions(quiz) {
+  // Fisher-Yates shuffle
+  const pool = [...quiz];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.map(q => {
+    if (q.type === 'trace' && q.vals) {
+      const vals = q.vals();
+      const rawOpts = q.options(vals);
+      const ans = q.answer(vals);
+      // Shuffle trace-opties ook
+      const opts = [...rawOpts].sort(() => Math.random() - 0.5);
+      const ansIdx = opts.indexOf(ans);
+      return { ...q, _vals:vals, _q:q.q(vals), _opts:opts, _ansStr:ans, _ansIdx: ansIdx >= 0 ? ansIdx : 0 };
+    }
+    if (q.type === 'mc') {
+      // Shuffle MC-opties en update de antwoordindex
+      const correctAnswer = q.options[q.answer];
+      const shuffledOpts = [...q.options].sort(() => Math.random() - 0.5);
+      return { ...q, options: shuffledOpts, answer: shuffledOpts.indexOf(correctAnswer) };
+    }
+    return q;
+  });
+}
+
+function QuizSection({ module, onXP, onBadge, onComplete }) {
+  const [quizKey, setQuizKey] = useState(0);
+  const [questions, setQuestions] = useState(() => generateQuestions(module.quiz));
+  const restart = () => { setQuestions(generateQuestions(module.quiz)); setQuizKey(k => k+1); };
+  return <QuizInner key={quizKey} questions={questions}
+    module={module} onXP={onXP} onBadge={onBadge} onRestart={restart} onComplete={onComplete} />;
+}
+
+function QuizInner({ questions, module, onXP, onBadge, onRestart, onComplete }) {
+  const [cur, setCur] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [fillVal, setFillVal] = useState('');
+  const [answered, setAnswered] = useState(false);
+  const [correct, setCorrect] = useState(false);
+  const [score, setScore] = useState({c:0,t:0});
+  const [done, setDone] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [burst, setBurst] = useState(null);
+  const [showHint, setShowHint] = useState(false);
+  const [wasRetried, setWasRetried] = useState(false);
+  const btnRef = useRef(null);
+
+  const q = questions[cur];
+
+  const getAnswerIdx = () => {
+    if (q.type === 'mc')    return q.answer;
+    if (q.type === 'trace') return q._ansIdx;
+    return -1;
+  };
+
+  const checkAnswer = () => {
+    if (answered) return;
+    let isOk = false;
+    if (q.type === 'fill') {
+      const expected = Array.isArray(q.answer) ? q.answer : [q.answer];
+      isOk = expected.some(a => fillVal.trim() === a.trim());
+    } else {
+      isOk = selected === getAnswerIdx();
+    }
+    setCorrect(isOk);
+    setAnswered(true);
+    const newStreak = isOk ? streak + 1 : 0;
+    setStreak(newStreak);
+    if (isOk) {
+      setScore(s => ({c:s.c+1, t:s.t+1}));
+      if (!wasRetried) {
+        const rect = btnRef.current?.getBoundingClientRect();
+        if (rect) setBurst({x:rect.left+40, y:rect.top});
+        onXP(q.xp);
+        if (score.c === 0 && cur === 0) onBadge('quiz_first');
+        if (newStreak >= 3) onBadge('streak_3');
+      }
+    } else {
+      setScore(s => ({...s, t:s.t+1}));
+    }
+  };
+
+  const retry = () => {
+    setSelected(null); setFillVal(''); setAnswered(false);
+    setCorrect(false); setBurst(null); setShowHint(false);
+    setWasRetried(true);
+  };
+
+  const next = () => {
+    setSelected(null); setFillVal(''); setAnswered(false); setCorrect(false);
+    setBurst(null); setShowHint(false); setWasRetried(false);
+    if (cur < questions.length - 1) setCur(c => c+1);
+    else {
+      setDone(true);
+      if (score.c === questions.length) onBadge('quiz_perfect');
+      if (onComplete) onComplete();
+    }
+  };
+
+  if (done) {
+    const pct = Math.round((score.c / questions.length) * 100);
+    return (
+      <div className="fade-in" style={{textAlign:'center',padding:'40px 20px'}}>
+        <div style={{fontSize:56,marginBottom:12}}>{pct>=80?'🎉':pct>=60?'👍':'💪'}</div>
+        <div style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:36,marginBottom:8}}>{pct}%</div>
+        <div style={{color:'var(--text2)',marginBottom:28}}>{score.c} van {questions.length} correct</div>
+        <div style={{maxWidth:360,margin:'0 auto 32px',height:12,background:'var(--bg3)',borderRadius:999,overflow:'hidden'}}>
+          <div style={{height:'100%',width:`${pct}%`,background:pct>=80?'#34D399':pct>=60?'#FCD34D':'#F87171',transition:'width .8s'}}/>
+        </div>
+        <button onClick={onRestart} style={{padding:'13px 32px',borderRadius:10,border:'none',
+          background:module.color,color:'#000',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:16,cursor:'pointer'}}>
+          🔄 Nieuwe ronde
+        </button>
+      </div>
+    );
+  }
+
+  const opts = q.type === 'trace' ? q._opts : q.type === 'mc' ? q.options : null;
+  const qText = q.type === 'trace' ? q._q : q.q;
+  const ansIdx = getAnswerIdx();
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:18}}>
+      {burst && <div style={{position:'fixed',left:burst.x,top:burst.y,zIndex:9999,pointerEvents:'none',
+        animation:'xpGain .9s ease-out both',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:22,
+        color:'#FCD34D',textShadow:'0 0 12px #FCD34D'}}>+{q.xp} XP</div>}
+
+      {/* Progress dots */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{color:'var(--text3)',fontSize:13}}>Vraag {cur+1} / {questions.length}</span>
+        <div style={{display:'flex',gap:6}}>
+          {questions.map((_,i) => (
+            <div key={i} style={{width:10,height:10,borderRadius:999,transition:'background .3s',
+              background:i<cur?'#34D399':i===cur?module.color:'#1E2A3A'}}/>
+          ))}
+        </div>
+        <span style={{color:'#FCD34D',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13}}>
+          {wasRetried ? '(herpoging)' : `+${q.xp} XP`}
+        </span>
+      </div>
+
+      {/* Question card */}
+      <div style={{background:'var(--card)',
+        border:`1px solid ${answered?(correct?'#34D39944':'#F8717144'):'var(--border)'}`,
+        borderRadius:12,padding:24,transition:'border .3s'}}>
+        <pre style={{fontFamily:'DM Sans,sans-serif',fontSize:15,lineHeight:1.75,color:'var(--text)',
+          whiteSpace:'pre-wrap',marginBottom:20}}>{qText}</pre>
+
+        {q.type === 'fill' ? (
+          <input value={fillVal} onChange={e=>setFillVal(e.target.value)} disabled={answered}
+            placeholder="Typ je antwoord hier..."
+            onKeyDown={e=>e.key==='Enter'&&!answered&&checkAnswer()}
+            style={{width:'100%',background:'var(--card)',
+              border:`2px solid ${answered?(correct?'#34D399':'var(--red)'):'var(--border)'}`,
+              borderRadius:8,padding:'12px 16px',color:'var(--text)',
+              fontFamily:'Fira Code,monospace',fontSize:14,outline:'none'}}/>
+        ) : (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+            {opts && opts.map((opt, i) => {
+              const isRight = i === ansIdx;
+              let bg = 'var(--bg3)', bdr = '1px solid var(--border)';
+              if (!answered) {
+                if (selected === i) { bg = `${module.color}22`; bdr = `1px solid ${module.color}`; }
+              } else {
+                if (isRight)             { bg = '#34D39922'; bdr = '1px solid #34D399'; }
+                else if (selected === i) { bg = '#F8717122'; bdr = '1px solid #F87171'; }
+              }
+              return (
+                <div key={i} onClick={()=>!answered&&setSelected(i)}
+                  style={{padding:'12px 16px',borderRadius:8,border:bdr,background:bg,
+                    cursor:answered?'default':'pointer',transition:'all .2s',
+                    fontFamily:'Fira Code,monospace',fontSize:13,color:'var(--text)',
+                    display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{color:'var(--text3)',minWidth:22}}>{String.fromCharCode(65+i)}.</span>
+                  <span style={{flex:1}}>{opt}</span>
+                  {answered && isRight && <span style={{color:'#34D399'}}>✓</span>}
+                  {answered && selected===i && !isRight && <span style={{color:'#F87171'}}>✗</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {answered && (
+          <div className="fade-in" style={{marginTop:14,padding:'10px 14px',borderRadius:8,
+            background:correct?'#34D39915':'#F8717115',
+            border:`1px solid ${correct?'#34D39944':'#F8717144'}`}}>
+            <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,color:correct?'#34D399':'#F87171'}}>
+              {correct ? (wasRetried ? '✓ Correct! (na herpoging — geen XP)' : '✓ Correct!') : '✗ Niet correct.'}
+            </span>
+          </div>
+        )}
+
+        {/* Hint box — shown on demand, never reveals the answer */}
+        {showHint && (
+          <div className="fade-in" style={{marginTop:10,padding:'12px 16px',borderRadius:8,
+            background:'#FCD34D10',border:'1px solid #FCD34D33'}}>
+            <span style={{color:'#FCD34D',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13}}>💡 Tip &nbsp;</span>
+            <span style={{color:'var(--text2)',fontSize:13,lineHeight:1.6}}>{generateHint(q, selected)}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{display:'flex',justifyContent:'flex-end',gap:10,flexWrap:'wrap'}}>
+        {!answered ? (
+          <button ref={btnRef} onClick={checkAnswer}
+            disabled={q.type==='fill' ? !fillVal.trim() : selected===null}
+            style={{padding:'12px 28px',borderRadius:10,border:'none',
+              background:(q.type==='fill'?fillVal.trim():selected!==null)?module.color:'var(--bg3)',
+              color:(q.type==='fill'?fillVal.trim():selected!==null)?'#000':'var(--text3)',
+              fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14,
+              cursor:(q.type==='fill'?fillVal.trim():selected!==null)?'pointer':'default',transition:'all .2s'}}>
+            Controleer antwoord
+          </button>
+        ) : correct ? (
+          <button onClick={next}
+            style={{padding:'12px 28px',borderRadius:10,border:'none',
+              background:module.color,color:'#000',fontFamily:'Sora,sans-serif',
+              fontWeight:700,fontSize:14,cursor:'pointer'}}>
+            {cur < questions.length-1 ? 'Volgende vraag →' : 'Resultaten bekijken 🎉'}
+          </button>
+        ) : (
+          <>
+            {!showHint && (
+              <button onClick={()=>setShowHint(true)}
+                style={{padding:'10px 18px',borderRadius:10,border:'1px solid #FCD34D55',
+                  background:'#FCD34D12',color:'#FCD34D',fontFamily:'Sora,sans-serif',
+                  fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                💡 Tip
+              </button>
+            )}
+            <button onClick={retry}
+              style={{padding:'10px 18px',borderRadius:10,border:'1px solid var(--border)',
+                background:'var(--bg3)',color:'var(--text2)',fontFamily:'Sora,sans-serif',
+                fontWeight:600,fontSize:13,cursor:'pointer'}}>
+              🔄 Opnieuw proberen
+            </button>
+            <button onClick={next}
+              style={{padding:'10px 22px',borderRadius:10,border:'none',
+                background:module.color,color:'#000',fontFamily:'Sora,sans-serif',
+                fontWeight:700,fontSize:13,cursor:'pointer'}}>
+              {cur < questions.length-1 ? 'Overslaan →' : 'Resultaten bekijken 🎉'}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  THEORY SECTION
+// ══════════════════════════════════════════════════════════════════════════════
+function TheorySection({ module, onReadAll }) {
+  const [read, setRead] = useState(new Set());
+  const toggle = i => {
+    setRead(prev => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      if (next.size === module.theory.length) onReadAll();
+      return next;
+    });
+  };
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:12}}>
+      {module.theory.map((sec, i) => (
+        <div key={i} onClick={()=>toggle(i)}
+          style={{background:read.has(i)?`${module.color}08`:'var(--card)',
+            border:`1px solid ${read.has(i)?module.color+'33':'var(--border)'}`,
+            borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'all .2s'}}>
+          <div style={{padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:30,height:30,borderRadius:8,background:`${module.color}22`,
+                display:'flex',alignItems:'center',justifyContent:'center',
+                fontFamily:'Sora,sans-serif',fontWeight:700,color:module.color,fontSize:13}}>
+                {i+1}
+              </div>
+              <span style={{fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:15}}>{sec.title}</span>
+            </div>
+            <span style={{color:read.has(i)?module.color:'var(--text3)',fontSize:16,transition:'color .2s'}}>
+              {read.has(i)?'▾':'▸'}
+            </span>
+          </div>
+          {read.has(i) && (
+            <div className="fade-in" style={{padding:'0 18px 18px',borderTop:'1px solid var(--border)'}}>
+              <p style={{color:'var(--text2)',lineHeight:1.75,marginTop:14,marginBottom:14,
+                whiteSpace:'pre-line',fontSize:14}}>{sec.content}</p>
+              <pre style={{background:'#080C14',border:'1px solid var(--border)',borderRadius:8,
+                padding:'14px 16px',fontFamily:'Fira Code,monospace',fontSize:13,
+                color:'#A8D8A8',lineHeight:1.65,whiteSpace:'pre-wrap',overflowX:'auto'}}>
+                {sec.example}
+              </pre>
+            </div>
+          )}
+        </div>
+      ))}
+      <div style={{color:'var(--text3)',fontSize:13,textAlign:'center',paddingTop:4}}>
+        {read.size}/{module.theory.length} secties gelezen — klik om te openen/sluiten
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CONNECTION VIEW  –  flowchart ↔ code naast elkaar
+// ══════════════════════════════════════════════════════════════════════════════
+const FC_SYMBOLS = {terminal:'⬭',io:'▱',process:'▭',decision:'◇'};
+const FC_COLORS  = {terminal:'#A78BFA',io:'#38BDF8',process:'#34D399',decision:'#FCD34D'};
+
+function ConnectionView({ module }) {
+  const [hovered, setHovered] = useState(null);
+  const rawLines = (module.connectionCode || []).map((l, i) => ({ ...l, _idx: i }));
+  const hasLines = rawLines.length > 0;
+
+  // ── SVG layout constants ────────────────────────────────────────────────────
+  const SVG_W  = 268;
+  const MCX    = 134;          // main column center X
+  const MX     = 18;           // main column left X
+  const MW     = 232;          // main column width
+  const YES_CX = 58;           // yes-branch center X
+  const YES_X  = 8;            // yes-branch left X
+  const YES_W  = 100;          // yes-branch width
+  const NO_CX  = 210;          // no-branch center X
+  const NO_X   = 160;          // no-branch left X
+  const NO_W   = 100;          // no-branch width
+  const NH     = 32;           // regular node height
+  const DEC_H  = 46;           // decision diamond height
+  const GAP    = 16;
+  const JGAP   = 12;           // gap below diamond to junction
+
+  // ── Shared helpers ──────────────────────────────────────────────────────────
+  const trunc = (s, n = 19) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+  const nodePath = (type, x, y, w, h) => {
+    const cx = x + w / 2, cy = y + h / 2, r = h / 2;
+    if (type === 'terminal')
+      return `M${x+r},${y} H${x+w-r} A${r},${r} 0 0 1 ${x+w-r},${y+h} H${x+r} A${r},${r} 0 0 1 ${x+r},${y} Z`;
+    if (type === 'decision')
+      return `M${cx},${y} L${x+w},${cy} L${cx},${y+h} L${x},${cy} Z`;
+    if (type === 'io') { const sk = 8;
+      return `M${x+sk},${y} L${x+w},${y} L${x+w-sk},${y+h} L${x},${y+h} Z`; }
+    return `M${x+3},${y} H${x+w-3} Q${x+w},${y} ${x+w},${y+3} V${y+h-3} Q${x+w},${y+h} ${x+w-3},${y+h} H${x+3} Q${x},${y+h} ${x},${y+h-3} V${y+3} Q${x},${y} ${x+3},${y} Z`;
+  };
+
+  const arrowLine = (x1, y1, x2, y2, col, key) => (
+    <g key={key}>
+      <line x1={x1} y1={y1} x2={x2} y2={y2-6} stroke={col} strokeWidth={1.4}/>
+      <polygon points={`${x2-5},${y2-6} ${x2+5},${y2-6} ${x2},${y2}`} fill={col}/>
+    </g>
+  );
+
+  // ── Parse flat lines into branch-aware structure ────────────────────────────
+  const parsed = useMemo(() => {
+    const result = [];
+    let i = 0;
+    while (i < rawLines.length) {
+      const l = rawLines[i];
+      const code = l.code.trim();
+      const isDecStart = l.type === 'decision' &&
+        (code.startsWith('if ') || code.startsWith('while ') || code.startsWith('for '));
+      const isElse = l.type === 'decision' &&
+        (code.startsWith('else') || code.startsWith('elif'));
+
+      if (isDecStart) {
+        const item = { ...l, yesBranch: [], elseIdx: null, noBranch: [] };
+        i++;
+        while (i < rawLines.length && /^(\s{2,}|\t)/.test(rawLines[i].code)) {
+          item.yesBranch.push(rawLines[i++]);
+        }
+        if (i < rawLines.length && rawLines[i].type === 'decision' &&
+            (rawLines[i].code.trim().startsWith('else') || rawLines[i].code.trim().startsWith('elif'))) {
+          item.elseIdx = rawLines[i]._idx;
+          i++;
+          while (i < rawLines.length && /^(\s{2,}|\t)/.test(rawLines[i].code)) {
+            item.noBranch.push(rawLines[i++]);
+          }
+        }
+        result.push(item);
+      } else if (isElse) {
+        i++; // else/elif already consumed above
+      } else {
+        result.push({ ...l, yesBranch: [], elseIdx: null, noBranch: [] });
+        i++;
+      }
+    }
+    return result;
+  }, [rawLines]);
+
+  // ── Compute SVG layout with positioned nodes ────────────────────────────────
+  const layout = useMemo(() => {
+    const nodes = []; // flat list of { x, y, w, nh, col, _idx, type, note, code, branchMeta? }
+    let y = 10;
+
+    for (const item of parsed) {
+      const hasBranch = item.yesBranch.length > 0 || item.noBranch.length > 0;
+
+      if (hasBranch) {
+        // Main decision diamond
+        nodes.push({ ...item, x:MX, y, w:MW, nh:DEC_H, col:'main' });
+        const jY = y + DEC_H + JGAP;   // junction Y
+        const branchStartY = jY + GAP;
+
+        let yesEndY = branchStartY;
+        item.yesBranch.forEach(b => {
+          nodes.push({ ...b, x:YES_X, y:yesEndY, w:YES_W, nh:NH, col:'yes' });
+          yesEndY += NH + GAP;
+        });
+
+        let noEndY = branchStartY;
+        item.noBranch.forEach(b => {
+          nodes.push({ ...b, x:NO_X, y:noEndY, w:NO_W, nh:NH, col:'no' });
+          noEndY += NH + GAP;
+        });
+
+        const mergeY = Math.max(
+          item.yesBranch.length ? yesEndY : branchStartY,
+          item.noBranch.length ? noEndY  : branchStartY
+        ) + GAP;
+
+        // Store branch meta on the decision node (last added before yesBranch/noBranch)
+        const decNode = nodes[nodes.length - 1 - item.yesBranch.length - item.noBranch.length];
+        if (decNode) decNode.branchMeta = {
+          jY, branchStartY,
+          hasYes: item.yesBranch.length > 0,
+          hasNo:  item.noBranch.length > 0,
+          yesEndY: item.yesBranch.length ? yesEndY - GAP + NH : branchStartY,
+          noEndY:  item.noBranch.length  ? noEndY  - GAP + NH : branchStartY,
+          mergeY,
+        };
+
+        y = mergeY;
+      } else {
+        const nh = item.type === 'decision' ? DEC_H : NH;
+        nodes.push({ ...item, x:MX, y, w:MW, nh, col:'main' });
+        y += nh + GAP;
+      }
+    }
+
+    return { nodes, svgH: y + 8 };
+  }, [parsed]);
+
+  // ── Render helpers ──────────────────────────────────────────────────────────
+  const hovCol = (node) => FC_COLORS[node.type] || '#888';
+  const isH = (node) => hovered === node._idx;
+
+  const renderNode = (node, keyPfx) => {
+    const col = hovCol(node);
+    const h = isH(node);
+    const cx = node.x + node.w / 2;
+    const rawLbl = node.note || node.code.split('=')[0].trim().replace(/[():#]/g,'').trim() || node.code;
+    const lbl = trunc(rawLbl, node.col === 'main' ? 24 : 14);
+    const fontSize = node.col === 'main' ? 9 : 8;
+    return (
+      <g key={`${keyPfx}_${node._idx}`} style={{cursor:'default'}}
+        onMouseEnter={() => setHovered(node._idx)}
+        onMouseLeave={() => setHovered(null)}>
+        <path d={nodePath(node.type, node.x, node.y, node.w, node.nh)}
+          fill={h ? col+'22' : '#0a1020'}
+          stroke={h ? col : col+'55'}
+          strokeWidth={h ? 2 : 1.5}
+          style={{transition:'all .15s'}}/>
+        <text x={cx} y={node.y + node.nh / 2}
+          textAnchor="middle" dominantBaseline="middle"
+          fill={h ? col : '#8aa0b5'} fontSize={fontSize}
+          fontFamily="Fira Code,monospace"
+          style={{userSelect:'none', pointerEvents:'none', transition:'fill .15s'}}>
+          {lbl}
+        </text>
+      </g>
+    );
+  };
+
+  // Gather decision nodes to render their branch arrows
+  const decisionNodes = layout.nodes.filter(n => n.branchMeta);
+
+  return (
+    <div>
+      {/* Legenda */}
+      <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:12,
+        background:'var(--bg3)',borderRadius:10,padding:'8px 14px',border:'1px solid var(--border)'}}>
+        <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:11,color:'var(--text2)',marginRight:2}}>Legenda:</span>
+        {[['terminal','⬭ Terminal'],['io','▱ I/O'],['process','▭ Actie'],['decision','◇ Beslissing']].map(([t,l])=>(
+          <span key={t} style={{fontSize:11,fontFamily:'Fira Code,monospace',color:FC_COLORS[t]}}>{l}</span>
+        ))}
+      </div>
+
+      {!hasLines && (
+        <div style={{color:'var(--text3)',fontFamily:'Sora,sans-serif',fontSize:14,padding:20,textAlign:'center'}}>
+          Geen verbindingsdata beschikbaar voor deze module.
+        </div>
+      )}
+
+      {hasLines && (
+        <div style={{display:'flex',gap:0,borderRadius:12,overflow:'hidden',border:'1px solid var(--border)',minHeight:200}}>
+
+          {/* ── SVG Flowchart links ── */}
+          <div style={{flex:'0 0 296px',background:'#080C14',padding:'12px 14px',
+            borderRight:'1px solid var(--border)',overflowY:'auto',maxHeight:560}}>
+            <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:11,
+              color:'var(--text3)',marginBottom:10,textTransform:'uppercase',letterSpacing:1}}>Flowchart</div>
+            <svg width={SVG_W} height={layout.svgH} style={{display:'block',overflow:'visible'}}>
+
+              {/* ── Straight arrows between sequential main-column nodes ── */}
+              {(() => {
+                const mainNodes = layout.nodes.filter(n => n.col === 'main' && !n.branchMeta);
+                const allMain   = layout.nodes.filter(n => n.col === 'main');
+                const lines2 = [];
+                for (let i = 1; i < allMain.length; i++) {
+                  const prev = allMain[i-1], curr = allMain[i];
+                  if (!prev.branchMeta) {
+                    const col = '#2d3f52';
+                    lines2.push(arrowLine(MCX, prev.y+prev.nh, MCX, curr.y, col, `sa${i}`));
+                  }
+                }
+                return lines2;
+              })()}
+
+              {/* ── Branch arrows from each decision ── */}
+              {decisionNodes.map(dec => {
+                const m = dec.branchMeta;
+                const decCol = FC_COLORS[dec.type] || '#888';
+                const arrows = [];
+
+                // Arrow from bottom of diamond down to junction
+                arrows.push(
+                  <line key="jl" x1={MCX} y1={dec.y+DEC_H} x2={MCX} y2={m.jY}
+                    stroke='#2d3f52' strokeWidth={1.4}/>
+                );
+                // Horizontal line at junction level
+                const leftEnd  = m.hasYes ? YES_CX : MCX;
+                const rightEnd = m.hasNo  ? NO_CX  : MCX;
+                arrows.push(
+                  <line key="jh" x1={leftEnd} y1={m.jY} x2={rightEnd} y2={m.jY}
+                    stroke='#2d3f52' strokeWidth={1.4}/>
+                );
+
+                // Yes-branch arrow + label
+                if (m.hasYes) {
+                  arrows.push(arrowLine(YES_CX, m.jY, YES_CX, m.branchStartY, '#2d3f52', `ya`));
+                  arrows.push(
+                    <text key="jal" x={YES_CX} y={m.jY - 3}
+                      textAnchor="middle" fontSize={8} fontFamily="Sora,sans-serif"
+                      fill='#34D399' fontWeight="700">Ja</text>
+                  );
+                  // Merge arrow from yes-branch to center
+                  arrows.push(
+                    <g key="ym">
+                      <line x1={YES_CX} y1={m.yesEndY} x2={YES_CX} y2={m.mergeY}
+                        stroke='#2d3f52' strokeWidth={1.4}/>
+                      <line x1={YES_CX} y1={m.mergeY} x2={MCX-1} y2={m.mergeY}
+                        stroke='#2d3f52' strokeWidth={1.4}/>
+                    </g>
+                  );
+                }
+
+                // No-branch arrow + label
+                if (m.hasNo) {
+                  arrows.push(arrowLine(NO_CX, m.jY, NO_CX, m.branchStartY, '#2d3f52', `na`));
+                  arrows.push(
+                    <text key="jnar" x={NO_CX} y={m.jY - 3}
+                      textAnchor="middle" fontSize={8} fontFamily="Sora,sans-serif"
+                      fill='#F87171' fontWeight="700">Nee</text>
+                  );
+                  // Merge arrow from no-branch to center
+                  arrows.push(
+                    <g key="nm">
+                      <line x1={NO_CX} y1={m.noEndY} x2={NO_CX} y2={m.mergeY}
+                        stroke='#2d3f52' strokeWidth={1.4}/>
+                      <line x1={NO_CX} y1={m.mergeY} x2={MCX+1} y2={m.mergeY}
+                        stroke='#2d3f52' strokeWidth={1.4}/>
+                    </g>
+                  );
+                }
+
+                // Arrow from merge point to next main node
+                const myMainIdx = layout.nodes.filter(n=>n.col==='main').findIndex(n=>n._idx===dec._idx);
+                const nextMain  = layout.nodes.filter(n=>n.col==='main')[myMainIdx+1];
+                if (nextMain) {
+                  arrows.push(arrowLine(MCX, m.mergeY, MCX, nextMain.y, '#2d3f52', `ma`));
+                }
+
+                return <g key={`dec_${dec._idx}`}>{arrows}</g>;
+              })}
+
+              {/* ── All nodes (drawn after arrows so they appear on top) ── */}
+              {layout.nodes.map(n => renderNode(n, 'n'))}
+            </svg>
+          </div>
+
+          {/* ── Python-code rechts ── */}
+          <div style={{flex:1,background:'#0D1117',padding:'14px 16px',overflowX:'auto',overflowY:'auto',maxHeight:560}}>
+            <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:11,
+              color:'var(--text3)',marginBottom:12,textTransform:'uppercase',letterSpacing:1}}>Python-code</div>
+            {rawLines.map((l) => {
+              const col = FC_COLORS[l.type] || '#888';
+              const h = hovered === l._idx;
+              return (
+                <div key={l._idx}
+                  onMouseEnter={() => setHovered(l._idx)}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{padding:'4px 10px',marginBottom:2,borderRadius:6,cursor:'default',
+                    background: h ? `${col}14` : 'transparent',
+                    borderLeft:`3px solid ${h ? col : 'transparent'}`,
+                    transition:'all .15s'}}>
+                  <pre style={{margin:0,fontFamily:'Fira Code,monospace',fontSize:12,
+                    color: h ? col : '#9aabb8',
+                    lineHeight:1.6,whiteSpace:'pre-wrap',wordBreak:'break-all'}}>
+                    {l.code}
+                  </pre>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{marginTop:10,fontSize:11,color:'var(--text3)',fontFamily:'Sora,sans-serif',textAlign:'center'}}>
+        Beweeg over een blok om de overeenkomst te zien · beslissingen tonen Ja/Nee-takken naast elkaar
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  EXERCISE SECTION — oefenzone per module
+// ══════════════════════════════════════════════════════════════════════════════
+function ExerciseSection({ module, onXP, onBadge }) {
+  const exercises = EXERCISES[module.id] || [];
+  const [curEx, setCurEx]       = useState(0);
+  const [code, setCode]         = useState('');
+  const [testRes, setTestRes]   = useState(null);
+  const [running, setRunning]   = useState(false);
+  const [passed, setPassed]     = useState({});   // exId → true/false
+  const [showHint, setShowHint] = useState(false);
+
+  // "Eigen invoer" tester (tekst-oefeningen)
+  const [tryInput, setTryInput]   = useState('');
+  const [tryOutput, setTryOutput] = useState(null);
+  const [tryRunning, setTryRunning] = useState(false);
+  const [tryError, setTryError]   = useState('');
+
+  // Turtle canvas (visuele oefeningen)
+  const turtleRef = useRef(null);
+  const [turtleRunning, setTurtleRunning] = useState(false);
+  const [turtleRan, setTurtleRan]         = useState(false);  // al minstens 1x gedraaid?
+
+  const ex = exercises[curEx];
+
+  useEffect(() => {
+    if (ex) {
+      setCode(ex.starter);
+      setTestRes(null);
+      setShowHint(false);
+      setTryOutput(null);
+      setTryError('');
+      setTurtleRan(false);
+    }
+  }, [curEx, ex?.id]);
+
+  const runTry = async () => {
+    if (!ex || tryRunning) return;
+    setTryRunning(true); setTryOutput(null); setTryError('');
+    const inputs = tryInput.split('\n');
+    let inputIdx = 0;
+    const outLines = [];
+    await new Promise(resolve => {
+      Sk.configure({
+        output: txt => { outLines.push(txt); },
+        read: x => {
+          if (Sk.builtinFiles?.files?.[x]) return Sk.builtinFiles.files[x];
+          throw new Error(x + ': not found');
+        },
+        inputfun: () => Promise.resolve(inputs[inputIdx++] ?? ''),
+        inputfunTakesPrompt: true,
+        __future__: Sk.python3,
+      });
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody('<stdin>', false, code, true))
+        .then(resolve)
+        .catch(e => { setTryError(e.tp$str ? e.tp$str().v : String(e)); resolve(); });
+    });
+    setTryOutput(outLines.join('') || '(geen uitvoer)');
+    setTryRunning(false);
+  };
+
+  // Visuele oefening uitvoeren via turtle canvas
+  const runVisual = async () => {
+    if (!ex || turtleRunning || !turtleRef.current) return;
+    setTurtleRunning(true);
+    turtleRef.current.innerHTML = '';
+    const cw = turtleRef.current.offsetWidth || 560;
+    const ch = Math.max(cw, 480);
+    Sk.TurtleGraphics = { target: turtleRef.current, width: cw, height: ch };
+    Sk.configure({
+      output: () => {},
+      read: x => {
+        if (Sk.builtinFiles?.files?.[x]) return Sk.builtinFiles.files[x];
+        throw new Error(x + ': not found');
+      },
+      inputfun: () => Promise.resolve(''),
+      inputfunTakesPrompt: true,
+      __future__: Sk.python3,
+    });
+    await new Promise(resolve => {
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody('<stdin>', false, code, true))
+        .then(resolve).catch(resolve);
+    });
+    setTurtleRunning(false);
+    setTurtleRan(true);
+  };
+
+  const markVisualDone = () => {
+    if (!ex || passed[ex.id]) return;
+    setPassed(p => ({ ...p, [ex.id]: true }));
+    onXP(15);
+    if (Object.keys(passed).length + 1 >= exercises.length) onBadge('exercise_pass');
+  };
+
+  const runTests = async () => {
+    if (!ex || running) return;
+    setRunning(true); setTestRes(null);
+    const results = [];
+    for (const t of ex.tests) {
+      const inputs = t.input ? t.input.split('\n') : [];
+      let inputIdx = 0;
+      const outLines = [];
+      await new Promise(resolve => {
+        Sk.configure({
+          output: txt => { outLines.push(txt); },
+          read: x => {
+            if (Sk.builtinFiles?.files?.[x]) return Sk.builtinFiles.files[x];
+            throw new Error(x + ': not found');
+          },
+          inputfun: () => Promise.resolve(inputs[inputIdx++] ?? ''),
+          inputfunTakesPrompt: true,   // voorkomt dat Skulpt de prompt via output() stuurt
+          __future__: Sk.python3,
+        });
+        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody('<stdin>', false, code, true))
+          .then(resolve).catch(resolve);
+      });
+      const actual   = outLines.join('').replace(/\n$/, '').trim();
+      const expected = t.output.trim();
+      results.push({ input: t.input, expected, actual, ok: actual === expected });
+    }
+    setTestRes(results);
+    const allOk = results.every(r => r.ok);
+    if (allOk && !passed[ex.id]) {
+      setPassed(p => ({ ...p, [ex.id]: true }));
+      onXP(15);
+      if (Object.keys(passed).length + 1 >= exercises.length) onBadge('exercise_pass');
+    }
+    setRunning(false);
+  };
+
+  if (!ex) return <div style={{color:'var(--text3)',padding:20,textAlign:'center'}}>Geen oefeningen beschikbaar.</div>;
+
+  const doneCount = exercises.filter(e => passed[e.id]).length;
+
+  return (
+    <div>
+      {/* Voortgang */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,flexWrap:'wrap',gap:8}}>
+        <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,color:'var(--text2)'}}>
+          🎯 Oefeningen — {doneCount}/{exercises.length} voltooid
+        </div>
+        <div style={{height:8,flex:'1 1 200px',background:'var(--bg3)',borderRadius:999,overflow:'hidden',maxWidth:300}}>
+          <div style={{height:'100%',width:`${(doneCount/exercises.length)*100}%`,
+            background:`linear-gradient(90deg,${module.color},${module.color}bb)`,borderRadius:999,transition:'width .5s'}}/>
+        </div>
+      </div>
+
+      {/* Oefening-tabs */}
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {exercises.map((e, i) => {
+          const done = passed[e.id];
+          const active = curEx === i;
+          return (
+            <button key={e.id} onClick={() => setCurEx(i)}
+              style={{padding:'6px 14px',borderRadius:8,cursor:'pointer',fontFamily:'Sora,sans-serif',
+                fontWeight:600,fontSize:12,transition:'all .15s',
+                border:`1.5px solid ${active ? module.color : done ? module.color+'55' : 'var(--border)'}`,
+                background: active ? `${module.color}18` : done ? `${module.color}08` : 'var(--card)',
+                color: active ? module.color : done ? module.color+'cc' : 'var(--text2)'}}>
+              {done ? '✅ ' : ''}{e.title.split(' ').slice(0, 3).join(' ')}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Oefening kaart */}
+      <div style={{background:'var(--card)',border:`1px solid ${module.color}33`,
+        borderRadius:12,padding:18,marginBottom:14}}>
+        <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:16,marginBottom:8,color:module.color}}>
+          {ex.title}
+        </h3>
+        <p style={{color:'var(--text2)',fontSize:14,lineHeight:1.65,marginBottom:0}}>{ex.desc}</p>
+        {ex.hint && (
+          <div style={{marginTop:10}}>
+            <button onClick={() => setShowHint(h => !h)}
+              style={{padding:'4px 12px',borderRadius:6,border:`1px solid ${module.color}55`,
+                background:'transparent',color:module.color,fontSize:12,fontFamily:'Sora,sans-serif',
+                fontWeight:600,cursor:'pointer'}}>
+              {showHint ? '🙈 Verberg hint' : '💡 Toon hint'}
+            </button>
+            {showHint && (
+              <div style={{marginTop:8,background:`${module.color}0f`,
+                borderLeft:`3px solid ${module.color}`,borderRadius:'0 8px 8px 0',
+                padding:'8px 12px',fontSize:13,color:'var(--text2)',fontFamily:'Fira Code,monospace'}}>
+                {ex.hint}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Code editor */}
+      <div style={{background:'#080C14',borderRadius:12,overflow:'hidden',marginBottom:12,
+        border:'1px solid var(--border)'}}>
+        <div style={{background:'#0D1117',padding:'9px 16px',borderBottom:'1px solid #1a2a3a',
+          display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div style={{display:'flex',gap:6}}>
+            <div style={{width:11,height:11,borderRadius:999,background:'#F87171'}}/>
+            <div style={{width:11,height:11,borderRadius:999,background:'#FCD34D'}}/>
+            <div style={{width:11,height:11,borderRadius:999,background:'#34D399'}}/>
+          </div>
+          <span style={{fontFamily:'Fira Code,monospace',fontSize:11,color:'var(--text3)'}}>oefening_{curEx+1}.py</span>
+          <span style={{fontSize:11,color:'var(--text3)',fontFamily:'Sora,sans-serif'}}>Python</span>
+        </div>
+        <textarea value={code} onChange={e => setCode(e.target.value)} spellCheck={false}
+          style={{width:'100%',minHeight:200,background:'transparent',border:'none',outline:'none',
+            padding:'16px 20px',fontFamily:'Fira Code,monospace',fontSize:13,
+            color:'#A8D8A8',lineHeight:1.7,resize:'vertical',tabSize:4}}/>
+      </div>
+
+      {/* ── VISUELE oefening (turtle) ── */}
+      {ex.visual ? (
+        <div>
+          {/* Turtle canvas */}
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,
+            padding:14,marginBottom:12}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+              <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,color:'#34D399'}}>
+                🐢 Turtle-canvas
+              </span>
+              <button onClick={runVisual} disabled={turtleRunning}
+                style={{padding:'6px 18px',borderRadius:8,border:'none',
+                  cursor:turtleRunning?'default':'pointer',
+                  background:turtleRunning?'var(--bg3)':'#7C3AED',color:'#fff',
+                  fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+                  display:'flex',alignItems:'center',gap:6}}>
+                {turtleRunning
+                  ? <span style={{display:'inline-block',animation:'spin 1s linear infinite'}}>⟳</span>
+                  : '▶'}
+                {turtleRunning ? 'Loopt...' : '▶ Uitvoeren'}
+              </button>
+            </div>
+            <div ref={turtleRef}
+              style={{background:'#fff',borderRadius:8,width:'100%',minHeight:200,overflow:'auto'}}/>
+          </div>
+
+          {/* Self-assessment */}
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+            <div style={{flex:1,height:1,background:'var(--border)'}}/>
+            {passed[ex.id] ? (
+              <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,color:'#34D399'}}>
+                ✅ Oefening afgevinkt! +15 XP
+              </span>
+            ) : (
+              <button onClick={markVisualDone} disabled={!turtleRan}
+                title={!turtleRan ? 'Voer de code eerst uit' : ''}
+                style={{padding:'7px 20px',borderRadius:8,border:'none',
+                  cursor:turtleRan?'pointer':'default',
+                  background:turtleRan?'var(--mint)':'var(--bg3)',
+                  color:turtleRan?'#fff':'var(--text3)',
+                  fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12}}>
+                ✅ Ziet er goed uit! Markeer als klaar (+15 XP)
+              </button>
+            )}
+            <div style={{flex:1,height:1,background:'var(--border)'}}/>
+          </div>
+          {!turtleRan && (
+            <p style={{textAlign:'center',fontSize:11,color:'var(--text3)',
+              fontFamily:'Sora,sans-serif',marginTop:-8,marginBottom:12}}>
+              Voer de code eerst uit om de tekening te beoordelen.
+            </p>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* ── Eigen invoer testen (tekst-oefeningen) ── */}
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,
+            padding:14,marginBottom:12}}>
+            <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+              color:'var(--text2)',marginBottom:8}}>
+              🧪 Test met eigen invoer
+              <span style={{fontFamily:'Fira Code,monospace',fontWeight:400,color:'var(--text3)',
+                fontSize:11,marginLeft:8}}>
+                (meerdere inputs? gebruik nieuwe regels)
+              </span>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
+              <textarea
+                value={tryInput}
+                onChange={e => { setTryInput(e.target.value); setTryOutput(null); setTryError(''); }}
+                placeholder={'invoerwaarde\ntwee inputs? één per regel'}
+                spellCheck={false}
+                rows={Math.max(1, tryInput.split('\n').length)}
+                style={{flex:'1 1 0',background:'var(--bg2)',border:'1px solid var(--border)',
+                  borderRadius:8,padding:'8px 12px',fontFamily:'Fira Code,monospace',fontSize:12,
+                  color:'var(--text)',outline:'none',resize:'vertical',lineHeight:1.6,minHeight:36}}/>
+              <button onClick={runTry} disabled={tryRunning}
+                style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:tryRunning?'default':'pointer',
+                  background:tryRunning?'var(--bg3)':'#7C3AED',color:'#fff',
+                  fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+                  display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap',flexShrink:0}}>
+                {tryRunning
+                  ? <span style={{display:'inline-block',animation:'spin 1s linear infinite'}}>⟳</span>
+                  : '▶'}
+                {tryRunning ? 'Loopt...' : 'Uitproberen'}
+              </button>
+            </div>
+            {(tryOutput !== null || tryError) && (
+              <div style={{marginTop:10,background:'#080C14',borderRadius:8,padding:'10px 14px',
+                fontFamily:'Fira Code,monospace',fontSize:12,lineHeight:1.7}}>
+                {tryError
+                  ? <span style={{color:'#F87171'}}>⚠️ {tryError}</span>
+                  : <pre style={{margin:0,color:'#A8D8A8',whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
+                      {tryOutput}
+                    </pre>
+                }
+              </div>
+            )}
+          </div>
+
+          {/* Scheidingslijn + controleer-knop */}
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+            <div style={{flex:1,height:1,background:'var(--border)'}}/>
+            <button onClick={runTests} disabled={running}
+              style={{padding:'7px 20px',borderRadius:8,border:'none',cursor:running?'default':'pointer',
+                background:running?'var(--bg3)':'var(--mint)',color:'#fff',
+                fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,
+                display:'flex',alignItems:'center',gap:6}}>
+              {running
+                ? <span style={{display:'inline-block',animation:'spin 1s linear infinite'}}>⟳</span>
+                : '▶▶'}
+              {running ? 'Testen...' : '▶▶ Controleer alle testscenarios'}
+            </button>
+            <div style={{flex:1,height:1,background:'var(--border)'}}/>
+          </div>
+        </>
+      )}
+
+      {/* Testresultaten (alleen tekst-oefeningen) */}
+      {!ex.visual && testRes && (
+        <div style={{borderRadius:12,overflow:'hidden',border:'1px solid var(--border)'}}>
+          <div style={{background:testRes.every(r=>r.ok)?'#1a3a2a':'#3a1a1a',
+            padding:'10px 16px',borderBottom:'1px solid var(--border)',
+            fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,
+            color:testRes.every(r=>r.ok)?'#34D399':'#F87171'}}>
+            {testRes.every(r=>r.ok) ? '🎉 Alle testen geslaagd! +15 XP' : `${testRes.filter(r=>r.ok).length}/${testRes.length} testen geslaagd`}
+          </div>
+          {testRes.map((r, i) => (
+            <div key={i} style={{padding:'10px 16px',borderBottom:i<testRes.length-1?'1px solid var(--border)':'none',
+              background:r.ok?'#0d1f15':'#1f0d0d'}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                <span style={{fontSize:14}}>{r.ok ? '✅' : '❌'}</span>
+                <span style={{fontFamily:'Fira Code,monospace',fontSize:11,color:r.ok?'#34D399':'#F87171',fontWeight:700}}>
+                  Test {i+1}{r.input ? ` (invoer: "${r.input.replace(/\n/g,'↵')}")` : ''}
+                </span>
+              </div>
+              <div style={{marginLeft:22,fontSize:11,fontFamily:'Fira Code,monospace',color:'var(--text3)'}}>
+                {r.ok ? (
+                  <span style={{color:'#86efac'}}>▶ uitvoer: "{r.actual}"</span>
+                ) : (
+                  <>
+                    <span style={{color:'#F87171'}}>Gekregen:  </span><span style={{color:'#fca5a5'}}>"{r.actual}"</span><br/>
+                    <span style={{color:'#34D399'}}>Verwacht: </span><span style={{color:'#86efac'}}>"{r.expected}"</span>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MODULE PAGE
+// ══════════════════════════════════════════════════════════════════════════════
+function ModulePage({ module, state, onBack, onXP, onBadge, onModuleComplete }) {
+  const [tab, setTab] = useState('theorie');
+  const [theoryDone, setTheoryDone] = useState(false);
+  const [codeRuns, setCodeRuns]     = useState(0);
+  const [quizDone, setQuizDone]     = useState(false);
+  const [showUnlock, setShowUnlock] = useState(false);
+
+  const curIdx    = MODULES.findIndex(m => m.id === module.id);
+  const nextModule = MODULES[curIdx + 1] || null;
+
+  const handleCodeRun = () => {
+    const r = codeRuns + 1;
+    setCodeRuns(r);
+    onXP(15);
+    if (r >= 3) onBadge('code_3');
+  };
+
+  const handleQuizComplete = () => {
+    if (!quizDone) {
+      setQuizDone(true);
+      onBadge('module_complete');
+      onModuleComplete(module.id);
+      setShowUnlock(true);   // toon unlockmelding
+    }
+  };
+
+  // ── Module-unlock modal ───────────────────────────────────────────────────
+  const UnlockModal = () => (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:2000,
+      display:'flex',alignItems:'center',justifyContent:'center'}}
+      onClick={e => e.target===e.currentTarget && setShowUnlock(false)}>
+      <div className="fade-in" style={{
+        background:'linear-gradient(145deg,var(--navy),var(--navy2))',
+        border:'2px solid var(--mint)',borderRadius:20,padding:'36px 40px',
+        width:440,maxWidth:'92vw',textAlign:'center',
+        boxShadow:'0 12px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(60,180,151,.2)'}}>
+        {/* Confetti-achtig accent */}
+        <div style={{fontSize:52,marginBottom:12}}>🎉</div>
+        <div style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:22,color:'#fff',marginBottom:6}}>
+          {module.emoji} {module.title} voltooid!
+        </div>
+        <div style={{color:'rgba(255,255,255,.65)',fontSize:14,marginBottom:28,lineHeight:1.6}}>
+          Geweldig werk — je hebt de zelftest gehaald en +100 XP verdiend.
+        </div>
+
+        {nextModule ? (
+          <>
+            <div style={{background:'rgba(60,180,151,.15)',border:'1px solid rgba(60,180,151,.4)',
+              borderRadius:14,padding:'16px 20px',marginBottom:24}}>
+              <div style={{color:'var(--mint)',fontFamily:'Sora,sans-serif',fontWeight:700,
+                fontSize:12,textTransform:'uppercase',letterSpacing:1.5,marginBottom:8}}>
+                🔓 Nieuwe module vrijgespeeld
+              </div>
+              <div style={{fontSize:28,marginBottom:4}}>{nextModule.emoji}</div>
+              <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:17,
+                color:'#fff',marginBottom:4}}>{nextModule.title}</div>
+              <div style={{color:'rgba(255,255,255,.55)',fontSize:12}}>{nextModule.week} · {nextModule.hours}u</div>
+            </div>
+            <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+              <button onClick={() => setShowUnlock(false)}
+                style={{padding:'11px 22px',borderRadius:10,border:'1px solid rgba(255,255,255,.25)',
+                  background:'transparent',color:'rgba(255,255,255,.75)',
+                  fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:14,cursor:'pointer'}}>
+                Blijf hier
+              </button>
+              <button onClick={onBack}
+                style={{padding:'11px 28px',borderRadius:10,border:'none',
+                  background:'var(--mint)',color:'#fff',
+                  fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14,cursor:'pointer',
+                  boxShadow:'0 4px 14px rgba(60,180,151,.4)'}}>
+                Naar {nextModule.title} →
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{background:'rgba(255,215,0,.1)',border:'1px solid rgba(255,215,0,.3)',
+              borderRadius:14,padding:'16px 20px',marginBottom:24}}>
+              <div style={{fontSize:36,marginBottom:8}}>🏆</div>
+              <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:16,color:'#FFD700',marginBottom:4}}>
+                Alle modules afgerond!
+              </div>
+              <div style={{color:'rgba(255,255,255,.6)',fontSize:13}}>
+                Je bent klaar voor de evaluatieweek. Proficiat!
+              </div>
+            </div>
+            <button onClick={onBack}
+              style={{padding:'11px 28px',borderRadius:10,border:'none',
+                background:'var(--mint)',color:'#fff',
+                fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+              Terug naar dashboard
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const tabs = [
+    {id:'theorie',   label:'📖 Theorie'},
+    {id:'flowchart', label:'🔷 Flowchart'},
+    {id:'verbinding',label:'🔗 Verbinding'},
+    {id:'code',      label:'🐍 Python'},
+    {id:'oefeningen',label:'🎯 Oefeningen'},
+    {id:'zelftest',  label:'✅ Zelftest'},
+  ];
+
+  return (
+    <div className="fade-in" style={{maxWidth:1200,margin:'0 auto'}}>
+      <button onClick={onBack} style={{display:'flex',alignItems:'center',gap:8,background:'transparent',
+        border:'1px solid var(--border)',borderRadius:8,padding:'8px 16px',color:'var(--text2)',
+        cursor:'pointer',marginBottom:22,fontSize:14,fontFamily:'DM Sans,sans-serif'}}>
+        ← Terug
+      </button>
+
+      <div style={{background:`linear-gradient(135deg,${module.color}12,var(--card))`,
+        border:`1px solid ${module.color}33`,borderRadius:16,padding:'26px 30px',marginBottom:22}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12}}>
+          <div>
+            <div style={{color:'var(--text3)',fontSize:13,marginBottom:4}}>{module.week} · {module.hours} contacturen</div>
+            <h1 style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:26,marginBottom:8}}>
+              <span style={{fontSize:30,marginRight:10}}>{module.emoji}</span>{module.title}
+            </h1>
+            <p style={{color:'var(--text2)',fontSize:14}}>{module.tagline}</p>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:'flex',gap:4,marginBottom:22,background:'var(--bg2)',
+        borderRadius:12,padding:4,border:'1px solid var(--border)'}}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={()=>setTab(t.id)}
+            style={{flex:1,padding:'10px 6px',borderRadius:8,border:'none',
+              background:tab===t.id?'var(--card)':'transparent',
+              color:tab===t.id?module.color:'var(--text3)',
+              fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:13,cursor:'pointer',transition:'all .2s',
+              boxShadow:tab===t.id?'0 2px 8px rgba(0,0,0,.3)':'none'}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab==='theorie'    && <TheorySection module={module} onReadAll={()=>{setTheoryDone(true);onBadge('theory_all');onXP(30);}}/>}
+      {tab==='flowchart'  && <FlowchartSection module={module}/>}
+      {tab==='code'       && <CodeSection module={module} onRun={handleCodeRun}/>}
+      {tab==='verbinding' && <ConnectionView module={module}/>}
+      {tab==='oefeningen' && <ExerciseSection module={module} onXP={onXP} onBadge={onBadge}/>}
+      {tab==='zelftest'   && <QuizSection module={module} onXP={onXP} onBadge={onBadge} onComplete={handleQuizComplete}/>}
+
+      {showUnlock && <UnlockModal/>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  TEACHER DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════
+function TeacherDashboard({ currentUser, onClose }) {
+  const [students, setStudents]   = useState([]);
+  const [importCode, setImportCode] = useState('');
+  const [importErr, setImportErr]   = useState('');
+  const [selStudent, setSelStudent] = useState(null);
+
+  const loadStudents = () => {
+    const users = JSON.parse(localStorage.getItem('algoflow_users') || '[]');
+    const withProgress = users
+      .filter(u => !TEACHER_EMAILS.includes(u.email))
+      .map(u => ({
+        ...u,
+        progress: (() => { try { return JSON.parse(localStorage.getItem('algoflow_progress_' + u.id) || '{}'); } catch(e) { return {}; } })()
+      }));
+    setStudents(withProgress);
+  };
+
+  useEffect(loadStudents, []);
+
+  const doImport = () => {
+    setImportErr('');
+    try {
+      const data = JSON.parse(atob(importCode.trim()));
+      if (!data.user || !data.progress) throw new Error('Ongeldige structuur');
+      const users = JSON.parse(localStorage.getItem('algoflow_users') || '[]');
+      if (!users.find(u => u.id === data.user.id)) {
+        users.push(data.user);
+        localStorage.setItem('algoflow_users', JSON.stringify(users));
+      }
+      localStorage.setItem('algoflow_progress_' + data.user.id, JSON.stringify(data.progress));
+      setImportCode('');
+      loadStudents();
+    } catch(e) {
+      setImportErr('⚠️ Ongeldige code. Vraag de student om opnieuw te exporteren.');
+    }
+  };
+
+  const moduleLabels = ['M1 I/O','M2 Vars','M3 If','M4 Lussen','M5 Lijsten','M6 Functies'];
+
+  return (
+    <div className="fade-in" style={{maxWidth:1100,margin:'0 auto'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}}>
+        <h1 style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:24}}>
+          👩‍🏫 Klasoverzicht
+        </h1>
+        <button onClick={onClose}
+          style={{padding:'8px 18px',borderRadius:8,border:'1px solid var(--border)',
+            background:'transparent',color:'var(--text2)',cursor:'pointer',fontSize:14}}>
+          ← Terug
+        </button>
+      </div>
+
+      {/* Importeer voortgang */}
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,padding:20,marginBottom:20}}>
+        <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:15,marginBottom:8}}>
+          📥 Voortgang importeren
+        </h3>
+        <p style={{color:'var(--text2)',fontSize:13,marginBottom:12,lineHeight:1.6}}>
+          Studenten kunnen hun voortgang exporteren (via knop in de navigatiebalk). Plak de exportcode hieronder om hun voortgang toe te voegen.
+        </p>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <input value={importCode} onChange={e=>setImportCode(e.target.value)}
+            placeholder="Plak exportcode hier…"
+            style={{flex:'1 1 300px',padding:'10px 14px',borderRadius:8,border:'1px solid var(--border)',
+              background:'var(--card)',color:'var(--text)',fontFamily:'Fira Code,monospace',fontSize:13,outline:'none'}}/>
+          <button onClick={doImport} disabled={!importCode.trim()}
+            style={{padding:'10px 20px',borderRadius:8,border:'none',cursor:'pointer',
+              background:importCode.trim()?'var(--mint)':'var(--bg3)',
+              color:importCode.trim()?'#fff':'var(--text3)',
+              fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13}}>
+            Importeer
+          </button>
+        </div>
+        {importErr && <div style={{color:'var(--red-od)',fontSize:12,marginTop:8}}>{importErr}</div>}
+      </div>
+
+      {/* Tabel studenten */}
+      {students.length === 0 ? (
+        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,
+          padding:40,textAlign:'center',color:'var(--text3)'}}>
+          <div style={{fontSize:36,marginBottom:12}}>👨‍🎓</div>
+          <div style={{fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:15,marginBottom:8}}>Nog geen studenten</div>
+          <div style={{fontSize:13,lineHeight:1.6}}>
+            Studenten verschijnen hier nadat ze ingelogd zijn op dezelfde browser, of nadat je hun exportcode importeert.
+          </div>
+        </div>
+      ) : (
+        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead>
+              <tr style={{background:'var(--bg2)',borderBottom:'1px solid var(--border)'}}>
+                <th style={{padding:'12px 16px',textAlign:'left',fontFamily:'Sora,sans-serif',fontWeight:700,color:'var(--text2)'}}>Student</th>
+                <th style={{padding:'12px 16px',textAlign:'left',fontFamily:'Sora,sans-serif',fontWeight:700,color:'var(--text2)'}}>XP</th>
+                {moduleLabels.map(l => (
+                  <th key={l} style={{padding:'12px 8px',textAlign:'center',fontFamily:'Sora,sans-serif',fontWeight:700,color:'var(--text2)',fontSize:11}}>{l}</th>
+                ))}
+                <th style={{padding:'12px 16px'}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((s, i) => {
+                const p = s.progress;
+                const completed = p.completedModules || [];
+                return (
+                  <tr key={s.id} style={{borderBottom:i<students.length-1?'1px solid var(--border)':'none',
+                    background:selStudent===s.id?'var(--bg2)':'transparent'}}>
+                    <td style={{padding:'12px 16px'}}>
+                      <div style={{fontFamily:'Sora,sans-serif',fontWeight:600,color:'var(--text)'}}>{s.name}</div>
+                      <div style={{fontSize:11,color:'var(--text3)'}}>{s.email}</div>
+                    </td>
+                    <td style={{padding:'12px 16px',fontFamily:'Fira Code,monospace',fontWeight:700,color:'var(--mint)'}}>
+                      {p.xp || 0}
+                    </td>
+                    {[1,2,3,4,5,6].map(id => (
+                      <td key={id} style={{padding:'12px 8px',textAlign:'center'}}>
+                        {completed.includes(id)
+                          ? <span style={{color:'#34D399',fontSize:16}}>✓</span>
+                          : <span style={{color:'var(--border)',fontSize:14}}>·</span>}
+                      </td>
+                    ))}
+                    <td style={{padding:'12px 16px'}}>
+                      <button onClick={()=>setSelStudent(selStudent===s.id?null:s.id)}
+                        style={{padding:'4px 10px',borderRadius:6,border:'1px solid var(--border)',
+                          background:'transparent',color:'var(--text3)',cursor:'pointer',fontSize:11}}>
+                        Detail
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Geselecteerde student detail */}
+      {selStudent && (() => {
+        const s = students.find(x => x.id === selStudent);
+        if (!s) return null;
+        const p = s.progress;
+        return (
+          <div style={{marginTop:16,background:'var(--card)',border:`1px solid var(--mint)44`,
+            borderRadius:12,padding:20}}>
+            <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:15,marginBottom:12,color:'var(--mint)'}}>
+              Detailrapport — {s.name}
+            </h3>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:10}}>
+              {[['⚡ XP', p.xp||0,'var(--mint)'],
+                ['🏅 Badges', (p.badges||[]).length,'var(--navy)'],
+                ['✅ Modules', (p.completedModules||[]).length+'/6','var(--storm)'],
+              ].map(([lbl,val,col])=>(
+                <div key={lbl} style={{background:'var(--bg2)',borderRadius:10,padding:'12px 14px'}}>
+                  <div style={{fontSize:11,color:'var(--text3)',marginBottom:4}}>{lbl}</div>
+                  <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:20,color:col}}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Info backend */}
+      <div style={{marginTop:20,background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:12,padding:16}}>
+        <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,marginBottom:6}}>
+          ℹ️ Opmerking over gegevensbeheer
+        </div>
+        <p style={{fontSize:12,color:'var(--text2)',lineHeight:1.7,margin:0}}>
+          De voortgang van studenten wordt lokaal opgeslagen. Studenten die dezelfde browser/computer gebruiken als jij verschijnen automatisch hier. Voor volledige cross-device synchronisatie heb je een backend nodig (bijv. Azure Functions + Cosmos DB). Vraag de IT-dienst om een Azure Static Web App te configureren.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════
+function ProgressBar({ value, max, color='#00E5C3', height=8 }) {
+  const pct = Math.min(100,(value/max)*100);
+  return (
+    <div style={{background:'var(--bg3)',borderRadius:999,height,overflow:'hidden',position:'relative'}}>
+      <div style={{height:'100%',width:`${pct}%`,background:`linear-gradient(90deg,${color},${color}bb)`,
+        borderRadius:999,transition:'width .6s cubic-bezier(.4,0,.2,1)',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:0,left:'-100%',width:'60%',height:'100%',
+          background:'linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent)',animation:'shine 2s infinite'}}/>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ state, modules, onModule, user }) {
+  const level = Math.floor(state.xp / 200) + 1;
+  const xpCur = state.xp - (level-1)*200;
+  const xpMax = 200;
+  const titles = ['','Beginner Programmeur','Junior Coder','Algo Ninja','Code Meester','Python Master'];
+  const title = level <= 5 ? titles[level] : 'Code Legende';
+
+  return (
+    <div className="fade-in">
+      {/* Hero — Odisee navy */}
+      <div style={{background:'linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)',borderRadius:16,
+        padding:'28px 32px',marginBottom:24,position:'relative',overflow:'hidden',
+        boxShadow:'0 4px 20px rgba(31,65,107,.25)'}}>
+        {/* decoratief cirkel-accent */}
+        <div style={{position:'absolute',top:-60,right:-60,width:260,height:260,borderRadius:999,
+          background:'radial-gradient(circle,rgba(60,180,151,.18) 0%,transparent 70%)',pointerEvents:'none'}}/>
+        {user && (
+          <div style={{position:'absolute',top:16,right:16,
+            background:'rgba(255,255,255,.12)',borderRadius:8,padding:'4px 12px',
+            color:'rgba(255,255,255,.85)',fontSize:12,fontFamily:'Sora,sans-serif'}}>
+            👋 Welkom, {user.name.split(' ')[0]}
+          </div>
+        )}
+        <div style={{display:'flex',gap:16,alignItems:'center',marginBottom:14}}>
+          <div style={{background:'var(--mint)',borderRadius:12,
+            padding:'10px 16px',fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:20,color:'#fff',
+            minWidth:52,textAlign:'center',boxShadow:'0 2px 8px rgba(0,0,0,.2)'}}>
+            {level}
+          </div>
+          <div>
+            <div style={{color:'rgba(255,255,255,.65)',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:2}}>Niveau</div>
+            <div style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:20,color:'#fff'}}>{title}</div>
+          </div>
+        </div>
+        <div style={{maxWidth:380,marginBottom:6}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:5,fontSize:12,color:'rgba(255,255,255,.65)'}}>
+            <span>{xpCur}/{xpMax} XP</span><span>Niveau {level+1}</span>
+          </div>
+          <ProgressBar value={xpCur} max={xpMax} color='#3cb497' height={10}/>
+        </div>
+        <div style={{color:'rgba(255,255,255,.6)',fontSize:13}}>
+          Totaal: {state.xp} XP · {state.badges.length} badges · {state.completedModules.length} modules
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:10,marginBottom:28}}>
+        {[['⚡','XP',state.xp,'var(--mint)'],['🏅','Badges',`${state.badges.length}/${BADGES.length}`,'var(--navy)'],
+          ['📚','Modules',`${state.completedModules.length}/6`,'var(--storm)'],['🔥','Streak',state.streak,'var(--orange)']].map(([icon,label,val,col])=>(
+          <div key={label} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,
+            padding:'14px 16px',boxShadow:'0 2px 8px rgba(31,65,107,.06)'}}>
+            <div style={{color:'var(--text3)',fontSize:12,marginBottom:4}}>{icon} {label}</div>
+            <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:24,color:col}}>{val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Module grid */}
+      <h2 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:19,marginBottom:14}}>📘 Modules</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:16,marginBottom:28}}>
+        {modules.map((mod, i) => {
+          const locked = i > 0 && !state.completedModules.includes(modules[i-1].id);
+          const completed = state.completedModules.includes(mod.id);
+          return (
+            <div key={mod.id} onClick={()=>!locked&&onModule(mod)}
+              style={{background:'var(--card)',border:`1px solid ${completed?mod.color+'44':'var(--border)'}`,
+                borderRadius:16,padding:22,cursor:locked?'not-allowed':'pointer',opacity:locked?.5:1,
+                transition:'all .25s',position:'relative',overflow:'hidden'}}
+              onMouseEnter={e=>{ if(!locked){e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow=`0 10px 30px ${mod.color}20`;} }}
+              onMouseLeave={e=>{ e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='none'; }}>
+              {completed && <div style={{position:'absolute',top:10,right:10,background:'#34D39922',border:'1px solid #34D39944',borderRadius:999,padding:'2px 9px',color:'#34D399',fontSize:11,fontFamily:'Sora,sans-serif',fontWeight:700}}>✓</div>}
+              {locked && <div style={{position:'absolute',top:10,right:10,fontSize:15}}>🔒</div>}
+              <div style={{fontSize:32,marginBottom:10}}>{mod.emoji}</div>
+              <div style={{color:'var(--text3)',fontSize:12,marginBottom:3}}>{mod.week}</div>
+              <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:16,marginBottom:6,color:mod.color}}>{mod.title}</h3>
+              <p style={{color:'var(--text2)',fontSize:13,lineHeight:1.6,marginBottom:14}}>{mod.tagline}</p>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                <span style={{background:`${mod.color}18`,color:mod.color,borderRadius:999,padding:'2px 9px',fontSize:11,fontFamily:'Sora,sans-serif',fontWeight:600}}>{mod.hours}u</span>
+                <span style={{background:'var(--bg3)',color:'var(--text3)',borderRadius:999,padding:'2px 9px',fontSize:11}}>{mod.quiz.length} zelftests</span>
+              </div>
+            </div>
+          );
+        })}
+        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:16,padding:22,opacity:.45}}>
+          <div style={{position:'relative',display:'inline-block'}}><div style={{fontSize:32,marginBottom:10}}>📝</div><span style={{position:'absolute',top:-4,right:-4,fontSize:12}}>🔒</span></div>
+          <div style={{color:'var(--text3)',fontSize:12,marginBottom:3}}>Week 7</div>
+          <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:16,marginBottom:6,color:'var(--text2)'}}>Evaluatieweek</h3>
+          <p style={{color:'var(--text3)',fontSize:13,lineHeight:1.6}}>Praktische proef + flowchart-component. Beschikbaar na alle modules.</p>
+        </div>
+      </div>
+
+      {/* Badges */}
+      <h2 style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:19,marginBottom:14}}>🏅 Badges</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(170px,1fr))',gap:10}}>
+        {BADGES.map(badge => {
+          const earned = state.badges.includes(badge.id);
+          return (
+            <div key={badge.id} style={{background:'var(--card)',border:`1px solid ${earned?'#9B5CF644':'var(--border)'}`,
+              borderRadius:12,padding:16,opacity:earned?1:.35,transition:'all .3s',
+              ...(earned?{boxShadow:'0 0 16px rgba(155,92,246,.15)'}:{})}}>
+              <div style={{fontSize:28,filter:earned?'none':'grayscale(1)',marginBottom:8}}>{badge.emoji}</div>
+              <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,color:earned?'var(--text)':'var(--text3)',marginBottom:4}}>{badge.name}</div>
+              <div style={{fontSize:12,color:'var(--text3)'}}>{badge.desc}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  BADGE TOAST
+// ══════════════════════════════════════════════════════════════════════════════
+function BadgeToast({ badge, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, []);
+  return (
+    <div style={{position:'fixed',bottom:28,right:28,zIndex:9999,
+      background:'linear-gradient(135deg,var(--navy),var(--navy2))',
+      border:'2px solid var(--mint)',borderRadius:16,padding:'18px 26px',
+      display:'flex',alignItems:'center',gap:14,
+      animation:'badgePop .5s ease-out both',
+      boxShadow:'0 8px 36px rgba(31,65,107,.4)'}}>
+      <span style={{fontSize:44}}>{badge.emoji}</span>
+      <div>
+        <div style={{color:'var(--mint)',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:2}}>Badge verdiend!</div>
+        <div style={{color:'#fff',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:17}}>{badge.name}</div>
+        <div style={{color:'rgba(255,255,255,.7)',fontSize:12}}>{badge.desc}</div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  APP
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Demo-login modal ─────────────────────────────────────────────────────────
+function DemoLoginModal({ onLogin, onClose }) {
+  const [name,  setName]  = useState('');
+  const [email, setEmail] = useState('');
+  const valid = name.trim() && email.includes('@');
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.6)',zIndex:2000,
+      display:'flex',alignItems:'center',justifyContent:'center'}}
+      onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="fade-in" style={{background:'var(--card)',borderRadius:16,padding:32,
+        width:400,maxWidth:'90vw',border:'1px solid var(--border)',boxShadow:'0 8px 36px rgba(0,0,0,.2)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+          <div style={{background:'#0078D4',borderRadius:8,width:36,height:36,
+            display:'flex',alignItems:'center',justifyContent:'center',
+            fontFamily:'Sora,sans-serif',fontWeight:900,fontSize:14,color:'#fff'}}>M</div>
+          <div>
+            <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:15}}>Aanmelden</div>
+            <div style={{fontSize:11,color:'var(--text3)'}}>Demo-modus (Azure app nog niet ingesteld)</div>
+          </div>
+        </div>
+        {[['Naam', name, setName, 'Joris Janssen'],['E-mail', email, setEmail, 'student@student.odisee.be']].map(([lbl,val,set,ph]) => (
+          <div key={lbl} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:12,fontFamily:'Sora,sans-serif',fontWeight:600,
+              color:'var(--text2)',marginBottom:5}}>{lbl}</label>
+            <input value={val} onChange={e=>set(e.target.value)}
+              placeholder={ph}
+              style={{width:'100%',padding:'10px 14px',borderRadius:8,
+                border:'1px solid var(--border)',background:'var(--card)',
+                color:'var(--text)',fontFamily:'DM Sans,sans-serif',fontSize:14,outline:'none'}}/>
+          </div>
+        ))}
+        <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+          <button onClick={onClose} style={{padding:'9px 18px',borderRadius:8,
+            border:'1px solid var(--border)',background:'transparent',
+            color:'var(--text2)',cursor:'pointer'}}>Annuleer</button>
+          <button onClick={()=>valid&&onLogin(name.trim(),email.trim())} disabled={!valid}
+            style={{padding:'9px 22px',borderRadius:8,border:'none',cursor:valid?'pointer':'default',
+              background:valid?'#0078D4':'var(--bg3)',color:valid?'#fff':'var(--text3)',
+              fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14}}>
+            Aanmelden
+          </button>
+        </div>
+        <div style={{marginTop:16,padding:12,background:'var(--bg2)',borderRadius:8,fontSize:11,color:'var(--text3)',lineHeight:1.6}}>
+          💡 Voor echte Microsoft-login: registreer de app in Azure AD en vervang <code>JOUW_CLIENT_ID</code> bovenaan de code.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+function App() {
+  const [state, setState]         = useState({ xp:0, badges:[], completedModules:[], streak:0 });
+  const [curModule, setCurModule] = useState(null);
+  const [badgeToast, setBadgeToast] = useState(null);
+  const [user, setUser]           = useState(null);   // { name, email, id, isTeacher }
+  const [showLogin, setShowLogin] = useState(false);
+  const [showTeacher, setShowTeacher] = useState(false);
+  const [exportMsg, setExportMsg] = useState('');
+
+  // Laad opgeslagen gebruiker + voortgang bij opstarten
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('algoflow_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        setUser(u);
+        const savedProgress = localStorage.getItem('algoflow_progress_' + u.id);
+        if (savedProgress) setState(JSON.parse(savedProgress));
+      }
+    } catch(e) {}
+  }, []);
+
+  // Sla voortgang op bij elke wijziging (als ingelogd)
+  useEffect(() => {
+    if (!user) return;
+    localStorage.setItem('algoflow_progress_' + user.id, JSON.stringify(state));
+    // Registreer student in globale lijst voor docent
+    try {
+      const users = JSON.parse(localStorage.getItem('algoflow_users') || '[]');
+      if (!users.find(u => u.id === user.id)) {
+        users.push({ id: user.id, name: user.name, email: user.email });
+        localStorage.setItem('algoflow_users', JSON.stringify(users));
+      }
+    } catch(e) {}
+  }, [state, user]);
+
+  const doLogin = (name, email) => {
+    const id = 'demo_' + email.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const isTeacher = TEACHER_EMAILS.includes(email.toLowerCase());
+    const newUser = { name, email, id, isTeacher };
+    setUser(newUser);
+    localStorage.setItem('algoflow_user', JSON.stringify(newUser));
+    // Herstel voortgang van bestaande sessie
+    try {
+      const saved = localStorage.getItem('algoflow_progress_' + id);
+      if (saved) setState(JSON.parse(saved));
+    } catch(e) {}
+    setShowLogin(false);
+  };
+
+  const doLoginMicrosoft = async () => {
+    if (IS_DEMO_MODE) { setShowLogin(true); return; }
+    try {
+      const msalApp = new msal.PublicClientApplication(MSAL_CONFIG);
+      await msalApp.initialize();
+      const result = await msalApp.loginPopup({ scopes:['openid','profile','email','User.Read'] });
+      const email = result.account.username;
+      const name  = result.account.name || email.split('@')[0];
+      const id    = result.account.homeAccountId;
+      const isTeacher = TEACHER_EMAILS.includes(email.toLowerCase());
+      const newUser = { name, email, id, isTeacher };
+      setUser(newUser);
+      localStorage.setItem('algoflow_user', JSON.stringify(newUser));
+      try {
+        const saved = localStorage.getItem('algoflow_progress_' + id);
+        if (saved) setState(JSON.parse(saved));
+      } catch(e) {}
+    } catch(err) { console.error('Login failed', err); }
+  };
+
+  const doLogout = () => {
+    setUser(null);
+    localStorage.removeItem('algoflow_user');
+    setState({ xp:0, badges:[], completedModules:[], streak:0 });
+  };
+
+  const exportProgress = () => {
+    if (!user) return;
+    const data = btoa(JSON.stringify({ user:{ id:user.id, name:user.name, email:user.email }, progress:state }));
+    navigator.clipboard.writeText(data).then(() => {
+      setExportMsg('✓ Code gekopieerd!');
+      setTimeout(() => setExportMsg(''), 2500);
+    }).catch(() => {
+      setExportMsg('⚠️ Kon niet kopiëren — gebruik Ctrl+C');
+    });
+  };
+
+  const addXP = useCallback(amt => setState(s => ({...s, xp:s.xp+amt})), []);
+
+  const earnBadge = useCallback(earnedBy => {
+    const badge = BADGES.find(b => b.id===earnedBy || b.earnedBy===earnedBy);
+    if (!badge) return;
+    setState(s => {
+      if (s.badges.includes(badge.id)) return s;
+      setBadgeToast(badge);
+      return {...s, badges:[...s.badges, badge.id]};
+    });
+  }, []);
+
+  const completeModule = useCallback(id => {
+    setState(s => {
+      if (s.completedModules.includes(id)) return s;
+      return {...s, completedModules:[...s.completedModules, id]};
+    });
+    addXP(100);
+  }, [addXP]);
+
+  const level = Math.floor(state.xp/200)+1;
+
+  if (showTeacher && user?.isTeacher) {
+    return (
+      <div style={{minHeight:'100vh',background:'var(--bg)'}}>
+        <div style={{background:'var(--navy)',borderBottom:'3px solid var(--mint)',
+          padding:'0 32px',position:'sticky',top:0,zIndex:100,
+          display:'flex',alignItems:'center',justifyContent:'space-between',height:60,
+          boxShadow:'0 2px 12px rgba(31,65,107,.25)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div style={{background:'var(--mint)',borderRadius:8,width:36,height:36,
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontFamily:'Sora,sans-serif',fontWeight:900,fontSize:14,color:'#fff'}}>AF</div>
+            <span style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:15,color:'#fff'}}>AlgoFlow</span>
+          </div>
+          <span style={{color:'rgba(255,255,255,.7)',fontSize:13}}>{user.name} · Docent</span>
+        </div>
+        <div className="content-wrap">
+          <TeacherDashboard currentUser={user} onClose={() => setShowTeacher(false)}/>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{minHeight:'100vh',background:'var(--bg)'}}>
+      {/* Nav – Odisee huisstijl */}
+      <div style={{background:'var(--navy)',borderBottom:`3px solid var(--mint)`,
+        padding:'0 24px',position:'sticky',top:0,zIndex:100,
+        display:'flex',alignItems:'center',justifyContent:'space-between',height:60,
+        boxShadow:'0 2px 12px rgba(31,65,107,.25)'}}>
+        {/* Logo */}
+        <div style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={()=>setCurModule(null)}>
+          <div style={{background:'var(--mint)',borderRadius:8,width:36,height:36,
+            display:'flex',alignItems:'center',justifyContent:'center',
+            fontFamily:'Sora,sans-serif',fontWeight:900,fontSize:14,color:'#fff',letterSpacing:-.5,
+            boxShadow:'0 2px 6px rgba(0,0,0,.2)'}}>AF</div>
+          <div style={{display:'flex',flexDirection:'column',lineHeight:1.15}}>
+            <span style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:15,color:'#fff',letterSpacing:-.2}}>AlgoFlow</span>
+            <span style={{fontFamily:'DM Sans,sans-serif',fontWeight:400,fontSize:10,color:'rgba(255,255,255,.6)',letterSpacing:.4}}>Odisee · Programmeerfundamenten</span>
+          </div>
+        </div>
+        {/* Rechts */}
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{color:'var(--mint)',fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:13}}>⚡ {state.xp} XP</span>
+          <div style={{background:'var(--mint)',borderRadius:6,padding:'3px 10px',
+            fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:12,color:'#fff'}}>
+            LVL {level}
+          </div>
+          <div style={{display:'flex',gap:4}}>
+            {state.badges.slice(-3).map(id=>{const b=BADGES.find(ba=>ba.id===id);return b?<span key={id} title={b.name} style={{fontSize:15,cursor:'default'}}>{b.emoji}</span>:null;})}
+          </div>
+          {/* Auth sectie */}
+          {user ? (
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              {exportMsg && <span style={{fontSize:11,color:'var(--mint)',fontFamily:'Sora,sans-serif'}}>{exportMsg}</span>}
+              <button onClick={exportProgress} title="Exporteer voortgang (voor docent)"
+                style={{padding:'5px 10px',borderRadius:6,border:'1px solid rgba(255,255,255,.25)',
+                  background:'transparent',color:'rgba(255,255,255,.8)',cursor:'pointer',fontSize:11,
+                  fontFamily:'Sora,sans-serif'}}>
+                📤 Export
+              </button>
+              {user.isTeacher && (
+                <button onClick={() => setShowTeacher(true)}
+                  style={{padding:'5px 10px',borderRadius:6,border:'1px solid rgba(255,255,255,.25)',
+                    background:'rgba(255,255,255,.1)',color:'#fff',cursor:'pointer',fontSize:11,
+                    fontFamily:'Sora,sans-serif',fontWeight:600}}>
+                  👩‍🏫 Klas
+                </button>
+              )}
+              <div style={{display:'flex',alignItems:'center',gap:7,background:'rgba(255,255,255,.1)',
+                borderRadius:20,padding:'4px 12px 4px 8px',cursor:'pointer'}}
+                onClick={doLogout} title="Afmelden">
+                <div style={{width:26,height:26,borderRadius:999,background:'var(--mint)',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:11,color:'#fff'}}>
+                  {user.name[0].toUpperCase()}
+                </div>
+                <span style={{color:'#fff',fontSize:12,fontFamily:'Sora,sans-serif',fontWeight:600,
+                  maxWidth:90,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {user.name.split(' ')[0]}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <button onClick={doLoginMicrosoft}
+              style={{display:'flex',alignItems:'center',gap:7,padding:'6px 14px',
+                borderRadius:8,border:'1px solid rgba(255,255,255,.3)',
+                background:'rgba(255,255,255,.1)',color:'#fff',cursor:'pointer',
+                fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:12,transition:'all .2s'}}>
+              <svg width="14" height="14" viewBox="0 0 21 21" fill="none">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+              </svg>
+              Aanmelden
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="content-wrap">
+        {curModule
+          ? <ModulePage module={curModule} state={state} onBack={()=>setCurModule(null)}
+              onXP={addXP} onBadge={earnBadge} onModuleComplete={completeModule}/>
+          : <Dashboard state={state} modules={MODULES} onModule={setCurModule} user={user}/>}
+      </div>
+
+      {badgeToast && <BadgeToast badge={badgeToast} onDone={()=>setBadgeToast(null)}/>}
+      {showLogin && <DemoLoginModal onLogin={doLogin} onClose={() => setShowLogin(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
