@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DevFlow Academy — Softwareontwikkelflow | Odisee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:   #1f416b;
+    --navy2:  #163256;
+    --mint:   #3cb497;
+    --mint2:  #2a9078;
+    --storm:  #00639c;
+    --red-od: #e73f16;
+    --purple: #9B5CF6;
+    --amber:  #d97706;
+    --bg:     #f0f3f8;
+    --bg2:    #e6ebf2;
+    --bg3:    #d8dfea;
+    --card:   #ffffff;
+    --border: #c2ccd8;
+    --text:   #181716;
+    --text2:  #3a4d62;
+    --text3:  #7a8fa0;
+    --code-bg:#0d1117;
+  }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  h1,h2,h3,h4,h5 { font-family:'Sora',sans-serif; }
+  code,.mono { font-family:'Fira Code',monospace; font-size:.85em; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg2); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--mint); }
+  @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  @keyframes xpPop   { 0%{opacity:0;transform:scale(.4) translateY(0)} 60%{opacity:1;transform:scale(1.3) translateY(-24px)} 100%{opacity:0;transform:scale(1) translateY(-48px)} }
+  @keyframes badgePop{ 0%{opacity:0;transform:scale(.3) rotate(-15deg)} 60%{transform:scale(1.15) rotate(5deg)} 100%{opacity:1;transform:scale(1)} }
+  @keyframes pulse   { 0%,100%{box-shadow:0 0 0 0 rgba(60,180,151,.4)} 50%{box-shadow:0 0 0 8px rgba(60,180,151,0)} }
+  @keyframes shine   { 0%{left:-100%} 100%{left:200%} }
+  .fade-in { animation:fadeIn .3s ease both; }
+  /* Layout */
+  .app-shell { display:grid; grid-template-columns:280px 1fr; grid-template-rows:auto auto 1fr; min-height:100vh; }
+  .topbar { grid-column:1/-1; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:64px; position:sticky; top:0; z-index:100; box-shadow:0 2px 16px rgba(0,0,0,.18); }
+  .topbar-brand { display:flex; align-items:center; gap:12px; }
+  .topbar-brand-icon { width:36px; height:36px; background:var(--mint); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .topbar-brand h1 { font-size:1.1rem; font-weight:800; letter-spacing:-.02em; }
+  .topbar-brand p { font-size:.7rem; color:rgba(255,255,255,.6); font-family:'DM Sans',sans-serif; }
+  .topbar-xp { display:flex; align-items:center; gap:10px; }
+  .xp-badge { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:20px; padding:6px 16px; font-family:'Sora',sans-serif; font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:6px; }
+  .xp-badge span { color:var(--mint); }
+  /* Timeline */
+  .timeline-bar { grid-column:1/-1; background:var(--navy2); padding:16px 28px; overflow-x:auto; }
+  .timeline { display:flex; align-items:center; gap:0; min-width:600px; }
+  .tl-step { flex:1; display:flex; flex-direction:column; align-items:center; position:relative; cursor:pointer; }
+  .tl-step:not(:last-child)::after { content:''; position:absolute; top:18px; left:50%; width:100%; height:3px; background:rgba(255,255,255,.15); z-index:0; }
+  .tl-step.done:not(:last-child)::after { background:var(--mint); }
+  .tl-dot { width:36px; height:36px; border-radius:50%; border:3px solid rgba(255,255,255,.2); background:var(--navy); display:flex; align-items:center; justify-content:center; font-size:15px; position:relative; z-index:1; transition:.2s; }
+  .tl-step.done .tl-dot { background:var(--mint); border-color:var(--mint); }
+  .tl-step.active .tl-dot { background:var(--navy); border-color:var(--mint); box-shadow:0 0 0 4px rgba(60,180,151,.25); animation:pulse 2s infinite; }
+  .tl-label { font-size:.62rem; color:rgba(255,255,255,.55); margin-top:6px; text-align:center; font-family:'DM Sans',sans-serif; font-weight:600; max-width:70px; line-height:1.2; }
+  .tl-step.active .tl-label { color:var(--mint); }
+  .tl-step.done .tl-label { color:rgba(255,255,255,.8); }
+  /* Sidebar */
+  .sidebar { background:var(--card); border-right:1px solid var(--border); padding:24px 16px; position:sticky; top:112px; height:calc(100vh - 112px); overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+  .sidebar-section-title { font-size:.65rem; font-weight:700; letter-spacing:.1em; color:var(--text3); text-transform:uppercase; padding:0 8px 6px; }
+  .sprint-nav-btn { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:none; background:transparent; cursor:pointer; width:100%; text-align:left; transition:.15s; position:relative; }
+  .sprint-nav-btn:hover { background:var(--bg); }
+  .sprint-nav-btn.active { background:var(--bg2); }
+  .sprint-nav-btn .snb-emoji { font-size:18px; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sprint-nav-btn .snb-info { flex:1; min-width:0; }
+  .sprint-nav-btn .snb-title { font-family:'Sora',sans-serif; font-size:.78rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sprint-nav-btn .snb-week { font-size:.65rem; color:var(--text3); }
+  .sprint-nav-btn .snb-status { font-size:.6rem; font-weight:700; padding:2px 7px; border-radius:10px; flex-shrink:0; }
+  .status-active { background:rgba(60,180,151,.15); color:var(--mint2); }
+  .status-done   { background:rgba(60,180,151,.15); color:var(--mint2); }
+  .status-locked { background:var(--bg2); color:var(--text3); }
+  .sidebar-progress { margin-top:auto; padding-top:16px; border-top:1px solid var(--border); }
+  .prog-label { font-size:.7rem; color:var(--text3); margin-bottom:6px; display:flex; justify-content:space-between; }
+  .prog-bar-outer { height:8px; background:var(--bg2); border-radius:4px; overflow:hidden; }
+  .prog-bar-inner { height:100%; background:linear-gradient(90deg,var(--mint),var(--storm)); border-radius:4px; transition:width .4s ease; }
+  /* Main content */
+  .main { padding:32px 36px; max-width:900px; }
+  /* Sprint header */
+  .sprint-header { display:flex; align-items:flex-start; gap:20px; margin-bottom:28px; animation:fadeIn .3s ease both; }
+  .sprint-icon { width:64px; height:64px; border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:30px; flex-shrink:0; }
+  .sprint-header-info h2 { font-size:1.6rem; font-weight:800; letter-spacing:-.03em; margin-bottom:4px; }
+  .sprint-header-info p { color:var(--text2); font-size:.9rem; }
+  .sprint-week-tag { display:inline-flex; align-items:center; gap:6px; background:var(--bg2); border-radius:20px; padding:4px 12px; font-size:.72rem; font-weight:700; color:var(--text3); margin-bottom:8px; }
+  /* Tab nav */
+  .tab-nav { display:flex; gap:4px; background:var(--bg2); border-radius:12px; padding:4px; margin-bottom:28px; }
+  .tab-btn { flex:1; padding:9px 0; border:none; background:transparent; border-radius:9px; font-family:'DM Sans',sans-serif; font-size:.83rem; font-weight:600; color:var(--text3); cursor:pointer; transition:.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .tab-btn.active { background:var(--card); color:var(--text); box-shadow:0 1px 6px rgba(0,0,0,.08); }
+  /* Theory */
+  .theory-grid { display:grid; gap:16px; }
+  .theory-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 2px 8px rgba(31,65,107,.06); transition:.2s; }
+  .theory-card:hover { box-shadow:0 4px 16px rgba(31,65,107,.1); transform:translateY(-1px); }
+  .theory-card-head { padding:16px 20px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+  .theory-card-head h3 { font-size:.92rem; font-weight:700; flex:1; }
+  .theory-card-body { padding:0 20px 16px; }
+  .theory-content { font-size:.87rem; color:var(--text2); line-height:1.65; white-space:pre-wrap; }
+  .theory-code { margin-top:12px; background:var(--code-bg); border-radius:10px; padding:14px 16px; font-family:'Fira Code',monospace; font-size:.78rem; color:#c9d1d9; line-height:1.7; white-space:pre; overflow-x:auto; }
+  .theory-code .c-green  { color:#7ee787; }
+  .theory-code .c-blue   { color:#79c0ff; }
+  .theory-code .c-orange { color:#ffa657; }
+  .theory-code .c-gray   { color:#8b949e; }
+  .chevron { font-size:12px; color:var(--text3); transition:.2s; }
+  .chevron.open { transform:rotate(180deg); }
+  /* Quiz */
+  .quiz-area { display:flex; flex-direction:column; gap:20px; }
+  .quiz-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:22px; box-shadow:0 2px 8px rgba(31,65,107,.06); position:relative; }
+  .quiz-card.correct { border-color:var(--mint); background:rgba(60,180,151,.04); }
+  .quiz-card.incorrect { border-color:var(--red-od); background:rgba(231,63,22,.04); }
+  .quiz-num { font-size:.65rem; font-weight:700; letter-spacing:.08em; color:var(--text3); text-transform:uppercase; margin-bottom:8px; }
+  .quiz-q { font-family:'Sora',sans-serif; font-size:.95rem; font-weight:600; margin-bottom:16px; line-height:1.45; }
+  .quiz-q code { background:var(--bg2); border-radius:5px; padding:1px 6px; color:var(--storm); font-size:.88em; }
+  .mc-options { display:grid; gap:8px; }
+  .mc-option { padding:10px 14px; border-radius:9px; border:2px solid var(--border); background:var(--bg); font-family:'DM Sans',sans-serif; font-size:.85rem; cursor:pointer; text-align:left; transition:.15s; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .mc-option:hover:not(:disabled) { border-color:var(--storm); background:rgba(0,99,156,.06); }
+  .mc-option.selected-correct { border-color:var(--mint); background:rgba(60,180,151,.1); color:var(--mint2); }
+  .mc-option.selected-wrong   { border-color:var(--red-od); background:rgba(231,63,22,.08); color:var(--red-od); }
+  .mc-option.reveal-correct   { border-color:var(--mint); background:rgba(60,180,151,.06); }
+  .mc-option:disabled { cursor:default; }
+  .fill-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .fill-prefix { font-family:'Fira Code',monospace; font-size:.85rem; color:var(--code-bg); background:var(--bg2); padding:8px 12px; border-radius:8px; white-space:nowrap; color:var(--text2); }
+  .fill-input { font-family:'Fira Code',monospace; font-size:.9rem; border:2px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--card); color:var(--text); width:140px; outline:none; transition:.15s; }
+  .fill-input:focus { border-color:var(--storm); }
+  .fill-input.correct { border-color:var(--mint); background:rgba(60,180,151,.08); }
+  .fill-input.wrong   { border-color:var(--red-od); background:rgba(231,63,22,.06); }
+  .check-btn { padding:8px 18px; background:var(--navy); color:#fff; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:600; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .check-btn:hover:not(:disabled) { background:var(--storm); }
+  .check-btn:disabled { opacity:.5; cursor:default; }
+  .quiz-feedback { margin-top:10px; font-size:.8rem; font-weight:600; display:flex; align-items:center; gap:6px; }
+  .quiz-feedback.ok  { color:var(--mint2); }
+  .quiz-feedback.err { color:var(--red-od); }
+  .xp-float { position:absolute; top:16px; right:16px; font-family:'Sora',sans-serif; font-size:.75rem; font-weight:700; color:var(--mint); background:rgba(60,180,151,.1); border-radius:10px; padding:3px 9px; display:flex; align-items:center; gap:4px; }
+  .xp-gained { animation:xpPop .8s ease forwards; position:absolute; top:8px; right:60px; font-family:'Sora',sans-serif; font-weight:800; color:var(--mint); font-size:1.1rem; pointer-events:none; }
+  /* Deliverables */
+  .deliverable-list { display:flex; flex-direction:column; gap:10px; }
+  .deliverable-item { display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 18px; cursor:pointer; transition:.15s; }
+  .deliverable-item:hover { border-color:var(--storm); }
+  .deliverable-item.checked { background:rgba(60,180,151,.06); border-color:var(--mint); }
+  .check-circle { width:24px; height:24px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; transition:.15s; }
+  .deliverable-item.checked .check-circle { background:var(--mint); border-color:var(--mint); color:#fff; }
+  .deliverable-text { font-size:.88rem; color:var(--text2); line-height:1.4; }
+  .deliverable-item.checked .deliverable-text { color:var(--text3); text-decoration:line-through; }
+  .deliv-xp-tag { margin-left:auto; font-size:.65rem; font-weight:700; color:var(--amber); background:rgba(217,119,6,.1); border-radius:8px; padding:3px 8px; white-space:nowrap; }
+  /* Summary card */
+  .summary-card { background:var(--navy); color:#fff; border-radius:16px; padding:24px; margin-top:28px; display:flex; align-items:center; gap:20px; }
+  .summary-icon { font-size:36px; }
+  .summary-info h3 { font-size:1rem; font-weight:700; margin-bottom:4px; }
+  .summary-info p { font-size:.8rem; color:rgba(255,255,255,.6); }
+  .summary-xp { margin-left:auto; text-align:right; }
+  .summary-xp .val { font-family:'Sora',sans-serif; font-size:2rem; font-weight:800; color:var(--mint); }
+  .summary-xp .lbl { font-size:.65rem; color:rgba(255,255,255,.5); }
+  /* Overview */
+  .overview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .overview-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; cursor:pointer; transition:.2s; box-shadow:0 2px 8px rgba(31,65,107,.06); }
+  .overview-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(31,65,107,.12); }
+  .overview-card .oc-emoji { font-size:28px; margin-bottom:12px; }
+  .overview-card .oc-week { font-size:.65rem; font-weight:700; letter-spacing:.08em; color:var(--text3); text-transform:uppercase; margin-bottom:4px; }
+  .overview-card .oc-title { font-family:'Sora',sans-serif; font-size:1rem; font-weight:700; margin-bottom:8px; }
+  .overview-card .oc-desc { font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:14px; }
+  .oc-prog { }
+  .oc-prog-bar { height:5px; background:var(--bg2); border-radius:3px; overflow:hidden; margin-top:6px; }
+  .oc-prog-inner { height:100%; border-radius:3px; transition:width .4s; }
+  .oc-prog-label { font-size:.65rem; color:var(--text3); display:flex; justify-content:space-between; }
+  /* Welcome */
+  .welcome-hero { background:linear-gradient(135deg,var(--navy) 0%,var(--storm) 100%); border-radius:20px; padding:40px 36px; color:#fff; margin-bottom:32px; position:relative; overflow:hidden; }
+  .welcome-hero::before { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; background:rgba(255,255,255,.04); border-radius:50%; }
+  .welcome-hero::after { content:''; position:absolute; bottom:-60px; right:80px; width:150px; height:150px; background:rgba(60,180,151,.1); border-radius:50%; }
+  .welcome-hero h2 { font-size:1.8rem; font-weight:800; margin-bottom:8px; }
+  .welcome-hero p { color:rgba(255,255,255,.75); max-width:500px; line-height:1.6; font-size:.95rem; }
+  .welcome-tags { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+  .welcome-tag { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:20px; padding:5px 14px; font-size:.75rem; font-weight:600; }
+  @media(max-width:768px){
+    .app-shell { grid-template-columns:1fr; }
+    .sidebar { display:none; }
+    .main { padding:20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ══════════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════════
+const SPRINTS = [
+  {
+    id: 1,
+    title: "De Fundering",
+    subtitle: "Requirements & Samenwerking",
+    emoji: "🗺️",
+    color: "#3cb497",
+    weeks: "Week 1–3",
+    tagline: "Van klantvraag naar Product Backlog en Git-repository",
+    theory: [
+      {
+        title: "Wat is een softwareproject?",
+        icon: "💡",
+        content: `Een softwareproject is het gestructureerd bouwen van een digitaal product — van een eerste idee tot een werkende applicatie die mensen echt gebruiken.
+
+Elk softwareproject doorloopt dezelfde grote fases:
+
+1. Requirements → Wat moet het product kunnen? Wat wil de klant?
+2. Design → Hoe ziet het eruit? Hoe is de architectuur opgebouwd?
+3. Development → Het effectief bouwen van de software
+4. Testing → Controleren of alles correct en stabiel werkt
+5. Deployment → Online zetten zodat gebruikers het kunnen gebruiken
+6. Onderhoud → Bugs fixen, updates uitbrengen, uitbreiden
+
+In dit project doorloop je al deze fases samen met je team, verdeeld over 5 sprints van telkens 3 weken.`,
+        code: `// De grote lijn van jullie project
+Week 1-3   → Requirements & Planning
+Week 4-6   → Prototype bouwen
+Week 7-9   → Testen & Verfijnen
+Week 10-12 → MVP afwerken
+Week 13-15 → Deployment & Presentatie`
+      },
+      {
+        title: "Prototype vs. MVP vs. Eindproduct",
+        icon: "🧱",
+        content: `Tijdens het project bouw je stapsgewijs: eerst een prototype, dan een MVP, dan het eindproduct.
+
+🔧 Prototype (Sprint 2):
+Een ruwe, klikbare versie van je app — om ideeën te testen. Niet alles werkt perfect. Het doel: "Ziet dit eruit als wat de klant bedoelde?" Gebouwd met AI-hulp, snel en iteratief.
+
+🚀 MVP — Minimum Viable Product (Sprint 4):
+De kleinst mogelijke versie die echt werkt voor gebruikers. Alle kernfuncties zijn werkend en getest. Geen overbodige features — enkel wat noodzakelijk is.
+
+✅ Eindproduct (Sprint 5):
+Live beschikbaar via een publieke URL. Getest, gedocumenteerd, gepresenteerd.
+
+Onthoud: een prototype is om te leren. Een MVP is om te leveren.`,
+        code: `// Vergelijking
+Prototype  → Snel, AI-gegenereerd, visueel
+             Doel: valideren met klant
+             "Klopt dit met uw verwachting?"
+
+MVP        → Werkend, getest, stabiel
+             Doel: echte gebruikers bedienen
+             Kernfuncties 100% functioneel
+
+Eindproduct → Live, gepresenteerd, ingediend`
+      },
+      {
+        title: "Vragen stellen aan de opdrachtgever",
+        icon: "🎙️",
+        content: `De grootste fout in softwareprojecten: iets bouwen dat de klant niet bedoelde. Oorzaak: onvoldoende vragen gesteld aan het begin.
+
+Waarom vragen stellen zo belangrijk is:
+De klant denkt in problemen en wensen — niet in technische oplossingen. Jij moet die wensen omzetten naar concrete requirements. Dat lukt alleen door gerichte vragen.
+
+Techniek — het klantinterview:
+• Begin breed: "Vertel eens over uw huidige situatie. Wat werkt niet goed?"
+• Graaf dieper: "Waarom is dat een probleem? Hoe vaak komt dit voor?"
+• Concretiseer: "Wie gebruikt dit? Hoeveel mensen tegelijk?"
+• Prioriteer: "Als u één ding kon veranderen, wat zou dat zijn?"
+• Valideer: "Ik begrijp dat u X wilt — klopt dat?"
+
+Gebruik ALTIJD open vragen (beginnen met Wie/Wat/Hoe/Waarom) — geen ja/nee-vragen!`,
+        code: `// ❌ Slechte vragen
+"Wilt u een loginpagina?"    → Ja/nee
+"Moet het mobiel werken?"    → Ja/nee
+
+// ✅ Goede vragen
+"Wie gaat de app gebruiken en in welke situatie?"
+"Hoe verloopt dat proces nu, zonder app?"
+"Wat is het grootste knelpunt vandaag?"
+"Hoe weet u dat de app succesvol is?"`
+      },
+      {
+        title: "Requirements ophalen en documenteren",
+        icon: "📋",
+        content: `Requirements zijn de concrete beschrijvingen van wat het systeem moet doen en hoe het zich moet gedragen.
+
+Twee soorten requirements:
+
+Functionele requirements — wat het systeem DOET:
+→ "De gebruiker kan inloggen met e-mail en wachtwoord"
+→ "De beheerder kan producten toevoegen en verwijderen"
+→ "Het systeem stuurt een bevestigingsmail na bestelling"
+
+Niet-functionele requirements — hoe het systeem zich GEDRAAGT:
+→ Snelheid: "De pagina laadt binnen 2 seconden"
+→ Veiligheid: "Wachtwoorden worden gehashed opgeslagen"
+→ Gebruiksvriendelijkheid: "Een nieuwe gebruiker vindt de bestelknop zonder uitleg"
+
+Hoe documenteer je requirements?
+Schrijf ze op als concrete, testbare zinnen — niet vaag! "Snel zijn" is geen requirement. "Laden in < 2 sec" is dat wel.`,
+        code: `// Requirements document (basis)
+Functioneel:
+FR-01: Gebruiker kan registreren met e-mail
+FR-02: Gebruiker kan producten filteren op categorie
+FR-03: Systeem berekent totaalprijs incl. BTW
+
+Niet-functioneel:
+NFR-01: App werkt op mobiel (min. 360px breed)
+NFR-02: Pagina laadt in < 2 seconden
+NFR-03: Geen plaintext wachtwoorden in database`
+      },
+      {
+        title: "Scrum in een notendop",
+        icon: "🔄",
+        content: `Scrum is een agile framework dat werkt met korte iteraties (sprints). In plaats van alles vooraf te plannen, lever je elke sprint iets werkends op en pas je bij op basis van feedback.
+
+Kernrollen:
+• Product Owner — vertegenwoordigt de klant, beheert de backlog
+• Scrum Master — bewaakt het proces, ruimt obstakels op
+• Development Team — jullie! Zelforganiserend en multidisciplinair
+
+Kernartefacten:
+• Product Backlog — alles wat het product ooit moet kunnen (geprioriteerd)
+• Sprint Backlog — wat jullie DEZE sprint gaan doen
+• Increment — het werkende, geteste stuk software na elke sprint
+
+Elke sprint heeft dezelfde vaste cyclus van 4 events: planning → daily standups → review → retro.`,
+        code: `// Sprint-cyclus (3 weken)
+Sprint Planning  → Wat gaan we doen? (dag 1)
+Daily Standup    → Wat deed ik? Wat doe ik? Blokkades? (elke dag, 15 min)
+Sprint Review    → Demo voor de klant (dag 15)
+Sprint Retro     → Wat ging goed? Wat beter? (dag 15)`
+      },
+      {
+        title: "User Stories schrijven",
+        icon: "📝",
+        content: `User Stories zijn een manier om requirements te beschrijven vanuit het oogpunt van de gebruiker — niet vanuit techniek. Ze vormen de bouwstenen van je Product Backlog.
+
+Format: "Als [ROL] wil ik [FUNCTIONALITEIT] zodat [VOORDEEL]."
+
+Goed voorbeeld:
+"Als klant wil ik mijn winkelmandje kunnen bekijken zodat ik weet wat ik ga bestellen."
+
+Slecht voorbeeld:
+"Er moet een database-query komen voor cart items." (technisch, geen gebruikersperspectief)
+
+Van requirement naar User Story:
+Requirement: "Gebruiker kan inloggen met e-mail en wachtwoord"
+User Story: "Als bezoeker wil ik inloggen met mijn e-mail en wachtwoord zodat ik toegang krijg tot mijn account."
+
+Voeg Acceptatiecriteria toe — concrete, testbare voorwaarden:
+• Foutmelding bij verkeerd wachtwoord
+• Redirect naar dashboard na succesvol inloggen`,
+        code: `// Template
+Als [rol] wil ik [functionaliteit]
+zodat [voordeel].
+
+Acceptatiecriteria:
+- [ ] Criterium 1 (testbaar!)
+- [ ] Criterium 2
+- [ ] Criterium 3`
+      },
+      {
+        title: "AI gebruiken voor requirements",
+        icon: "🤖",
+        content: `Gebruik AI (ChatGPT / Gemini / Claude) als sparring partner om requirements te ontdekken, te verfijnen én om te zetten naar User Stories.
+
+Effectieve prompts:
+1. Ontdekkingsfase: "Ik bouw een app voor [doelgroep]. Stel me vragen om de behoeften te ontdekken."
+2. Gesprek → Requirements: "Hier is het transcript van mijn klantinterview: [tekst]. Zet dit om naar een lijst van functionele requirements."
+3. Requirements → Stories: "Zet deze requirements om naar User Stories in het 'Als...wil ik...zodat...' formaat en voeg acceptatiecriteria toe."
+4. Verfijnen: "Bekijk deze User Story en controleer of ze SMART is (Specifiek, Meetbaar, Acceptabel, Realistisch, Tijdgebonden)."
+
+Let op: AI geeft suggesties — valideer altijd met de echte klant!`,
+        code: `// Prompting workflow
+Stap 1: Klantinterview → transcript
+Stap 2: "Zet dit interview om naar requirements"
+Stap 3: "Maak van elke requirement een User Story"
+Stap 4: "Voeg acceptatiecriteria toe"
+Stap 5: Valideer met klant!`
+      },
+      {
+        title: "Git Basis",
+        icon: "🌿",
+        content: `Git is een versiebeheersysteem — het houdt de volledige geschiedenis van je code bij. Iedereen in het team werkt in hetzelfde systeem zonder elkaars werk te overschrijven.
+
+Essentiële commando's:
+• git init          — nieuw lokaal repository aanmaken
+• git clone [url]   — bestaand repo kopiëren naar je pc
+• git status        — bekijk welke bestanden gewijzigd zijn
+• git add .         — alle wijzigingen klaarzetten (staging)
+• git commit -m "bericht"  — snapshot opslaan
+• git push          — commits uploaden naar GitHub
+• git pull          — laatste versie ophalen
+
+Gouden regel voor commit-berichten:
+✅ "Voeg loginpagina toe met validatie"
+❌ "update" / "fix" / "asdfgh"`,
+        code: `# Typische werkflow
+git clone https://github.com/team/project
+git status
+git add .
+git commit -m "Voeg productlijst toe"
+git push origin main`
+      }
+    ],
+    quiz: [
+      {
+        type: "mc",
+        q: "Wat is het verschil tussen een PROTOTYPE en een MVP?",
+        options: [
+          "Er is geen verschil, het is hetzelfde",
+          "Een prototype is om te leren en valideren; een MVP is een werkend product voor echte gebruikers",
+          "Een MVP is altijd mooier dan een prototype",
+          "Een prototype heeft meer features dan een MVP"
+        ],
+        answer: 1, xp: 20
+      },
+      {
+        type: "mc",
+        q: "Welk type vragen stel je best aan een opdrachtgever tijdens een interview?",
+        options: [
+          "Gesloten ja/nee-vragen zodat het snel gaat",
+          "Open vragen zoals 'Hoe verloopt dit nu?' en 'Waarom is dit een probleem?'",
+          "Technische vragen over databases en frameworks",
+          "Vragen over het budget"
+        ],
+        answer: 1, xp: 20
+      },
+      {
+        type: "mc",
+        q: "Welk van deze is een FUNCTIONELE requirement?",
+        options: [
+          "De pagina laadt in minder dan 2 seconden",
+          "Wachtwoorden worden gehashed opgeslagen",
+          "De gebruiker kan inloggen met e-mail en wachtwoord",
+          "De app werkt op mobiele schermen"
+        ],
+        answer: 2, xp: 20
+      },
+      {
+        type: "mc",
+        q: "Welk Scrum-artefact beschrijft ALLES wat het product ooit moet kunnen?",
+        options: ["Sprint Backlog", "Product Backlog", "Increment", "Sprint Review"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "mc",
+        q: "Een User Story begint altijd met...",
+        options: ["Het systeem moet...", "Als [rol] wil ik...", "TODO:", "Feature:"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "fill",
+        q: "Je hebt lokale wijzigingen gemaakt. Gebruik `git ___` om ze klaar te zetten voor een commit.",
+        prefix: "git ", suffix: "",
+        answer: ["add"], xp: 25
+      },
+      {
+        type: "fill",
+        q: "Om je lokale commits naar GitHub te uploaden gebruik je `git ___`.",
+        prefix: "git ", suffix: "",
+        answer: ["push"], xp: 25
+      },
+      {
+        type: "mc",
+        q: "Welke Scrum-rol vertegenwoordigt de klant/stakeholder?",
+        options: ["Scrum Master", "Development Team", "Product Owner", "Agile Coach"],
+        answer: 2, xp: 20
+      }
+    ],
+    deliverables: [
+      "Klantinterview afgenomen en requirements gedocumenteerd (min. 5 FR + 2 NFR)",
+      "Product Backlog aangemaakt (min. 10 User Stories met acceptatiecriteria)",
+      "GitHub repository aangemaakt en gedeeld met alle teamleden",
+      "Iedereen heeft de repo gecloned en een test-commit gedaan",
+      "Eerste Sprint Planning gedaan en Sprint Backlog gevuld"
+    ]
+  },
+  {
+    id: 2,
+    title: "Vibecoding",
+    subtitle: "Het Prototype Bouwen met AI",
+    emoji: "🤖",
+    color: "#00639c",
+    weeks: "Week 4–6",
+    tagline: "AI coding agent als co-developer: van User Stories naar klikbaar prototype",
+    theory: [
+      {
+        title: "Van Chatbot naar Agent — de Mindshift",
+        icon: "🧠",
+        content: `In Sprint 1 gebruikte je AI als chatbot: vragen stellen, requirements ophalen, User Stories schrijven. Nu verschuift je rol.
+
+Sprint 2: AI als coding agent — voor het bouwen van het PROTOTYPE.
+
+Wat verandert er?
+• Chatbot: je plakt code heen en weer, context gaat verloren, jij schrijft nog veel zelf
+• Agent: de AI heeft toegang tot je volledige codebase, ziet alle bestanden, schrijft en past direct aan
+
+De mindshift voor jullie rol:
+→ Niet meer: "Ik schrijf elke regel zelf"
+→ Wel: "Ik geef de richting aan, review de code, stuur bij waar nodig"
+
+Jullie zijn de REGISSEUR — de AI is de uitvoerende.
+
+Belangrijke spelregel: review ALTIJD de gegenereerde code. Begrijp wat er staat voor je het opslaat. Vraag gerust: "Verklaar deze code regel voor regel." Jij bent eindverantwoordelijk.`,
+        code: `// Rolverdeling jij ↔ agent
+Jij:    "Maak een loginformulier met
+         e-mail + wachtwoord validatie"
+Agent:  Genereert de code
+Jij:    Leest, begrijpt, test lokaal
+Jij:    Stuurt bij indien nodig
+Jij:    Commit naar Git`
+      },
+      {
+        title: "Wat is een AI Coding Agent?",
+        icon: "⚡",
+        content: `Een coding agent (Cursor, GitHub Copilot, Windsurf) is een AI-tool geïntegreerd in je IDE die code voor jou kan schrijven, verklaren en aanpassen — direct in je project.
+
+Voordeel t.o.v. een gewone chatbot:
+• Chatbot (ChatGPT/Gemini): je plakt code heen en weer, de AI kent je project niet
+• Agent (Cursor/Copilot): ziet je volledige codebase, alle bestanden en hun samenhang, past direct aan
+
+In deze sprint gebruik je de agent om snel een prototype te bouwen op basis van je User Stories en wireframes uit Sprint 1.
+
+Typische taken voor de agent tijdens prototyping:
+→ "Genereer de HTML/CSS structuur voor de homepagina"
+→ "Maak een navigatiemenu dat linkt naar alle pagina's"
+→ "Voeg een productkaart-component toe met naam, prijs en foto"`,
+        code: `// Jij → Agent (Cursor voorbeeld)
+Cmd+K: "Maak een productlijstpagina
+die de items uit products.json inlaadt
+en weergeeft als kaarten in een grid.
+Gebruik onze bestaande CSS-klassen."
+
+// Agent schrijft de volledige pagina
+// Jij reviewt, test, commit`
+      },
+      {
+        title: "Goede Prompts Schrijven voor Code",
+        icon: "✍️",
+        content: `De kwaliteit van de gegenereerde code hangt DIRECT af van de kwaliteit van je prompt. Een vage prompt geeft vage, onbruikbare code.
+
+Een goede code-prompt bevat:
+1. Context — Wat is het project? Welk bestand/framework?
+2. Doel — Wat moet de code precies doen?
+3. Randvoorwaarden — Taal, libraries, stijl, beperkingen
+4. Voorbeeld — Input/output of een vergelijkbaar stuk code
+
+Vertrek vanuit je User Stories! Je hebt ze al geschreven in Sprint 1 — gebruik ze als basis voor je prompts.
+
+❌ Slecht: "maak een loginformulier"
+
+✅ Goed: "Maak een HTML/CSS loginformulier voor mijn webshop (bestaand project in vanilla JS). Velden: e-mail en wachtwoord. Voeg client-side validatie toe die een rode foutmelding toont als het e-mailveld leeg is of geen @-teken bevat. Geen externe libraries. Gebruik dezelfde stijl als index.html."`,
+        code: `// Prompt-template voor prototype
+"In dit project ([framework/taal]) wil ik
+[pagina/component] bouwen.
+
+User Story: Als [rol] wil ik [functie]
+zodat [voordeel].
+
+Randvoorwaarden: [stijl, libs, beperkingen].
+Gebruik de bestaande [bestand/klasse]."`
+      },
+      {
+        title: "Git Branching voor teamwerk",
+        icon: "🌿",
+        content: `Nu je met meerdere personen tegelijk code schrijft (deels met AI-hulp), is branching essentieel. Zonder branches overschrijf je elkaars werk.
+
+Werkwijze — één branch per feature/pagina:
+1. git checkout -b feature/login  → nieuwe branch + ernaar switchen
+2. Werk aan je feature (AI genereert, jij reviewt)
+3. git add . && git commit -m "Voeg loginpagina toe"
+4. git push origin feature/login
+5. Open een Pull Request op GitHub
+6. Teamlid reviewt de code → merge naar main
+
+GOUDEN REGEL: NOOIT direct op 'main' pushen!
+main = altijd de werkende, stabiele versie van je prototype.
+
+Tip: commit regelmatig — na elke werkende stap, niet pas op het einde.`,
+        code: `git checkout main
+git pull                        # Up-to-date beginnen
+git checkout -b feature/login   # Eigen branch
+
+# ... agent genereert code, jij reviewt ...
+
+git add .
+git commit -m "Voeg loginpagina toe met validatie"
+git push origin feature/login
+# → Pull Request op GitHub → teammate reviewt`
+      }
+    ],
+    quiz: [
+      {
+        type: "fill",
+        q: "Om een nieuwe branch aan te maken en er direct naar te switchen: `git checkout -b ___`",
+        prefix: "git checkout -b ", suffix: "",
+        answer: ["feature/login","feature/home","feature/naam","feature/mijn-feature"], xp: 25,
+        acceptAny: true
+      },
+      {
+        type: "mc",
+        q: "Wat is het GROOTSTE voordeel van een coding agent t.o.v. een gewone chatbot?",
+        options: ["Het is sneller","Het heeft toegang tot je volledige codebase","Het is gratis","Het kent meer talen"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "fill",
+        q: "Je werkt op branch 'feature/home'. Om je commit naar GitHub te uploaden: `git push origin ___`",
+        prefix: "git push origin ", suffix: "",
+        answer: ["feature/home"], xp: 25
+      },
+      {
+        type: "mc",
+        q: "Welk element is NIET nodig in een goede code-prompt?",
+        options: ["Context over het project","Jouw naam","Het gewenste resultaat","Randvoorwaarden"],
+        answer: 1, xp: 20
+      }
+    ],
+    deliverables: [
+      "Coding Agent (Cursor / Copilot / Windsurf) geïnstalleerd en geconfigureerd",
+      "Eerste werkende pagina's gegenereerd met behulp van AI",
+      "Elk teamlid werkt op een eigen feature-branch",
+      "Functioneel klikbaar prototype beschikbaar op GitHub"
+    ]
+  },
+  {
+    id: 3,
+    title: "Reality Check",
+    subtitle: "Refactoring & Klantvalidatie",
+    emoji: "🔍",
+    color: "#e73f16",
+    weeks: "Week 7–9",
+    tagline: "Testen met echte gebruikers en code opschonen",
+    theory: [
+      {
+        title: "Klantvalidatie — Usability Testing",
+        icon: "👥",
+        content: `Test je prototype met echte gebruikers. Niet met vrienden die "het mooi vinden" — met mensen uit de doelgroep die eerlijk reageren.
+
+Think-Aloud methode:
+1. Geef de gebruiker een taak zonder uitleg: "Bestel een product"
+2. Vraag hen hardop te denken terwijl ze het doen
+3. Observeer en noteer waar ze vastlopen — zeg NIETS
+4. Stel achteraf open vragen: "Wat vond je verwarrend?"
+
+Resultaat: een lijst verbeterpunten voor je Sprint Backlog.
+
+Gouden regel: als 3 gebruikers hetzelfde probleem hebben, is het een designprobleem — niet een gebruikersprobleem.`,
+        code: `// Testscript template
+Taak: "Voeg product X toe aan je mandje
+       en ga naar de betalingspagina."
+
+Observeer: Waar aarzelt de gebruiker?
+Noteer:    Kliks op verkeerde elementen
+Achteraf:  "Wat was onduidelijk?"`
+      },
+      {
+        title: "AI-Spaghetti Code Herkennen",
+        icon: "🍝",
+        content: `AI genereert snel veel code, maar die is niet altijd clean of onderhoudbaar. Leer de signalen herkennen:
+
+❌ Red flags in AI-gegenereerde code:
+• Duplicaat code — hetzelfde logica op meerdere plaatsen
+• Magic numbers — willekeurige getallen zonder uitleg (bijv. * 1.21 zonder comment)
+• Te lange functies — een functie > 20 regels doet waarschijnlijk te veel
+• Onduidelijke namen — x, temp, data, stuff, val
+
+Hoe refactoren met AI:
+"Verklaar deze functie en refactor haar zodat ze leesbaar, herbruikbaar en goed becommentarieerd is."
+
+Onthoud: Refactoring verandert de interne structuur zonder het extern gedrag te wijzigen.`,
+        code: `// ❌ Voor refactoring
+function p(d) {
+  return d.filter(x => x.s === 1)
+    .map(x => x.p * 1.21).reduce((a,b)=>a+b,0);
+}
+
+// ✅ Na refactoring
+const BTW_PERCENTAGE = 1.21;
+function berekenTotaalMetBTW(producten) {
+  const actieveProducten = producten
+    .filter(product => product.isActief);
+  return actieveProducten
+    .map(p => p.prijs * BTW_PERCENTAGE)
+    .reduce((som, prijs) => som + prijs, 0);
+}`
+      },
+      {
+        title: "Merge Conflicten Oplossen",
+        icon: "⚔️",
+        content: `Een merge conflict ontstaat als twee personen hetzelfde bestand op dezelfde plek hebben aangepast. Git weet niet welke versie de juiste is.
+
+Git markeert het conflict zo:
+<<<<<<< HEAD           ← jouw versie
+const titel = "Hallo";
+=======                ← scheidslijn
+const titel = "Welkom";
+>>>>>>> feature/home   ← hun versie
+
+Stappenplan:
+1. Open het bestand in je editor
+2. Kies welke versie je wilt — of combineer ze
+3. Verwijder de conflict-markers (<<<, ===, >>>)
+4. Sla op, test of het werkt
+5. git add . && git commit
+
+Preventie: bespreek wie welk bestand aanpast vóór je begint!`,
+        code: `# Conflict oplossen
+git status          # zie welke bestanden conflicteren
+# ... open bestand, bewerk handmatig ...
+git add .
+git commit -m "Merge conflict opgelost in header.js"`
+      },
+      {
+        title: "Customer Evaluation",
+        icon: "📊",
+        content: `Presenteer het prototype aan de "klant" (docent of echte stakeholder) voor formele feedback. Dit is een Scrum Sprint Review.
+
+Structuur:
+1. Demo — toon de werkende functionaliteiten (geen slides!)
+2. Bespreek wat gedaan is vs. wat gepland was
+3. Vraag feedback: Wat mist er? Wat werkt goed? Wat moet anders?
+
+Na de evaluation:
+• Verwerk feedback als nieuwe User Stories in de Product Backlog
+• Prioriteer samen met de Product Owner
+• Pas de planning aan voor de volgende sprint
+
+Onthoud: feedback is een cadeau, geen kritiek. Hoe vroeger je het ontdekt, hoe goedkoper het is om te fixen.`,
+        code: `// Sprint Review agenda
+1. Demo werkende features (10 min)
+2. Toon Sprint Backlog: gedaan vs. niet
+3. Vraag feedback van stakeholders
+4. Update Product Backlog samen
+5. Bespreek volgende sprint`
+      }
+    ],
+    quiz: [
+      {
+        type: "mc",
+        q: "Wat is een 'merge conflict'?",
+        options: ["Een bug in je code","Twee personen wijzigden hetzelfde bestand op dezelfde plek","GitHub is offline","Je commit-bericht is fout"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "fill",
+        q: "Na het oplossen van een merge conflict moet je de bestanden opnieuw stagen: `git ___ .`",
+        prefix: "git ", suffix: " .",
+        answer: ["add"], xp: 25
+      },
+      {
+        type: "mc",
+        q: "Welke usability testing methode observeert gebruikers ZONDER uitleg te geven?",
+        options: ["Survey","Think-Aloud Testing","A/B Testing","Expert Review"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "fill",
+        q: "Om de branch 'feature/login' samen te voegen in 'main': switch naar main, dan `git ___ feature/login`",
+        prefix: "git ", suffix: " feature/login",
+        answer: ["merge"], xp: 25
+      }
+    ],
+    deliverables: [
+      "Usability test uitgevoerd met minstens 1 externe testpersoon",
+      "Feedbackrapport geschreven met bevindingen en verbeterpunten",
+      "Codebase gerefactored op basis van AI-review (geen spaghetti meer)",
+      "Customer Evaluation gepresenteerd en prototype goedgekeurd"
+    ]
+  },
+  {
+    id: 4,
+    title: "Van Prototype naar MVP",
+    subtitle: "Testing & Kwaliteit",
+    emoji: "🧪",
+    color: "#9B5CF6",
+    weeks: "Week 10–12",
+    tagline: "Een stabiel, getest Minimum Viable Product opleveren",
+    theory: [
+      {
+        title: "Wat is een MVP?",
+        icon: "🎯",
+        content: `Een Minimum Viable Product (MVP) is de kleinst mogelijke versie van je product met net genoeg features om echte waarde te bieden aan gebruikers.
+
+MVP ≠ half afgewerkt product
+MVP = volledig werkend product met bewust beperkte scope
+
+Hoe bepaal je de scope?
+→ Focus op de core user journey: de meest essentiële weg die een gebruiker aflegt.
+
+Voorbeeld webshop:
+Core journey: Zoek product → Voeg toe aan mandje → Betaal → Ontvang bevestiging
+Buiten scope voor MVP: Recensies, wishlist, geavanceerde filters, aanbevelingen
+
+Onthoud: Features die buiten scope vallen gaan terug in de Product Backlog voor een volgende sprint.`,
+        code: `// MVP scope bepalen
+Core user journey (IN scope):
+✅ Registreren / Inloggen
+✅ Producten bekijken
+✅ Toevoegen aan mandje
+✅ Afrekenen
+
+Nice-to-have (OUT scope voor nu):
+⏳ Recensies schrijven
+⏳ Producten vergelijken
+⏳ Loyaliteitspunten`
+      },
+      {
+        title: "Unit Tests met AI",
+        icon: "🔬",
+        content: `Een unit test controleert één specifieke functie in isolatie, onafhankelijk van de rest van de app.
+
+Prompt voor AI: "Schrijf unit tests voor deze functie. Test de happy path (normaal gebruik), edge cases (lege input, null, grote getallen) en error cases."
+
+Laat AI de tests schrijven, maar begrijp wat ze testen:
+• describe() — groepeert gerelateerde tests
+• it() of test() — één specifieke test
+• expect().toBe() — controleert de verwachte waarde`,
+        code: `// Voorbeeld (Jest / Vitest)
+describe('berekenKorting', () => {
+  it('berekent 10% korting correct', () => {
+    expect(berekenKorting(100, 10)).toBe(90);
+  });
+  it('gooit error bij negatieve prijs', () => {
+    expect(() => berekenKorting(-10, 10))
+      .toThrow('Prijs mag niet negatief zijn');
+  });
+  it('geeft prijs terug bij 0% korting', () => {
+    expect(berekenKorting(50, 0)).toBe(50);
+  });
+});`
+      },
+      {
+        title: "E2E Testing — De Gebruikersreis Testen",
+        icon: "🗺️",
+        content: `End-to-End tests simuleren een echte gebruiker die door je app navigeert — van begin tot einde. Ze testen het samenspel van alle componenten.
+
+Tools: Playwright (aanbevolen) of Cypress
+
+Typische E2E test scenario's:
+• Gebruiker registreert en logt in
+• Gebruiker voegt product toe en rekent af
+• Admin voegt product toe en het verschijnt op de shop
+
+Laat AI de test schrijven:
+"Schrijf een Playwright E2E test die: (1) naar de homepage navigeert, (2) op 'Registreren' klikt, (3) het formulier invult, (4) controleert of de gebruiker op /dashboard belandt."`,
+        code: `// Playwright E2E voorbeeld
+import { test, expect } from '@playwright/test';
+
+test('gebruiker kan inloggen', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('#email', 'test@test.com');
+  await page.fill('#password', 'geheim123');
+  await page.click('button[type="submit"]');
+  await expect(page).toHaveURL('/dashboard');
+  await expect(page.locator('h1'))
+    .toContainText('Welkom');
+});`
+      },
+      {
+        title: "Iterative Development",
+        icon: "🔄",
+        content: `In deze sprint doorloop je meerdere kleine cycli: code → test → fix → commit. Elke commit maakt je codebase stabieler.
+
+Test-driven bug fixing werkwijze:
+1. Schrijf een test die het probleem reproduceert (test faalt)
+2. Fix de bug
+3. Verifieer dat de test nu slaagt
+4. Commit (code + test samen)
+
+Gebruik AI als debug-partner:
+"Ik krijg deze foutmelding: [error]. Dit is mijn code: [code]. Leg uit wat de oorzaak is en geef een oplossing."
+
+Pro-tip: commit na ELKE werkende stap — zo kun je altijd terugkeren naar een werkende toestand.`,
+        code: `// Debug workflow met AI
+1. Kopieer de exacte foutmelding
+2. Kopieer de relevante code
+3. Prompt: "Analyseer deze error en leg
+   stap voor stap uit hoe ik het oplos"
+4. Begrijp de fix voor je ze toepast
+5. Test → commit → verder`
+      }
+    ],
+    quiz: [
+      {
+        type: "mc",
+        q: "Wat test een UNIT test?",
+        options: ["De volledige app van begin tot einde","Één specifieke functie in isolatie","De UI van de app","De serververbinding"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "mc",
+        q: "MVP staat voor...",
+        options: ["Maximum Viable Product","Minimum Viable Product","Most Valuable Product","Main Version Product"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "fill",
+        q: "Een test die een echte gebruikersreis simuleert heet een ___ test. (afkorting)",
+        prefix: "", suffix: " test",
+        answer: ["E2E","e2e","end-to-end"], xp: 25
+      },
+      {
+        type: "mc",
+        q: "Wat is de juiste volgorde bij test-driven bug fixing?",
+        options: ["Fix → Test → Commit","Commit → Fix → Test","Test → Fix → Commit","Fix → Commit → Test"],
+        answer: 2, xp: 25
+      }
+    ],
+    deliverables: [
+      "Alle core user stories geïmplementeerd en werkend",
+      "Minstens 3 unit tests geschreven met behulp van AI",
+      "E2E test beschrijving voor de core user journey",
+      "MVP is stabiel en klaar voor deployment"
+    ]
+  },
+  {
+    id: 5,
+    title: "Deployment & Presentatie",
+    subtitle: "Live zetten & Demo Day",
+    emoji: "🚀",
+    color: "#d97706",
+    weeks: "Week 13–15",
+    tagline: "Van localhost naar live URL — en presenteren als een pro",
+    theory: [
+      {
+        title: "Wat is CI/CD?",
+        icon: "⚙️",
+        content: `CI/CD staat voor Continuous Integration / Continuous Deployment — de automatische pipeline die van code naar live app gaat.
+
+CI (Continuous Integration):
+→ Elke push naar Git triggert automatisch een build en tests
+→ Als een test faalt, word je direct gewaarschuwd
+→ Nooit meer "het werkt op mijn pc!" probleem
+
+CD (Continuous Deployment):
+→ Als CI slaagt, wordt de app automatisch live gezet
+→ Elke push naar 'main' = nieuwe versie live
+
+Voordelen:
+• Geen handmatig uploaden meer
+• Directe feedback bij fouten
+• Altijd een werkende live versie
+• Professionele werkwijze (hoe het in de industrie gaat)`,
+        code: `// CI/CD flow
+git push origin main
+    ↓
+GitHub Actions / Vercel detecteert push
+    ↓
+Build & Tests draaien automatisch
+    ↓
+✅ Alles slaagt → App live op vercel.app
+❌ Test faalt  → Notificatie, deployment geblokkeerd`
+      },
+      {
+        title: "Deployen op Vercel of Render",
+        icon: "☁️",
+        content: `Vercel — ideaal voor front-end / Next.js / React:
+1. Maak account op vercel.com (gratis)
+2. Klik "Add New Project" → Importeer je GitHub repo
+3. Vercel detecteert automatisch het framework
+4. Klik Deploy — klaar!
+Vanaf nu: elke push naar 'main' → automatisch live!
+
+Render — ideaal voor back-end / full-stack / Node.js:
+1. Maak account op render.com (gratis tier beschikbaar)
+2. Kies "New Web Service"
+3. Koppel je GitHub repo
+4. Stel in: Build Command (npm install && npm run build) en Start Command (node server.js)
+5. Deploy!
+
+Resultaat: een publieke URL die je aan iedereen kunt geven.`,
+        code: `// Vercel via CLI (alternatief)
+npm install -g vercel
+vercel login
+vercel          # deploy preview
+vercel --prod   # deploy naar productie`
+      },
+      {
+        title: "Git History als Portfolio",
+        icon: "📚",
+        content: `Je Git-geschiedenis vertelt het verhaal van je project — en toekomstige werkgevers lezen dit verhaal.
+
+Een indrukwekkende Git-history heeft:
+• Zinvolle commit-berichten (niet "update" of "fix")
+• Logische taakverdeling zichtbaar in de commits
+• Feature branches die netjes samengevoegd zijn via Pull Requests
+• Regelmatige commits (niet alles in één grote commit)
+
+Hoe beoordelen werkgevers je GitHub?
+1. Commit frequentie — laat zien dat je consistent werkte
+2. Commit berichten — laat zien dat je professioneel werkt
+3. Code reviews in Pull Requests — laat zien dat je teamspeler bent
+
+Dit is je digitale portfolio — zorg dat het goed oogt!`,
+        code: `// Goede commit-berichten
+✅ "Voeg productdetailpagina toe"
+✅ "Fix: mandje telt verkeerde hoeveelheid"
+✅ "Refactor: hernoem variabelen in cart.js"
+✅ "Test: voeg unit tests toe voor korting"
+
+❌ "update"
+❌ "fix"
+❌ "changes"
+❌ "aaa"`
+      },
+      {
+        title: "De Eindpresentatie — Demo Day",
+        icon: "🎤",
+        content: `Een sterke eindpresentatie duurt max. 6 minuten en laat het product zien — niet slides vol tekst.
+
+Structuur (6 min):
+1. Het probleem (1 min) — welk probleem lost jullie app op? Voor wie?
+2. Live demo (3 min) — toon de core user journey live, met échte data
+3. Technisch verhaal (1 min) — welke AI-tools gebruikten jullie? Hoe?
+4. Reflectie (1 min) — wat leerden jullie over AI als ontwikkelpartner?
+
+Presentatietips:
+• Demo altijd met echte data — niet "test test test"
+• Oefen de demo minstens 3x van begin tot einde
+• Heb een backup plan als de wifi wegvalt (screenshots/video)
+• Wees eerlijk over wat niet af is — en zeg wat je zou toevoegen`,
+        code: `// Demo script
+1. Toon de live URL
+2. "Stel je voor: je bent een klant van..."
+3. Doe de volledige core user journey
+4. Toon één technische beslissing
+   ("We lieten AI de tests schrijven...")
+5. Reflectie: "We leerden dat AI..."
+6. "Vragen?"`
+      }
+    ],
+    quiz: [
+      {
+        type: "mc",
+        q: "Wat gebeurt er automatisch bij CI/CD na elke push naar 'main'?",
+        options: ["Niets","De app wordt gebuild en gedeployed","Je krijgt een email","Git maakt een backup"],
+        answer: 1, xp: 20
+      },
+      {
+        type: "fill",
+        q: "Om zeker te zijn dat je de laatste versie hebt voor je begint te werken: `git ___`",
+        prefix: "git ", suffix: "",
+        answer: ["pull"], xp: 25
+      },
+      {
+        type: "mc",
+        q: "Welk platform is het meest geschikt voor het deployen van een front-end React app?",
+        options: ["Vercel","Docker Hub","npm","GitHub Issues"],
+        answer: 0, xp: 20
+      },
+      {
+        type: "mc",
+        q: "Wat is een goed commit-bericht?",
+        options: ["update","fix stuff","Voeg productdetailpagina toe met afbeelding en beschrijving","asdfgh"],
+        answer: 2, xp: 20
+      }
+    ],
+    deliverables: [
+      "App is live op Vercel of Render (werkende publieke URL)",
+      "GitHub repository heeft nette commit-geschiedenis met zinvolle berichten",
+      "Eindpresentatie voorbereid en geoefend (max. 6 minuten)",
+      "Reflectieverslag over AI-gebruik ingediend"
+    ]
+  }
+];
+
+const TOTAL_XP = SPRINTS.reduce((s, sp) => {
+  const quizXP = sp.quiz.reduce((a, q) => a + q.xp, 0);
+  const delivXP = sp.deliverables.length * 15;
+  return s + quizXP + delivXP;
+}, 0);
+
+// ══════════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════════
+const LS_KEY = 'devflow_state_v1';
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+function saveState(s) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  COMPONENTS
+// ══════════════════════════════════════════════════════════════════
+
+function TheoryCard({ card, accentColor }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="theory-card fade-in">
+      <div className="theory-card-head" onClick={() => setOpen(o => !o)}
+           style={{ borderLeft: open ? `4px solid ${accentColor}` : '4px solid transparent', paddingLeft: open ? 16 : 20, transition: '.2s' }}>
+        <span style={{ fontSize: 20 }}>{card.icon}</span>
+        <h3 style={{ flex: 1 }}>{card.title}</h3>
+        <span className={`chevron${open ? ' open' : ''}`}>▼</span>
+      </div>
+      {open && (
+        <div className="theory-card-body fade-in">
+          <p className="theory-content">{card.content}</p>
+          {card.code && (
+            <div className="theory-code">
+              {card.code.split('\n').map((line, i) => {
+                const isComment = line.trim().startsWith('//') || line.trim().startsWith('#');
+                const isGood = line.trim().startsWith('✅');
+                const isBad = line.trim().startsWith('❌');
+                return (
+                  <div key={i} style={{ color: isComment ? '#8b949e' : isBad ? '#ff7b72' : isGood ? '#7ee787' : '#c9d1d9' }}>
+                    {line}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuizQuestion({ q, idx, sprintId, saved, onAnswer, accentColor }) {
+  const [selected, setSelected] = useState(saved?.selected ?? null);
+  const [fillVal, setFillVal]   = useState(saved?.fill ?? '');
+  const [checked, setChecked]   = useState(saved?.checked ?? false);
+  const [showXp, setShowXp]     = useState(false);
+  const answered = checked || selected !== null;
+  const isCorrectMC = selected !== null && selected === q.answer;
+  const isCorrectFill = checked && (() => {
+    const v = fillVal.trim().toLowerCase();
+    if (q.acceptAny) return v.length > 0;
+    return q.answer.map(a => a.toLowerCase()).includes(v);
+  })();
+
+  const flashXP = () => { setShowXp(true); setTimeout(() => setShowXp(false), 900); };
+
+  const handleMC = (i) => {
+    if (answered) return;
+    setSelected(i);
+    const correct = i === q.answer;
+    onAnswer(idx, { selected: i, checked: false }, correct ? q.xp : 0);
+    if (correct) flashXP();
+  };
+
+  const handleCheck = () => {
+    if (checked) return;
+    setChecked(true);
+    const v = fillVal.trim().toLowerCase();
+    const correct = q.acceptAny ? v.length > 0 : q.answer.map(a => a.toLowerCase()).includes(v);
+    onAnswer(idx, { fill: fillVal, checked: true }, correct ? q.xp : 0);
+    if (correct) flashXP();
+  };
+
+  const cardClass = `quiz-card${q.type === 'mc' && selected !== null ? (isCorrectMC ? ' correct' : ' incorrect') : ''}${q.type === 'fill' && checked ? (isCorrectFill ? ' correct' : ' incorrect') : ''}`;
+
+  return (
+    <div className={cardClass}>
+      {showXp && <div className="xp-gained">+{q.xp} XP ⚡</div>}
+      <div className="xp-float">⚡ {q.xp} XP</div>
+      <div className="quiz-num">Vraag {idx + 1}</div>
+      <div className="quiz-q" dangerouslySetInnerHTML={{ __html: q.q.replace(/`([^`]+)`/g, '<code>$1</code>') }} />
+      {q.type === 'mc' ? (
+        <div className="mc-options">
+          {q.options.map((opt, i) => {
+            let cls = 'mc-option';
+            if (selected !== null) {
+              if (i === selected) cls += selected === q.answer ? ' selected-correct' : ' selected-wrong';
+              else if (i === q.answer && selected !== q.answer) cls += ' reveal-correct';
+            }
+            return (
+              <button key={i} className={cls} disabled={selected !== null} onClick={() => handleMC(i)}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', border: '2px solid currentColor', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>
+                  {['A','B','C','D'][i]}
+                </span>
+                {opt}
+              </button>
+            );
+          })}
+          {selected !== null && (
+            <div className={`quiz-feedback ${isCorrectMC ? 'ok' : 'err'}`}>
+              {isCorrectMC ? '✅ Correct!' : `❌ Fout — juist antwoord: ${q.options[q.answer]}`}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div className="fill-row">
+            {q.prefix && <span className="fill-prefix" style={{ background: '#1a2744', color: '#7dd3fc', borderRadius: 8, padding: '8px 12px' }}>{q.prefix}</span>}
+            <input
+              className={`fill-input${checked ? (isCorrectFill ? ' correct' : ' wrong') : ''}`}
+              value={fillVal}
+              onChange={e => setFillVal(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !checked && handleCheck()}
+              disabled={checked}
+              placeholder="???"
+              style={{ width: Math.max(120, fillVal.length * 10 + 40) }}
+            />
+            {q.suffix && <span className="fill-prefix" style={{ background: '#1a2744', color: '#7dd3fc', borderRadius: 8, padding: '8px 12px' }}>{q.suffix}</span>}
+            <button className="check-btn" onClick={handleCheck} disabled={checked || !fillVal.trim()}
+              style={{ background: accentColor }}>
+              Controleer
+            </button>
+          </div>
+          {checked && (
+            <div className={`quiz-feedback ${isCorrectFill ? 'ok' : 'err'}`}>
+              {isCorrectFill ? '✅ Correct!' : `❌ Fout — juist antwoord: ${q.answer[0]}`}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DeliverableItem({ text, checked, onToggle, xp }) {
+  return (
+    <div className={`deliverable-item${checked ? ' checked' : ''}`} onClick={onToggle}>
+      <div className="check-circle">{checked ? '✓' : ''}</div>
+      <span className="deliverable-text">{text}</span>
+      {!checked && <span className="deliv-xp-tag">+{xp} XP</span>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MAIN APP
+// ══════════════════════════════════════════════════════════════════
+function App() {
+  const [state, setState] = useState(() => loadState());
+  const [activeSprint, setActiveSprint] = useState(null); // null = overview
+  const [tab, setTab] = useState('theory');
+
+  useEffect(() => { saveState(state); }, [state]);
+
+  // Compute XP
+  const totalXP = SPRINTS.reduce((sum, sp) => {
+    const qXP = sp.quiz.reduce((a, q, qi) => {
+      const saved = state[`s${sp.id}_q${qi}`];
+      if (!saved) return a;
+      if (q.type === 'mc' && saved.selected === q.answer) return a + q.xp;
+      if (q.type === 'fill' && saved.checked) {
+        const v = saved.fill?.trim().toLowerCase() ?? '';
+        const ok = q.acceptAny ? v.length > 0 : q.answer.map(a => a.toLowerCase()).includes(v);
+        return ok ? a + q.xp : a;
+      }
+      return a;
+    }, 0);
+    const dXP = sp.deliverables.reduce((a, _, di) => a + (state[`s${sp.id}_d${di}`] ? 15 : 0), 0);
+    return sum + qXP + dXP;
+  }, 0);
+
+  const sprintProgress = (sp) => {
+    const qDone = sp.quiz.filter((q, qi) => {
+      const saved = state[`s${sp.id}_q${qi}`];
+      if (!saved) return false;
+      if (q.type === 'mc') return saved.selected !== null && saved.selected !== undefined;
+      return saved.checked;
+    }).length;
+    const dDone = sp.deliverables.filter((_, di) => state[`s${sp.id}_d${di}`]).length;
+    const total = sp.quiz.length + sp.deliverables.length;
+    return { done: qDone + dDone, total };
+  };
+
+  const handleQuizAnswer = (spId, qi, savedData, xpEarned) => {
+    setState(s => ({ ...s, [`s${spId}_q${qi}`]: savedData }));
+  };
+
+  const handleDeliverable = (spId, di) => {
+    const key = `s${spId}_d${di}`;
+    setState(s => ({ ...s, [key]: !s[key] }));
+  };
+
+  const sprint = activeSprint !== null ? SPRINTS[activeSprint] : null;
+
+  // Overview page
+  if (activeSprint === null) {
+    return (
+      <div className="app-shell" style={{ gridTemplateColumns: '1fr' }}>
+        {/* Topbar */}
+        <div className="topbar">
+          <div className="topbar-brand">
+            <div className="topbar-brand-icon">🚀</div>
+            <div>
+              <h1>DevFlow Academy</h1>
+              <p>Softwareontwikkelflow · Graduaat Programmeren · Odisee</p>
+            </div>
+          </div>
+          <div className="topbar-xp">
+            <div className="xp-badge">⚡ <span>{totalXP}</span> / {TOTAL_XP} XP</div>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="timeline-bar">
+          <div className="timeline">
+            {SPRINTS.map((sp, i) => {
+              const prog = sprintProgress(sp);
+              const isDone = prog.done === prog.total && prog.total > 0;
+              const isActive = !isDone && prog.done > 0;
+              return (
+                <div key={sp.id} className={`tl-step${isDone ? ' done' : isActive ? ' active' : ''}`}
+                     onClick={() => { setActiveSprint(i); setTab('theory'); }}>
+                  <div className="tl-dot">{sp.emoji}</div>
+                  <div className="tl-label">Sprint {sp.id}<br />{sp.weeks}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Main */}
+        <div style={{ padding: '36px 40px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+          {/* Hero */}
+          <div className="welcome-hero">
+            <h2>Welkom bij DevFlow Academy</h2>
+            <p>In 15 weken bouw je samen met je team een volledig softwareproject — van behoefteanalyse tot deployment. Elke sprint start met een JIT-les die je de tools geeft om die fase succesvol af te ronden.</p>
+            <div className="welcome-tags">
+              <span className="welcome-tag">🔄 Scrum & Agile</span>
+              <span className="welcome-tag">🤖 AI-Assisted Coding</span>
+              <span className="welcome-tag">🌿 Git & GitHub</span>
+              <span className="welcome-tag">🧪 Testing</span>
+              <span className="welcome-tag">🚀 Deployment</span>
+            </div>
+          </div>
+
+          {/* Overall progress */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontFamily: 'Sora', fontWeight: 700, fontSize: '.9rem' }}>Totale voortgang</span>
+              <span style={{ fontSize: '.8rem', color: 'var(--text3)' }}>{totalXP} / {TOTAL_XP} XP</span>
+            </div>
+            <div className="prog-bar-outer" style={{ height: 10 }}>
+              <div className="prog-bar-inner" style={{ width: `${TOTAL_XP > 0 ? (totalXP / TOTAL_XP) * 100 : 0}%` }} />
+            </div>
+          </div>
+
+          {/* Sprint cards */}
+          <div className="overview-grid">
+            {SPRINTS.map((sp, i) => {
+              const prog = sprintProgress(sp);
+              const pct = prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
+              return (
+                <div key={sp.id} className="overview-card" onClick={() => { setActiveSprint(i); setTab('theory'); }}
+                     style={{ borderTop: `4px solid ${sp.color}` }}>
+                  <div className="oc-emoji">{sp.emoji}</div>
+                  <div className="oc-week">Sprint {sp.id} · {sp.weeks}</div>
+                  <div className="oc-title">{sp.title}</div>
+                  <div className="oc-desc">{sp.tagline}</div>
+                  <div className="oc-prog">
+                    <div className="oc-prog-label">
+                      <span>{prog.done}/{prog.total} voltooid</span>
+                      <span>{pct}%</span>
+                    </div>
+                    <div className="oc-prog-bar">
+                      <div className="oc-prog-inner" style={{ width: `${pct}%`, background: sp.color }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Sprint detail
+  const prog = sprintProgress(sprint);
+  const pct = prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
+
+  return (
+    <div className="app-shell">
+      {/* Topbar */}
+      <div className="topbar">
+        <div className="topbar-brand">
+          <button onClick={() => setActiveSprint(null)}
+            style={{ background: 'rgba(255,255,255,.1)', border: 'none', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 16, marginRight: 4 }}>
+            ←
+          </button>
+          <div className="topbar-brand-icon" style={{ background: sprint.color }}>
+            {sprint.emoji}
+          </div>
+          <div>
+            <h1>DevFlow Academy</h1>
+            <p>{sprint.title} · {sprint.weeks}</p>
+          </div>
+        </div>
+        <div className="topbar-xp">
+          <div className="xp-badge">⚡ <span>{totalXP}</span> / {TOTAL_XP} XP</div>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="timeline-bar">
+        <div className="timeline">
+          {SPRINTS.map((sp, i) => {
+            const p = sprintProgress(sp);
+            const isDone = p.done === p.total && p.total > 0;
+            const isCurrent = i === activeSprint;
+            return (
+              <div key={sp.id} className={`tl-step${isDone ? ' done' : isCurrent ? ' active' : ''}`}
+                   onClick={() => { setActiveSprint(i); setTab('theory'); }}>
+                <div className="tl-dot">{sp.emoji}</div>
+                <div className="tl-label">Sprint {sp.id}<br />{sp.weeks}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className="sidebar">
+        <div className="sidebar-section-title">Sprints</div>
+        {SPRINTS.map((sp, i) => {
+          const p = sprintProgress(sp);
+          const isDone = p.done === p.total && p.total > 0;
+          const isActive = i === activeSprint;
+          return (
+            <button key={sp.id} className={`sprint-nav-btn${isActive ? ' active' : ''}`}
+              onClick={() => { setActiveSprint(i); setTab('theory'); }}>
+              <div className="snb-emoji" style={{ background: `${sp.color}20` }}>{sp.emoji}</div>
+              <div className="snb-info">
+                <div className="snb-title">{sp.title}</div>
+                <div className="snb-week">{sp.weeks}</div>
+              </div>
+              <span className={`snb-status ${isDone ? 'status-done' : isActive ? 'status-active' : 'status-locked'}`}>
+                {isDone ? '✓' : isActive ? 'Actief' : `${p.done}/${p.total}`}
+              </span>
+            </button>
+          );
+        })}
+
+        <div className="sidebar-progress">
+          <div className="prog-label">
+            <span>Totaal voortgang</span>
+            <span>{Math.round((totalXP / TOTAL_XP) * 100)}%</span>
+          </div>
+          <div className="prog-bar-outer">
+            <div className="prog-bar-inner" style={{ width: `${(totalXP / TOTAL_XP) * 100}%` }} />
+          </div>
+          <div style={{ fontSize: '.7rem', color: 'var(--text3)', marginTop: 6, textAlign: 'center' }}>
+            ⚡ {totalXP} / {TOTAL_XP} XP
+          </div>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="main">
+        {/* Sprint header */}
+        <div className="sprint-header">
+          <div className="sprint-icon" style={{ background: `${sprint.color}20` }}>{sprint.emoji}</div>
+          <div className="sprint-header-info">
+            <div className="sprint-week-tag">🗓️ {sprint.weeks}</div>
+            <h2 style={{ color: sprint.color }}>Sprint {sprint.id}: {sprint.title}</h2>
+            <p>{sprint.subtitle} — {sprint.tagline}</p>
+          </div>
+        </div>
+
+        {/* Sprint progress bar */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: 'var(--text3)', marginBottom: 5 }}>
+            <span>Sprint voortgang: {prog.done}/{prog.total} voltooid</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="prog-bar-outer">
+            <div className="prog-bar-inner" style={{ width: `${pct}%`, background: sprint.color }} />
+          </div>
+        </div>
+
+        {/* Tab nav */}
+        <div className="tab-nav">
+          {[
+            { key: 'theory', label: '📖 Theorie', count: sprint.theory.length },
+            { key: 'quiz', label: '🧠 Quiz', count: `${sprint.quiz.reduce((a,q)=>a+q.xp,0)} XP` },
+            { key: 'deliverables', label: '✅ Deliverables', count: sprint.deliverables.length }
+          ].map(t => (
+            <button key={t.key} className={`tab-btn${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
+              {t.label}
+              <span style={{ background: tab === t.key ? sprint.color : 'var(--bg3)', color: tab === t.key ? '#fff' : 'var(--text3)', borderRadius: 10, padding: '1px 7px', fontSize: '.65rem', fontWeight: 700 }}>
+                {t.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Theory tab */}
+        {tab === 'theory' && (
+          <div className="theory-grid fade-in">
+            {sprint.theory.map((card, i) => (
+              <TheoryCard key={i} card={card} accentColor={sprint.color} />
+            ))}
+          </div>
+        )}
+
+        {/* Quiz tab */}
+        {tab === 'quiz' && (
+          <div className="quiz-area fade-in">
+            {sprint.quiz.map((q, qi) => (
+              <QuizQuestion
+                key={qi}
+                q={q}
+                idx={qi}
+                sprintId={sprint.id}
+                saved={state[`s${sprint.id}_q${qi}`]}
+                onAnswer={(idx, data, xp) => setState(s => ({ ...s, [`s${sprint.id}_q${idx}`]: data }))}
+                accentColor={sprint.color}
+              />
+            ))}
+            <div className="summary-card">
+              <div className="summary-icon">{sprint.emoji}</div>
+              <div className="summary-info">
+                <h3>Quiz voltooid?</h3>
+                <p>Ga door naar de Deliverables om je sprint af te ronden.</p>
+              </div>
+              <div className="summary-xp">
+                <div className="val">{sprint.quiz.reduce((a,q)=>a+q.xp,0)}</div>
+                <div className="lbl">Max XP</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Deliverables tab */}
+        {tab === 'deliverables' && (
+          <div className="fade-in">
+            <div style={{ marginBottom: 16, padding: '14px 18px', background: `${sprint.color}15`, borderRadius: 12, borderLeft: `4px solid ${sprint.color}` }}>
+              <p style={{ fontSize: '.85rem', color: 'var(--text2)', lineHeight: 1.5 }}>
+                <strong>Deliverables</strong> zijn de concrete resultaten die je aan het einde van Sprint {sprint.id} moet kunnen tonen. Vink ze af als ze klaar zijn — elk levert <strong style={{ color: sprint.color }}>15 XP</strong> op.
+              </p>
+            </div>
+            <div className="deliverable-list">
+              {sprint.deliverables.map((d, di) => (
+                <DeliverableItem
+                  key={di}
+                  text={d}
+                  checked={!!state[`s${sprint.id}_d${di}`]}
+                  onToggle={() => handleDeliverable(sprint.id, di)}
+                  xp={15}
+                />
+              ))}
+            </div>
+            {sprint.deliverables.every((_, di) => state[`s${sprint.id}_d${di}`]) && (
+              <div className="summary-card fade-in" style={{ marginTop: 24 }}>
+                <div className="summary-icon">🎉</div>
+                <div className="summary-info">
+                  <h3>Sprint {sprint.id} volledig afgerond!</h3>
+                  <p>Alle deliverables aangevinkt.
+                    {activeSprint < SPRINTS.length - 1 && ' Ga door naar de volgende sprint!'}
+                  </p>
+                </div>
+                {activeSprint < SPRINTS.length - 1 && (
+                  <button onClick={() => { setActiveSprint(activeSprint + 1); setTab('theory'); }}
+                    style={{ marginLeft: 'auto', background: sprint.color, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontFamily: 'DM Sans', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem', whiteSpace: 'nowrap' }}>
+                    Sprint {sprint.id + 1} →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
