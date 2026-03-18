@@ -1,0 +1,3618 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataFlow — Data Organisatie &amp; Visualisatie | Odisee</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- React 18 CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- AlaSQL CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/alasql@4/dist/alasql.min.js"></script>
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES — Odisee Palette
+    ============================================================ */
+    :root {
+      --navy:    #1f416b;
+      --mint:    #3cb497;
+      --storm:   #00639c;
+      --red-od:  #e73f16;
+
+      --navy-10: rgba(31, 65, 107, 0.10);
+      --navy-20: rgba(31, 65, 107, 0.20);
+      --mint-10: rgba(60, 180, 151, 0.10);
+      --mint-20: rgba(60, 180, 151, 0.20);
+      --storm-10: rgba(0, 99, 156, 0.10);
+
+      --bg:       #f4f6f9;
+      --surface:  #ffffff;
+      --surface2: #f0f3f7;
+      --border:   #dde3ed;
+      --text:     #1a1a2e;
+      --text-2:   #4a5568;
+      --text-3:   #718096;
+
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  18px;
+      --radius-xl:  24px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.08);
+      --shadow-xl: 0 20px 50px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.10);
+
+      --font-head: 'Sora', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-code: 'Fira Code', monospace;
+
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ============================================================
+       KEYFRAME ANIMATIONS
+    ============================================================ */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes xpGain {
+      0%   { opacity: 0; transform: translateY(0) scale(0.7); }
+      30%  { opacity: 1; transform: translateY(-18px) scale(1.15); }
+      70%  { opacity: 1; transform: translateY(-28px) scale(1.05); }
+      100% { opacity: 0; transform: translateY(-44px) scale(0.9); }
+    }
+
+    @keyframes badgePop {
+      0%   { opacity: 0; transform: scale(0.4) rotate(-12deg); }
+      55%  { opacity: 1; transform: scale(1.18) rotate(4deg); }
+      75%  { transform: scale(0.95) rotate(-2deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes shine {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(60, 180, 151, 0.35); }
+      50%       { box-shadow: 0 0 0 10px rgba(60, 180, 151, 0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes progressFill {
+      from { width: 0; }
+    }
+
+    /* ============================================================
+       SCROLLBAR
+    ============================================================ */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--navy-20); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--storm); }
+    * { scrollbar-width: thin; scrollbar-color: var(--navy-20) var(--bg); }
+
+    /* ============================================================
+       BASE RESET & GLOBAL
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4, h5 {
+      font-family: var(--font-head);
+      line-height: 1.2;
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    h1 { font-size: clamp(1.75rem, 3.5vw, 2.6rem); font-weight: 800; }
+    h2 { font-size: clamp(1.35rem, 2.5vw, 1.9rem); }
+    h3 { font-size: clamp(1.1rem, 2vw, 1.45rem); }
+    h4 { font-size: 1.1rem; font-weight: 600; }
+    h5 { font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+
+    p { color: var(--text-2); margin-bottom: 0.75rem; }
+    p:last-child { margin-bottom: 0; }
+
+    a { color: var(--storm); text-decoration: none; transition: color var(--transition); }
+    a:hover { color: var(--mint); }
+
+    ul, ol { padding-left: 1.4rem; color: var(--text-2); }
+    li { margin-bottom: 0.25rem; }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    code, kbd {
+      font-family: var(--font-code);
+      font-size: 0.875em;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.15em 0.45em;
+      color: var(--storm);
+    }
+
+    pre {
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      background: #0f1923;
+      color: #c9d1d9;
+      border-radius: var(--radius-md);
+      padding: 1.2rem 1.4rem;
+      overflow-x: auto;
+      line-height: 1.7;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    pre code {
+      font-family: var(--font-code);
+      font-size: inherit;
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    button {
+      font-family: var(--font-body);
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+
+    input, textarea, select {
+      font-family: var(--font-body);
+      font-size: 1rem;
+    }
+
+    img { max-width: 100%; display: block; }
+
+    /* ============================================================
+       LAYOUT UTILITIES
+    ============================================================ */
+    .content-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .flex { display: flex; }
+    .flex-col { display: flex; flex-direction: column; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-1 { gap: 0.5rem; }
+    .gap-2 { gap: 1rem; }
+    .gap-3 { gap: 1.5rem; }
+    .gap-4 { gap: 2rem; }
+    .w-full { width: 100%; }
+    .text-center { text-align: center; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mb-3 { margin-bottom: 1.5rem; }
+
+    /* ============================================================
+       OD-CARD
+    ============================================================ */
+    .od-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+      overflow: hidden;
+    }
+
+    .od-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .od-card.interactive:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--mint);
+    }
+
+    .od-card.elevated {
+      box-shadow: var(--shadow-md);
+    }
+
+    .od-card.elevated:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ============================================================
+       FADE-IN
+    ============================================================ */
+    .fade-in {
+      animation: fadeIn 0.45s ease both;
+    }
+
+    .fade-in-1 { animation: fadeIn 0.45s 0.05s ease both; }
+    .fade-in-2 { animation: fadeIn 0.45s 0.10s ease both; }
+    .fade-in-3 { animation: fadeIn 0.45s 0.15s ease both; }
+    .fade-in-4 { animation: fadeIn 0.45s 0.20s ease both; }
+    .fade-in-5 { animation: fadeIn 0.45s 0.25s ease both; }
+
+    /* ============================================================
+       BADGE / CHIP
+    ============================================================ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: var(--font-head);
+      letter-spacing: 0.02em;
+    }
+
+    .badge-mint  { background: var(--mint-10);  color: var(--mint);  border: 1px solid var(--mint-20); }
+    .badge-navy  { background: var(--navy-10);  color: var(--navy);  border: 1px solid var(--navy-20); }
+    .badge-storm { background: var(--storm-10); color: var(--storm); border: 1px solid rgba(0,99,156,0.2); }
+    .badge-red   { background: rgba(231,63,22,0.10); color: var(--red-od); border: 1px solid rgba(231,63,22,0.2); }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.3rem;
+      border-radius: var(--radius-md);
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all var(--transition);
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+    .btn-primary:hover {
+      background: var(--storm);
+      border-color: var(--storm);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(31,65,107,0.3);
+    }
+
+    .btn-mint {
+      background: var(--mint);
+      color: #fff;
+      border-color: var(--mint);
+    }
+    .btn-mint:hover {
+      background: #2fa282;
+      border-color: #2fa282;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(60,180,151,0.35);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--navy);
+      border-color: var(--border);
+    }
+    .btn-outline:hover {
+      background: var(--navy-10);
+      border-color: var(--navy);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border-color: transparent;
+    }
+    .btn-ghost:hover {
+      background: var(--surface2);
+      color: var(--navy);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .btn-lg { padding: 0.8rem 1.8rem; font-size: 1rem; }
+    .btn-sm { padding: 0.35rem 0.85rem; font-size: 0.8rem; border-radius: var(--radius-sm); }
+
+    /* ============================================================
+       PROGRESS BAR
+    ============================================================ */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--mint), var(--storm));
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: progressFill 0.7s ease;
+    }
+
+    /* ============================================================
+       HEADER / TOPBAR
+    ============================================================ */
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+
+    .topbar-inner {
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .topbar-logo {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--mint), var(--storm));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-head);
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-family: var(--font-head);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-subtitle {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.55);
+      font-weight: 400;
+      margin-top: 1px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .xp-display {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 99px;
+      padding: 0.25rem 0.75rem;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+    }
+
+    .xp-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--mint);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    /* ============================================================
+       SIDEBAR / NAV
+    ============================================================ */
+    .app-layout {
+      display: flex;
+      min-height: calc(100vh - 62px);
+    }
+
+    .sidebar {
+      width: 270px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 62px;
+      height: calc(100vh - 62px);
+      overflow-y: auto;
+      padding: 1.25rem 0;
+    }
+
+    .sidebar-section-title {
+      font-family: var(--font-head);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
+      padding: 0 1.25rem;
+      margin-bottom: 0.4rem;
+      margin-top: 1rem;
+    }
+
+    .sidebar-section-title:first-child { margin-top: 0; }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 1.25rem;
+      cursor: pointer;
+      border-radius: 0;
+      transition: all var(--transition);
+      border-left: 3px solid transparent;
+      font-size: 0.875rem;
+      color: var(--text-2);
+      font-weight: 500;
+      position: relative;
+    }
+
+    .sidebar-item:hover {
+      background: var(--navy-10);
+      color: var(--navy);
+      border-left-color: var(--navy-20);
+    }
+
+    .sidebar-item.active {
+      background: var(--mint-10);
+      color: var(--mint);
+      border-left-color: var(--mint);
+      font-weight: 600;
+    }
+
+    .sidebar-item-emoji {
+      font-size: 1rem;
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-item-check {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--mint);
+    }
+
+    .sidebar-progress-mini {
+      padding: 0 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ============================================================
+       MAIN CONTENT
+    ============================================================ */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      padding: 2rem 2rem 4rem;
+    }
+
+    /* ============================================================
+       MODULE CARD (HOME GRID)
+    ============================================================ */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.75rem;
+    }
+
+    .module-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--mod-color, var(--mint));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--transition);
+    }
+
+    .module-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--mod-color, var(--mint));
+    }
+
+    .module-card:hover::before { transform: scaleX(1); }
+
+    .module-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .module-emoji {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .module-card-meta { flex: 1; min-width: 0; }
+
+    .module-card-week {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--mod-color, var(--mint));
+      margin-bottom: 0.15rem;
+    }
+
+    .module-card-title {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.25;
+    }
+
+    .module-card-tagline {
+      font-size: 0.82rem;
+      color: var(--text-3);
+      margin-bottom: 1rem;
+      line-height: 1.45;
+    }
+
+    .module-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+    }
+
+    .module-progress-label {
+      font-size: 0.75rem;
+      color: var(--text-3);
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       THEORY VIEW
+    ============================================================ */
+    .theory-nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .theory-nav-btn {
+      padding: 0.4rem 0.9rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-head);
+      background: var(--surface2);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .theory-nav-btn:hover {
+      background: var(--navy-10);
+      color: var(--navy);
+      border-color: var(--navy-20);
+    }
+
+    .theory-nav-btn.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    .theory-section {
+      animation: fadeIn 0.35s ease both;
+    }
+
+    .theory-content {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: var(--text-2);
+      margin-bottom: 1.25rem;
+    }
+
+    .theory-example {
+      margin-top: 1rem;
+    }
+
+    .theory-example-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--mint);
+      margin-bottom: 0.5rem;
+      font-family: var(--font-head);
+    }
+
+    /* ============================================================
+       QUIZ VIEW
+    ============================================================ */
+    .quiz-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .quiz-counter {
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-3);
+    }
+
+    .quiz-question {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 1.75rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn 0.35s ease both;
+    }
+
+    .quiz-q-text {
+      font-family: var(--font-head);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 0.9rem;
+      color: var(--text-2);
+      text-align: left;
+      font-family: var(--font-body);
+    }
+
+    .quiz-option:hover:not(:disabled) {
+      border-color: var(--storm);
+      background: var(--storm-10);
+      color: var(--storm);
+    }
+
+    .quiz-option.selected {
+      border-color: var(--storm);
+      background: var(--storm-10);
+      color: var(--storm);
+    }
+
+    .quiz-option.correct {
+      border-color: var(--mint);
+      background: var(--mint-10);
+      color: #1a6b50;
+    }
+
+    .quiz-option.incorrect {
+      border-color: var(--red-od);
+      background: rgba(231,63,22,0.07);
+      color: var(--red-od);
+    }
+
+    .quiz-option:disabled { cursor: default; }
+
+    .quiz-option-letter {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .quiz-fill-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--border);
+      font-family: var(--font-code);
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color var(--transition);
+      outline: none;
+    }
+
+    .quiz-fill-input:focus {
+      border-color: var(--storm);
+    }
+
+    .quiz-fill-input.correct { border-color: var(--mint); }
+    .quiz-fill-input.incorrect { border-color: var(--red-od); }
+
+    .quiz-feedback {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: fadeIn 0.25s ease both;
+    }
+
+    .quiz-feedback.success {
+      background: var(--mint-10);
+      color: #1a6b50;
+      border: 1px solid var(--mint-20);
+    }
+
+    .quiz-feedback.error {
+      background: rgba(231,63,22,0.08);
+      color: var(--red-od);
+      border: 1px solid rgba(231,63,22,0.2);
+    }
+
+    .xp-popup {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--mint);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      animation: xpGain 1.2s ease forwards;
+    }
+
+    /* ============================================================
+       SQL PLAYGROUND
+    ============================================================ */
+    .sql-editor {
+      background: #0f1923;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .sql-editor-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sql-editor-lang {
+      font-family: var(--font-code);
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .sql-editor textarea {
+      width: 100%;
+      background: transparent;
+      color: #c9d1d9;
+      font-family: var(--font-code);
+      font-size: 0.875rem;
+      line-height: 1.7;
+      padding: 1.1rem 1.25rem;
+      border: none;
+      outline: none;
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .sql-results {
+      margin-top: 1rem;
+      overflow-x: auto;
+    }
+
+    .sql-results table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .sql-results th {
+      background: var(--navy);
+      color: #fff;
+      padding: 0.55rem 0.85rem;
+      text-align: left;
+      font-family: var(--font-head);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .sql-results td {
+      padding: 0.5rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-2);
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+    }
+
+    .sql-results tr:last-child td { border-bottom: none; }
+    .sql-results tr:nth-child(even) td { background: var(--surface2); }
+
+    .sql-error {
+      background: rgba(231,63,22,0.08);
+      border: 1px solid rgba(231,63,22,0.2);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      color: var(--red-od);
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+
+    /* ============================================================
+       DASHBOARD / STATS
+    ============================================================ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-3);
+      font-weight: 500;
+    }
+
+    .stat-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ============================================================
+       ACHIEVEMENT BADGES
+    ============================================================ */
+    .badge-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .achievement {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.85rem 1rem;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      min-width: 80px;
+      transition: all var(--transition);
+    }
+
+    .achievement.earned {
+      animation: badgePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+      border-color: var(--mint-20);
+      background: var(--mint-10);
+      box-shadow: 0 0 0 3px var(--mint-20);
+    }
+
+    .achievement.locked {
+      opacity: 0.45;
+      filter: grayscale(1);
+    }
+
+    .achievement-icon { font-size: 1.75rem; }
+    .achievement-name { font-size: 0.7rem; font-weight: 600; color: var(--text-2); text-align: center; }
+
+    /* ============================================================
+       ERD DIAGRAM STYLES
+    ============================================================ */
+    .erd-container {
+      background: var(--surface2);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .erd-entity {
+      display: inline-flex;
+      flex-direction: column;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      border: 2px solid var(--navy);
+      overflow: hidden;
+      min-width: 160px;
+      box-shadow: var(--shadow-sm);
+      margin: 0.5rem;
+      vertical-align: top;
+    }
+
+    .erd-entity-name {
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.45rem 0.85rem;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .erd-attribute {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.85rem;
+      font-family: var(--font-code);
+      font-size: 0.78rem;
+      color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .erd-attribute:last-child { border-bottom: none; }
+    .erd-attribute.pk { color: var(--navy); font-weight: 700; }
+    .erd-attribute.fk { color: var(--storm); }
+
+    .erd-pk-icon { color: var(--mint); font-size: 0.65rem; }
+    .erd-fk-icon { color: var(--storm); font-size: 0.65rem; }
+
+    /* ============================================================
+       CALLOUT BOXES
+    ============================================================ */
+    .callout {
+      display: flex;
+      gap: 0.85rem;
+      padding: 1rem 1.1rem;
+      border-radius: var(--radius-md);
+      border-left: 4px solid;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    .callout-info {
+      background: var(--storm-10);
+      border-color: var(--storm);
+      color: var(--storm);
+    }
+
+    .callout-tip {
+      background: var(--mint-10);
+      border-color: var(--mint);
+      color: #1a6b50;
+    }
+
+    .callout-warn {
+      background: rgba(231,63,22,0.06);
+      border-color: var(--red-od);
+      color: var(--red-od);
+    }
+
+    .callout-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .callout-body { color: var(--text-2); line-height: 1.6; }
+    .callout-body strong { color: inherit; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { padding: 1.25rem 1rem 3rem; }
+    }
+
+    @media (max-width: 600px) {
+      .module-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const MODULES = [
+      {
+        id: 1,
+        title: "Data, Excel & Visualisatieprincipes",
+        week: "Week 1",
+        emoji: "🗂️",
+        color: "#3cb497",
+        tagline: "Dataformaten, spreadsheets en de basisregels van visualisatie",
+        type: "format",
+        theory: [
+          {
+            title: "Wat is data?",
+            content: `Data is de grondstof van de informatica: het zijn ruwe feiten en cijfers die op zichzelf nog geen betekenis hebben. Pas wanneer data geïnterpreteerd en in context geplaatst wordt, spreken we van informatie. Denk aan het getal '38' — zonder context weet je niet of het een leeftijd, een temperatuur of een postcode is.
+
+We onderscheiden twee hoofdtypes. <strong>Kwantitatieve data</strong> is numeriek: getallen waarmee je kunt rekenen, zoals prijs, leeftijd of aantal. <strong>Kwalitatieve data</strong> beschrijft eigenschappen en categorieën: naam, kleur, stad. Het onderscheid is belangrijk omdat het bepaalt welke bewerkingen zinvol zijn — een gemiddelde van postcodes berekenen heeft immers geen zin!`,
+            example: `// Voorbeelden
+kwantitatief: 39.99, 28, 1299.99    // prijs, leeftijd, bedrag
+kwalitatief:  "Gent", "Elektronica", "geleverd"`
+          },
+          {
+            title: "Gestructureerd vs Ongestructureerd",
+            content: `Niet alle data is gelijk van opbouw. We maken een belangrijk onderscheid tussen gestructureerde, ongestructureerde en semi-gestructureerde data.
+
+Gestructureerde data volgt een strikt, vooraf gedefinieerd schema. Denk aan een spreadsheet of een databasetabel: elke rij is een record, elke kolom een attribuut met een vast datatype. Dit maakt zoeken, filteren en analyseren zeer efficiënt. Voorbeelden zijn MySQL-tabellen, Excel-bestanden en CSV-bestanden.
+
+Ongestructureerde data heeft geen vast formaat. E-mails, afbeeldingen, video's, PDF-documenten en vrije tekst zijn typische voorbeelden. Meer dan 80% van alle data in de wereld is ongestructureerd, maar het is ook moeilijker te verwerken zonder geavanceerde technieken zoals Natural Language Processing (NLP).
+
+Semi-gestructureerde data zit er tussenin: het heeft enige structuur via tags of sleutels, maar is flexibeler dan een strakke tabel. JSON en XML zijn hiervan uitstekende voorbeelden. Ze worden veel gebruikt in webservices en configuratiebestanden.`,
+            example: `// Gestructureerd (tabel)
+| id | naam    | leeftijd |
+|----|---------|----------|
+|  1 | Axelle  |       22 |
+|  2 | Robbe   |       19 |
+
+// Ongestructureerd
+"Beste Axelle, je inschrijving is bevestigd..."
+
+// Semi-gestructureerd (JSON)
+{ "naam": "Axelle", "leeftijd": 22 }`
+          },
+          {
+            title: "Het CSV-formaat",
+            content: `CSV staat voor Comma-Separated Values en is een van de eenvoudigste en meest gebruikte formaten om tabeldata op te slaan. Elk record staat op een aparte regel; de velden binnen een record worden gescheiden door een komma (of soms een puntkomma, afhankelijk van de regio-instellingen).
+
+De eerste rij bevat doorgaans de kolomnamen (de header). Dit maakt CSV-bestanden direct leesbaar voor mensen én voor programma's zoals Excel, Python (pandas) en SQL-importtools.
+
+De sterke punten van CSV zijn de eenvoud, de kleine bestandsgrootte en de brede compatibiliteit. Vrijwel elk systeem kan CSV lezen en schrijven. De nadelen zijn echter ook reëel: CSV kent geen datatypes (alles is tekst), ondersteunt geen hiërarchische structuren, en speciale tekens zoals komma's in veldwaarden vereisen zorgvuldige escaping met aanhalingstekens.
+
+CSV is ideaal voor eenvoudige, vlakke datasets, zoals exportlijsten, logbestanden of dataoverdrachten tussen systemen.`,
+            example: `// voorbeeld.csv
+id,naam,studierichting,punten
+1,Axelle,Informatica,87
+2,Robbe,Elektronica,74
+3,Lena,"Data, AI",91
+
+// Let op: komma in waarde → aanhalingstekens!`
+          },
+          {
+            title: "Het JSON-formaat",
+            content: `JSON staat voor JavaScript Object Notation en is het dominante formaat voor data-uitwisseling op het web. Ondanks de naam is JSON taalonafhankelijk en wordt het ondersteund door vrijwel alle moderne programmeertalen.
+
+Een JSON-bestand bestaat uit sleutel-waardeparen, vergelijkbaar met een woordenboek. Waarden kunnen strings, getallen, booleans, null, arrays of andere JSON-objecten zijn. Deze nestbaarheid maakt JSON ideaal voor complexe, hiërarchische datastructuren.
+
+JSON is het standaardformaat voor REST APIs: wanneer je een webservice aanroept (bijv. een weerdienst of een betaalgateway), ontvang je vrijwel altijd een JSON-antwoord. Ook configuratiebestanden (package.json, appsettings.json) en NoSQL-databases zoals MongoDB gebruiken JSON of een variant ervan (BSON).
+
+In vergelijking met CSV biedt JSON ingebouwde datatypes: een getal is een getal, een boolean is true/false. Het is wel uitgebreider (meer tekens nodig) dan CSV voor eenvoudige tabellen.`,
+            example: `// student.json
+{
+  "id": 1,
+  "naam": "Axelle",
+  "actief": true,
+  "vakken": ["Databanken", "Webdev"],
+  "adres": {
+    "stad": "Brussel",
+    "postcode": "1000"
+  }
+}`
+          },
+          {
+            title: "Het XML-formaat",
+            content: `XML staat voor eXtensible Markup Language en is een tekstgebaseerd formaat dat gebruik maakt van tags om data te structureren en te beschrijven. XML was lange tijd de standaard voor data-uitwisseling, zeker in enterprise-omgevingen, en is nog steeds wijdverspreid in legacy-systemen, configuratiebestanden en bepaalde webservices (SOAP).
+
+Elk XML-document begint met een declaratie en bevat één rootelement. Binnenin kunnen elementen genest worden, waardoor hiërarchische structuren mogelijk zijn. Elementen kunnen ook attributen bevatten voor extra metadata.
+
+XML is zelfbeschrijvend: de tagnamen geven meteen de betekenis van de data aan. Dit maakt XML goed leesbaar voor mensen. Het nadeel is de verbositeit: XML-bestanden zijn typisch veel groter dan equivalente JSON-bestanden, doordat elke waarde zowel een openingstag als een sluitingstag vereist.
+
+Gebruik XML wanneer je werkt met bestaande systemen die XML vereisen, of wanneer uitgebreide documentatie en scheemavalidatie (via XSD) belangrijk zijn.`,
+            example: `<!-- studenten.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<studenten>
+  <student id="1">
+    <naam>Axelle</naam>
+    <richting>Informatica</richting>
+    <actief>true</actief>
+  </student>
+  <student id="2">
+    <naam>Robbe</naam>
+    <richting>Elektronica</richting>
+    <actief>true</actief>
+  </student>
+</studenten>`
+          },
+          {
+            title: "Wanneer welk formaat?",
+            content: `Het kiezen van het juiste dataformaat hangt af van je gebruik en context. Er is geen universeel "beste" formaat; elk heeft zijn sterke punten.
+
+Kies CSV wanneer je data simpel en tabellair is (rijen en kolommen), wanneer je het wilt importeren in Excel of een database, of wanneer je werkt met grote hoeveelheden vlakke data waarbij bestandsgrootte telt. CSV is ook de beste keuze voor exports en rapporten.
+
+Kies JSON wanneer je werkt met een web-API, wanneer je data genest of hiërarchisch is (bijv. een bestelling met meerdere orderregels), of wanneer je een configuratiebestand schrijft. JSON is de standaard in moderne webontwikkeling en microservices.
+
+Kies XML wanneer je te maken hebt met enterprise-software of legacy-integraties die XML vereisen (zoals SAP of oudere SOAP-webservices), of wanneer uitgebreide scheemavalidatie nodig is. XML wordt ook gebruikt in kantoordocumenten (OOXML in .docx en .xlsx).
+
+Een handige vuistregel: tabeldata → CSV, web/API → JSON, enterprise/legacy → XML.`,
+            example: `// Keuzegids
+Eenvoudige tabel / export     →  CSV
+Web API / configuratie        →  JSON
+Enterprise / legacy systemen  →  XML
+
+// Moderne stack: combineer ze!
+// DB exporteert CSV, API geeft JSON,
+// SAP-koppeling vraagt XML`
+          },
+          {
+            title: "Excel — basisformules",
+            content: `Excel is voor veel organisaties het dagelijkse werkinstrument voor data. Kennis van basisformules maakt je direct productief.\n\n<strong>De meest gebruikte formules:</strong>\n<code>=SUM(B2:B10)</code> — som van een bereik\n<code>=AVERAGE(B2:B10)</code> — gemiddelde\n<code>=COUNT(B2:B10)</code> — telt cellen met getallen\n<code>=COUNTA(B2:B10)</code> — telt niet-lege cellen\n<code>=MAX(B2:B10)</code> / <code>=MIN(B2:B10)</code> — hoogste/laagste waarde\n<code>=IF(A2>100, "hoog", "laag")</code> — voorwaardelijke waarde\n\n<strong>Handige trucjes:</strong>\n- Druk <strong>F2</strong> om een cel te bewerken\n- <strong>Ctrl+Shift+End</strong> selecteert tot de laatste cel met data\n- <strong>Ctrl+T</strong> maakt een bereik een Excel-tabel (met automatische filtering)\n- Dubbelklik op de hoek van een cel om een formule omlaag te kopiëren`,
+            example: `// Webshop-data in Excel
+A         B       C
+Product   Prijs   Categorie
+Laptop    899     Elektronica
+Muis      29      Elektronica
+Bureau    299     Meubels
+
+=SUM(B2:B4)       → 1227   (totale waarde)
+=AVERAGE(B2:B4)   → 409    (gemiddelde prijs)
+=COUNTIF(C2:C4,"Elektronica") → 2`
+          },
+          {
+            title: "Welk grafiektype voor welke data?",
+            visualType: 'charts',
+            content: "Het kiezen van het juiste grafiektype is cruciaal voor heldere communicatie. Een <strong>staafgrafiek</strong> gebruik je om categorieën naast elkaar te vergelijken — bijvoorbeeld omzet per afdeling. Een <strong>lijndiagram</strong> toont trends over tijd, zoals maandelijkse verkoopcijfers. Een <strong>taartdiagram</strong> is geschikt wanneer je het aandeel van een geheel wil tonen, maar beperk je tot maximaal 5-6 stukken. Een <strong>kaart (map)</strong> gebruik je voor geografische data, zoals omzet per provincie of klanten per regio.",
+            example: "Omzet per maand (12 maanden) → Lijndiagram\nOmzet per product (5 producten) → Taartdiagram\nOmzet per provincie/regio → Kaart\nVerkoop per categorie (6 categorieën) → Staafgrafiek"
+          },
+          {
+            title: "Slechte vs goede visualisaties",
+            content: "Less is more: verwijder alle elementen die geen informatie toevoegen. Vermijd 3D-grafieken — ze vervormen de proporties en maken vergelijken moeilijk. Gebruik kleur als communicatiemiddel, niet als decoratie: zorg voor contrast en houd rekening met kleurenblindheid (gebruik geen rood-groen combinaties als enig onderscheid). Een legende moet altijd duidelijk zijn en dicht bij de data staan. Titels en aslabels zijn verplicht — de lezer mag nooit raden wat er wordt getoond.",
+            example: "❌ Slecht: 3D-taartdiagram zonder labels, 12 kleuren, geen titel\n✓ Goed: Vlak staafgrafiek, 2 contrasterende kleuren, duidelijke titel\n          Aslabels aanwezig, legenda naast de grafiek"
+          },
+          {
+            title: "Excel — grafieken maken",
+            content: `Een grafiek in Excel maak je in drie stappen: selecteer je data, kies het grafiektype, en pas de opmaak aan. Het juiste grafiektype kiezen is even belangrijk als de data zelf.\n\n<strong>Stap voor stap:</strong>\n1. Selecteer de data inclusief kolomkoppen\n2. Ga naar <strong>Invoegen → Grafieken</strong>\n3. Kies het gewenste type (zie rechts voor wanneer welk type)\n4. Pas aan via <strong>Grafiekontwerp</strong> en <strong>Opmaak</strong> tabbladen\n\n<strong>Essentiële aanpassingen:</strong>\n- Voeg altijd een <strong>grafiektitel</strong> toe\n- Zorg voor duidelijke <strong>aslabels</strong>\n- Vermijd 3D-effecten — ze vervormen de waarneming\n- Beperk kleuren tot maximaal 2-3 per grafiek\n\n<strong>Snelle grafiektip:</strong> selecteer je data en druk <strong>Alt+F1</strong> voor een onmiddellijke standaardgrafiek op hetzelfde blad, of <strong>F11</strong> voor een grafiek op een nieuw blad.`,
+            example: `// Wanneer welk grafiektype in Excel?
+Vergelijken (categorieën)  →  Gegroepeerde staafgrafiek
+Trend over tijd            →  Lijndiagram
+Aandeel van geheel (≤5)   →  Taartdiagram
+Geografische data          →  Kaart (vereist Microsoft 365)`
+          }
+        ],
+        chartScenarios: [
+          {
+            id: 1,
+            scenario: "Je wil de maandelijkse omzet tonen over het afgelopen jaar (12 maanden).",
+            options: [
+              { type: "bar", label: "Staafgrafiek", correct: false, reason: "Werkt, maar een lijndiagram toont trends over tijd beter." },
+              { type: "line", label: "Lijndiagram", correct: true, reason: "Lijndiagrammen zijn ideaal voor trends over tijd." },
+              { type: "pie", label: "Taartdiagram", correct: false, reason: "Taartdiagrammen zijn niet geschikt voor tijdreeksen." },
+              { type: "map", label: "Kaart", correct: false, reason: "Een kaart gebruik je voor geografische data, niet voor tijdreeksen." }
+            ]
+          },
+          {
+            id: 2,
+            scenario: "Je wil tonen welk percentage van de totale omzet elk product bijdraagt (5 producten).",
+            options: [
+              { type: "bar", label: "Staafgrafiek", correct: false, reason: "Mogelijk, maar een taartdiagram toont aandelen duidelijker." },
+              { type: "line", label: "Lijndiagram", correct: false, reason: "Lijndiagrammen zijn voor tijdreeksen, niet voor aandelen." },
+              { type: "pie", label: "Taartdiagram", correct: true, reason: "Taartdiagrammen zijn ideaal voor aandelen van een geheel (max 5-6 stukken)." },
+              { type: "map", label: "Kaart", correct: false, reason: "Een kaart gebruik je voor geografische data, niet voor aandelen." }
+            ]
+          },
+          {
+            id: 3,
+            scenario: "Je wil de verkoopcijfers van 6 verschillende productcategorieën vergelijken.",
+            options: [
+              { type: "bar", label: "Staafgrafiek", correct: true, reason: "Staafgrafieken zijn perfect voor het vergelijken van categorieën naast elkaar." },
+              { type: "line", label: "Lijndiagram", correct: false, reason: "Lijndiagrammen zijn voor continue data over tijd, niet voor categorievergelijkingen." },
+              { type: "pie", label: "Taartdiagram", correct: false, reason: "Met 6 categorieën wordt een taartdiagram onoverzichtelijk." },
+              { type: "map", label: "Kaart", correct: false, reason: "Een kaart gebruik je voor geografische data, niet voor categorievergelijkingen." }
+            ]
+          },
+          {
+            id: 4,
+            scenario: "Je hebt data over het aantal klanten per Belgische provincie en wil dit geografisch tonen.",
+            options: [
+              { type: "bar", label: "Staafgrafiek", correct: false, reason: "Een staafgrafiek kan dit tonen, maar een kaart geeft direct geografisch inzicht." },
+              { type: "line", label: "Lijndiagram", correct: false, reason: "Lijndiagrammen zijn voor trends over tijd." },
+              { type: "pie", label: "Taartdiagram", correct: false, reason: "Met 10 provincies wordt een taartdiagram onoverzichtelijk." },
+              { type: "map", label: "Kaart", correct: true, reason: "Een kaart is ideaal voor geografische data — tools zoals Power BI kleuren provincies automatisch op basis van de waarde." }
+            ]
+          },
+          {
+            id: 5,
+            scenario: "Je wil de dagelijkse websitebezoeken tonen voor de afgelopen 30 dagen.",
+            options: [
+              { type: "bar", label: "Staafgrafiek", correct: false, reason: "Met 30 balken wordt het onoverzichtelijk — een lijn is beter." },
+              { type: "line", label: "Lijndiagram", correct: true, reason: "Lijndiagrammen tonen continue data over tijd overzichtelijk." },
+              { type: "pie", label: "Taartdiagram", correct: false, reason: "Taartdiagrammen zijn voor aandelen van een geheel, niet voor tijdreeksen." },
+              { type: "map", label: "Kaart", correct: false, reason: "Een kaart gebruik je voor geografische data, niet voor tijdreeksen." }
+            ]
+          }
+        ],
+        quiz: [
+          {
+            type: "mc",
+            q: "Welk formaat gebruikt komma's om waarden te scheiden?",
+            options: ["JSON", "CSV", "XML", "SQL"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Gestructureerde data wordt het best omschreven als?",
+            options: [
+              "Data in e-mails en foto's",
+              "Data georganiseerd in rijen en kolommen",
+              "Data afkomstig van sensoren",
+              "Ongestructureerde webtekst"
+            ],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Welk formaat maakt gebruik van openings- en sluitingstags?",
+            options: ["CSV", "JSON", "XML", "TXT"],
+            answer: 2,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Waar staat JSON voor?",
+            options: [
+              "Java Standard Object Notation",
+              "JavaScript Object Notation",
+              "Java Serialized Object Notation",
+              "JSON Syntax Object Notation"
+            ],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "fill",
+            q: "Geef het bestandsextensie van een JSON-bestand:",
+            answer: ["json", ".json"],
+            xp: 25
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: "Tabellen, DDL & INSERT",
+        week: "Week 2",
+        emoji: "🏗️",
+        color: "#00639c",
+        tagline: "Van entiteit naar tabel — structuur aanmaken en eerste data invoeren",
+        type: "erd",
+        hideErdViewer: true,
+        hasDML: true,
+        simpleErd: true,
+        freeSqlExamples: [
+          { label:'CREATE klanten', q:"CREATE TABLE klanten (\n  id       INT PRIMARY KEY,\n  naam     STRING,\n  stad     STRING,\n  leeftijd INT\n);" },
+          { label:'CREATE producten', q:"CREATE TABLE producten (\n  id        INT PRIMARY KEY,\n  naam      STRING,\n  categorie STRING,\n  prijs     FLOAT\n);" },
+          { label:'INSERT klant', q:"INSERT INTO klanten (id, naam, stad, leeftijd)\nVALUES (10, 'Thomas Claes', 'Leuven', 25);" },
+          { label:'INSERT product', q:"INSERT INTO producten (id, naam, categorie, prijs)\nVALUES (10, 'Webcam', 'Elektronica', 79.99);" },
+        ],
+        theory: [
+          {
+            title: "Wat is een RDBMS?",
+            content: `Een <strong>RDBMS</strong> (Relational Database Management System) is software die relationele databases beheert: het slaat data op, verwerkt queries en bewaakt de integriteit van de data. Bekende voorbeelden zijn MySQL, PostgreSQL, SQLite en Microsoft SQL Server.\n\nEen RDBMS organiseert data in <strong>tabellen</strong>. Elke tabel heeft een naam, vaste kolommen met datatypes en rijen met concrete waarden. De structuur van de tabel heet het <strong>schema</strong>.\n\nHet grote voordeel van een RDBMS ten opzichte van een spreadsheet: het RDBMS kan gelijktijdige toegang van meerdere gebruikers aan, garandeert de datakwaliteit via constraints, en schaalt naar miljoenen rijen zonder prestatieverlies.`,
+            example: `// Vergelijking: Excel vs RDBMS
+Excel:  Cel B3 bevat "39.99" — kan morgen tekst zijn
+RDBMS:  kolom 'prijs' is FLOAT — altijd een getal, altijd
+
+// Populaire RDBMS:
+MySQL      — open source, populair voor webapps
+PostgreSQL — geavanceerd, uitstekend voor complexe queries
+SQLite     — lichtgewicht, bestandsgebaseerd
+SQL Server — Microsoft enterprise-omgeving`
+          },
+          {
+            title: "Tabellen, rijen, kolommen en datatypes",
+            content: `Een <strong>tabel</strong> is de basisstructuur in een relationele database. Je kunt het vergelijken met een Excel-sheet, maar met één cruciaal verschil: het schema (de structuur) is vooraf vastgelegd en afgedwongen.\n\nElke kolom heeft een <strong>datatype</strong> dat bepaalt welke waarden toegelaten zijn:\n<code>INT</code> — gehele getallen (1, 42, -7)\n<code>FLOAT / DECIMAL</code> — decimale getallen (3.14, 39.99)\n<code>STRING</code> — tekst ("Gent", "Axelle")\n<code>DATE</code> — datum (2024-01-15)\n\nElke <strong>rij</strong> is één record — één concreet geval van de entiteit. Elke <strong>kolom</strong> is één attribuut dat voor elk record een waarde bevat.`,
+            example: `// Tabel KLANTEN
+id | naam           | stad      | leeftijd
+---|----------------|-----------|----------
+ 1 | Lotte Peeters  | Gent      | 28
+ 2 | Kobe Janssen   | Brussel   | 34
+ 3 | Yasmine Demir  | Gent      | 22
+
+// 3 rijen, 4 kolommen
+// id = INT, naam = STRING, stad = STRING, leeftijd = INT`
+          },
+          {
+            title: "Entiteiten en het entiteitdiagram",
+            visualType: 'entity',
+            content: `Voordat we een tabel aanmaken, denken we na over de <strong>entiteit</strong>: wat willen we bijhouden? Een entiteit is een zelfstandig, identificeerbaar concept — een zelfstandig naamwoord zoals KLANT, PRODUCT of STUDENT.\n\nVoor elke entiteit identificeren we de <strong>attributen</strong>: de eigenschappen die we willen opslaan. Elk attribuut krijgt een naam en een datatype.\n\nEén attribuut is de <strong>primaire sleutel (PK)</strong>: dit is een unieke identificator voor elke rij. Zonder PK kun je twee identieke rijen niet van elkaar onderscheiden. Kies bij voorkeur een automatisch oplopend getal (<code>id INT PRIMARY KEY</code>).\n\nZo stel je een entiteit visueel voor — dit is het entiteitdiagram:`,
+            example: `// Entiteit: KLANT
+// Attributen:
+id       INT   (PK — uniek, nooit NULL)
+naam     STRING
+email    STRING
+stad     STRING
+
+// In Week 4 leer je relaties TUSSEN entiteiten
+// Daar komen ook de verwijssleutels (FK's) aan bod`
+          },
+          {
+            title: "CREATE TABLE — DDL syntax",
+            content: `<strong>DDL</strong> staat voor <em>Data Definition Language</em>: de SQL-commando's waarmee je de structuur van een database definieert. Het belangrijkste DDL-commando is <code>CREATE TABLE</code>.\n\n<strong>Basisstructuur:</strong>\n<pre>CREATE TABLE tabelnaam (\n  kolomnaam  DATATYPE  [CONSTRAINTS],\n  ...\n);</pre>\n\n<strong>Veelgebruikte constraints:</strong>\n<code>PRIMARY KEY</code> — maakt de kolom de primaire sleutel\n<code>NOT NULL</code> — lege waarden zijn niet toegestaan\n<code>UNIQUE</code> — alle waarden moeten uniek zijn\n\n<strong>Naamgeving:</strong> gebruik kleine letters, geen spaties, gebruik underscores. Tabelnamen schrijf je doorgaans in meervoud.\n\n<strong>Let op:</strong> in deze module maken we tabellen <em>zonder</em> verwijssleutels (FK's). Relaties komen in Week 4.`,
+            example: `-- Enkelvoudige tabel, geen FK's
+CREATE TABLE klanten (
+  id       INT PRIMARY KEY,
+  naam     STRING NOT NULL,
+  email    STRING,
+  stad     STRING,
+  leeftijd INT
+);
+
+CREATE TABLE producten (
+  id        INT PRIMARY KEY,
+  naam      STRING NOT NULL,
+  categorie STRING,
+  prijs     FLOAT
+);`
+          },
+          {
+            title: "Data invoeren — INSERT",
+            content: `Nadat je een tabel hebt aangemaakt met DDL, kun je er data in stoppen met <strong>INSERT INTO</strong>. Dit commando behoort tot DML (Data Manipulation Language).\n\n<strong>Syntax:</strong>\n<pre>INSERT INTO tabelnaam (kolom1, kolom2, ...)\nVALUES (waarde1, waarde2, ...);</pre>\n\nDe volgorde van de kolomnamen moet overeenkomen met de volgorde van de waarden. Tekst zet je altijd tussen enkele aanhalingstekens (<code>'tekst'</code>). Getallen schrijf je zonder aanhalingstekens.\n\n<strong>Belangrijk:</strong> het PRIMARY KEY-veld moet een unieke waarde krijgen. Als je twee keer dezelfde <code>id</code> invoert, geeft de database een fout.`,
+            example: `-- Eerst de tabel aanmaken (DDL)
+CREATE TABLE klanten (
+  id       INT PRIMARY KEY,
+  naam     STRING NOT NULL,
+  stad     STRING
+);
+
+-- Dan data invoegen (DML)
+INSERT INTO klanten (id, naam, stad)
+VALUES (1, 'Lotte Peeters', 'Gent');
+
+INSERT INTO klanten (id, naam, stad)
+VALUES (2, 'Kobe Janssen', 'Brussel');`
+          }
+        ],
+        sqlExercises: [
+          {
+            title: "Webshop tabel — klanten",
+            type: "ddl",
+            erdFocus: ['klanten'],
+            checks: { tableName: "klanten", requiredCols: ["id","naam","stad","leeftijd"], primaryKey: true },
+            description: "Maak een CREATE TABLE voor de tabel 'klanten'. Kolommen: id (INT, PK), naam (STRING), stad (STRING), leeftijd (INT). Nog geen verwijssleutels nodig.",
+            hint: "CREATE TABLE klanten (id INT PRIMARY KEY, naam STRING, stad STRING, leeftijd INT)",
+            solution: "CREATE TABLE klanten (\n  id       INT PRIMARY KEY,\n  naam     STRING NOT NULL,\n  stad     STRING,\n  leeftijd INT\n)",
+            xp: 30
+          },
+          {
+            title: "Webshop tabel — producten",
+            type: "ddl",
+            erdFocus: ['producten'],
+            checks: { tableName: "producten", requiredCols: ["id","naam","categorie","prijs"], primaryKey: true },
+            description: "Maak een CREATE TABLE voor 'producten'. Kolommen: id (INT, PK), naam (STRING), categorie (STRING), prijs (FLOAT).",
+            hint: "Vergeet de PRIMARY KEY niet op id!",
+            solution: "CREATE TABLE producten (\n  id        INT PRIMARY KEY,\n  naam      STRING NOT NULL,\n  categorie STRING,\n  prijs     FLOAT\n)",
+            xp: 30
+          },
+          {
+            title: "INSERT — eerste klant toevoegen",
+            description: "Voeg een eerste klant toe aan de tabel klanten: id=10, naam='Thomas Claes', stad='Leuven', leeftijd=25.",
+            hint: "INSERT INTO klanten (id, naam, stad, leeftijd) VALUES (10, 'Thomas Claes', 'Leuven', 25)",
+            solution: "INSERT INTO klanten (id, naam, stad, leeftijd) VALUES (10, 'Thomas Claes', 'Leuven', 25)",
+            xp: 25
+          }
+        ],
+        quiz: [
+          {
+            type: "mc",
+            q: "Wat staat DDL voor?",
+            options: ["Data Definition Language", "Database Design Logic", "Dynamic Data Listing", "Data Deletion Layer"],
+            answer: 0,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Welk datatype gebruik je voor een klantnaam?",
+            options: ["INT", "FLOAT", "STRING", "DATE"],
+            answer: 2,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Wat is de functie van een PRIMARY KEY?",
+            options: ["Sla wachtwoorden op", "Identificeer elke rij uniek in de tabel", "Verwijs naar een andere tabel", "Beperk de kolom tot getallen"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Welke constraint verbiedt lege (NULL) waarden?",
+            options: ["PRIMARY KEY", "UNIQUE", "NOT NULL", "DEFAULT"],
+            answer: 2,
+            xp: 20
+          },
+          {
+            type: "fill",
+            q: "Het DDL-commando om een tabel aan te maken is CREATE ___:",
+            answer: ["TABLE", "table"],
+            xp: 25
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: "Relaties & ERD",
+        week: "Week 4",
+        emoji: "🔗",
+        color: "#1f416b",
+        tagline: "Relaties, kardinaliteit, ERD schetsen en DDL met verwijssleutels",
+        type: "erd",
+        theory: [
+          {
+            title: "Relaties en kardinaliteit",
+            visualType: 'nm',
+            content: `Relaties beschrijven hoe entiteiten met elkaar verbonden zijn. <strong>Kardinaliteit</strong> geeft aan hoeveel instanties van de ene entiteit gekoppeld kunnen worden aan instanties van de andere entiteit.\n\n<strong>1:1 — Één-op-één:</strong> elke instantie van A hoort bij precies één B, en omgekeerd. Voorbeeld: PERSOON — PASPOORT. Zeldzaam in de praktijk.\n\n<strong>1:N — Één-op-veel:</strong> de meest voorkomende relatie. Één A-instantie is gekoppeld aan meerdere B-instanties. Voorbeeld: één KLANT heeft meerdere BESTELLINGEN.\n\n<strong>N:M — Veel-op-veel:</strong> meerdere A-instanties horen bij meerdere B-instanties. Voorbeeld: een STUDENT volgt meerdere CURSUSSEN; een CURSUS heeft meerdere STUDENTEN. <strong>Een N:M-relatie kan niet rechtstreeks opgeslagen worden</strong> in een relationele database. De oplossing is een <em>koppeltabel</em>: de N:M "explodeert" zo in twee 1:N-relaties. Zie de visualisatie hieronder.`
+          },
+          {
+            title: "Verwijssleutels (FK's) — de brug tussen tabellen",
+            content: `Nu je weet welke relaties er zijn, kijken we hoe een database die relaties technisch implementeert. Daarvoor heb je een <strong>verwijssleutel</strong> (foreign key, FK) nodig.\n\nEen verwijssleutel is een kolom in een tabel die verwijst naar de <strong>primaire sleutel (PK) van een andere tabel</strong>. Zo weet de database welke rijen bij elkaar horen.\n\n<strong>Cruciale regel:</strong> de FK staat altijd aan de <em>"N-kant"</em> van een 1:N-relatie — de tabel die "bij veel" hoort. Voorbeeld: één KLANT heeft meerdere ORDERS → de FK <code>klant_id</code> staat in ORDERS, niet in KLANTEN.\n\n<strong>Bij N:M</strong> gebruik je een koppeltabel met twee FK's: één naar elke "ouder"-tabel.`,
+            example: `-- 1:N: FK staat in de "veel"-tabel (N-kant)
+-- Één KLANT heeft meerdere ORDERS:
+--   klant_id (in ORDERS) → verwijst naar id (in KLANTEN)
+
+-- N:M opgelost via koppeltabel met 2 FK's:
+-- STUDENT >——< CURSUS  →  via tabel INSCHRIJVINGEN
+--   student_id → verwijst naar id in STUDENTEN
+--   cursus_id  → verwijst naar id in CURSUSSEN`
+          },
+          {
+            title: "ERD schetsen — conventies en FK's tekenen",
+            content: `Nu je relaties en FK's begrijpt, zet je ze op papier als een <strong>ERD (Entity-Relationship Diagram)</strong>. Het ERD is een conceptueel model: het toont <em>wat</em> je wil opslaan en hoe entiteiten met elkaar verbonden zijn.\n\n<strong>Hoe teken je een entiteitbox:</strong> een rechthoek met de entiteitsnaam in HOOFDLETTERS bovenaan. Attributen staan eronder; de PK is onderstreept of gemarkeerd met 🔑.\n\n<strong>FK's in het ERD:</strong> een FK-kolom teken je met 🔗 of een stippellijn. Je trekt een lijn van de FK-kolom naar de PK-kolom van de andere tabel. De kraaienpoot staat aan de FK-kant (N-kant).\n\n<strong>Kardinaliteitsnotatie (crow's foot):</strong>\n- Rechte lijn ─── = "één"\n- Kraaienpoot ─< = "veel"\n- 1:N: ──────<  (één kant rechte lijn, N-kant kraaienpoot)\n- N:M: >──────< (beide kanten kraaienpoot)\n\n<strong>Stap-voor-stap ERD maken:</strong>\n1. Identificeer entiteiten (zelfstandige naamwoorden)\n2. Noteer attributen per entiteit + markeer de PK\n3. Bepaal de relaties en kardinaliteit\n4. Teken FK-kolommen (aan N-kant) en verbindingslijnen\n5. Los N:M op via koppeltabel (met 2 FK's)`,
+            example: `// ERD-schets (tekstueel): KLANT ──< BESTELLING
+┌─────────────┐         ┌──────────────────────┐
+│   KLANT     │         │     BESTELLING       │
+│─────────────│  1   N  │──────────────────────│
+│ 🔑 id       │─────────│ 🔑 id                │
+│  naam       │         │  datum               │
+│  email      │         │  status              │
+└─────────────┘         │ 🔗 klant_id (FK)     │
+                        └──────────────────────┘
+// Lees: één KLANT → meerdere BESTELLINGEN (1:N)
+// 🔗 klant_id zit in BESTELLING (N-kant) en verwijst naar 🔑 id van KLANT`
+          },
+          {
+            title: "Van ERD naar DDL",
+            visualType: 'erd',
+            content: `Eens het ERD klopt, vertaal je het naar DDL. Elke entiteit wordt een tabel, elk attribuut een kolom, elke FK-kolom krijgt <code>REFERENCES andereTable(id)</code>.\n\n<strong>Volgorde van aanmaken:</strong> maak altijd eerst de "ouder"-tabellen aan (zonder FK's), dan de "kind"-tabellen (met FK's). Anders kent de database de doeltabel nog niet.\n\nHieronder zie je het volledige webshop-ERD omgezet naar DDL.`,
+            example: `-- Stap 1: tabellen zonder FK's eerst (de "ouders")
+CREATE TABLE klanten (
+  id       INT PRIMARY KEY,
+  naam     STRING NOT NULL,
+  stad     STRING,
+  leeftijd INT
+);
+CREATE TABLE producten (
+  id        INT PRIMARY KEY,
+  naam      STRING NOT NULL,
+  categorie STRING,
+  prijs     FLOAT
+);
+
+-- Stap 2: tabel met FK naar klanten (1:N — FK aan N-kant)
+CREATE TABLE orders (
+  id       INT PRIMARY KEY,
+  klant_id INT REFERENCES klanten(id),  -- FK → KLANTEN
+  datum    STRING,
+  status   STRING
+);
+
+-- Stap 3: koppeltabel voor N:M (twee FK's)
+CREATE TABLE orderregels (
+  id         INT PRIMARY KEY,
+  order_id   INT REFERENCES orders(id),
+  product_id INT REFERENCES producten(id),
+  aantal     INT
+);`
+          }
+        ],
+        sqlExercises: [
+          {
+            title: "1:N relatie — orders",
+            type: "ddl",
+            erdFocus: ['klanten','orders'],
+            checks: { tableName: "orders", requiredCols: ["id","klant_id","datum","status"], primaryKey: true, references: ["klanten"] },
+            description: "Maak een CREATE TABLE voor 'orders' met een verwijssleutel (FK) naar klanten. Kolommen: id (INT, PK), klant_id (INT, FK → klanten), datum (STRING), status (STRING).",
+            hint: "Gebruik REFERENCES klanten(id) voor de verwijssleutel op klant_id",
+            solution: "CREATE TABLE orders (\n  id       INT PRIMARY KEY,\n  klant_id INT REFERENCES klanten(id),\n  datum    STRING,\n  status   STRING\n)",
+            xp: 35
+          },
+          {
+            title: "N:M koppeltabel — inschrijvingen",
+            type: "ddl",
+            erdFocus: [],
+            customERD: true,
+            checks: { tableName: "inschrijvingen", requiredCols: ["id","student_id","vak_id"], primaryKey: true },
+            description: "Een student kan meerdere vakken volgen (N:M). Maak de koppeltabel 'inschrijvingen' met: id (INT, PK), student_id (INT), vak_id (INT), datum (STRING).",
+            hint: "Gebruik een gewone id als PRIMARY KEY — geen samengestelde sleutel",
+            solution: "CREATE TABLE inschrijvingen (\n  id         INT PRIMARY KEY,\n  student_id INT,\n  vak_id     INT,\n  datum      STRING\n)",
+            xp: 35
+          }
+        ],
+        quiz: [
+          {
+            type: "mc",
+            q: "Waar staat ERD voor?",
+            options: ["Entity Relationship Database", "Entity Relationship Diagram", "Element Reference Diagram", "External Record Design"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Een klant kan meerdere bestellingen hebben. Dit is een...",
+            options: ["1:1-relatie", "1:N-relatie", "N:M-relatie", "N:1-relatie"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Wat doet een verwijssleutel (foreign key)?",
+            options: ["Maakt een kolom uniek", "Koppelt een tabel aan de primaire sleutel van een andere tabel", "Versnelt queries", "Slaat berekende waarden op"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Hoe los je een N:M-relatie op in een relationele database?",
+            options: ["Door een extra kolom toe te voegen", "Via een koppeltabel met twee verwijssleutels", "Door de relatie te negeren", "Via een aparte database"],
+            answer: 1,
+            xp: 25
+          },
+          {
+            type: "mc",
+            q: "Welke tabel maak je als eerste aan — de tabel met FK of zonder FK?",
+            options: ["Maakt niet uit", "De tabel MÉT FK eerst", "De tabel ZONDER FK eerst", "Beide tegelijk"],
+            answer: 2,
+            xp: 20
+          },
+          {
+            type: "fill",
+            q: "Een tabel in een ERD wordt ook een ___ genoemd:",
+            answer: ["entiteit", "entity"],
+            xp: 25
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: "SQL Basis",
+        week: "Week 3",
+        emoji: "🔍",
+        color: "#00639c",
+        tagline: "SELECT, WHERE en ORDER BY beheersen",
+        type: "sql",
+        theory: [
+          {
+            title: "Wat is SQL?",
+            exampleOutput: {cols:['naam','prijs'],rows:[['Laptop Pro 15"','1299.99'],['Draadloze muis','39.99'],['USB-C Hub','49.99'],['Kantoorstoel','249.00'],['Bureau','399.00']]},
+            content: `SQL (Structured Query Language) is de standaardtaal om met relationele databases te communiceren. In tegenstelling tot procedurele programmeertalen is SQL <strong>declaratief</strong>: je beschrijft <em>wat</em> je wilt, niet <em>hoe</em> de database het moet ophalen.\n\nSQL bestaat in verschillende dialecten: <strong>MySQL</strong> en <strong>PostgreSQL</strong> zijn populair voor webapplicaties, <strong>SQLite</strong> is lichtgewicht en ingebouwd in veel apps, en <strong>SQL Server</strong> is de Microsoft-variant.\n\n<strong>SQL vs Excel:</strong> Excel is ideaal voor kleine datasets, handmatige analyses en grafieken. SQL kies je wanneer je grote hoeveelheden data hebt (miljoenen rijen), meerdere tabellen moet combineren, of herhaaldelijk dezelfde analyse wil uitvoeren. SQL werkt ook beter samen met andere applicaties en is reproduceerbaar.\n\n<strong>Voorbeeld:</strong>\n<code>-- Dit is een SQL-commentaar\nSELECT naam, prijs FROM producten;</code>\nDeze query vraagt twee kolommen op uit de tabel "producten".`
+          },
+          {
+            title: "SELECT en FROM",
+            exampleOutput: {cols:['productnaam','euro_prijs'],rows:[['Laptop Pro 15"','1299.99'],['Draadloze muis','39.99'],['USB-C Hub','49.99'],['Kantoorstoel','249.00'],['Bureau','399.00']]},
+            content: `De basisstructuur van elke SQL-query bestaat uit twee verplichte onderdelen: <strong>SELECT</strong> (welke kolommen) en <strong>FROM</strong> (welke tabel).\n\n<code>SELECT * FROM klanten;</code>\nDe asterisk (<code>*</code>) selecteert <em>alle</em> kolommen. Handig om snel te verkennen, maar voor productieomgevingen geef je liever specifieke kolomnamen op — dit is sneller en duidelijker.\n\n<code>SELECT naam, email, stad FROM klanten;</code>\n\nMet <strong>aliassen</strong> geef je een kolom een andere naam in het resultaat:\n<code>SELECT naam AS klantnaam, prijs AS verkoopprijs FROM producten;</code>\n\n<strong>Conventie:</strong> SQL-sleutelwoorden schrijf je traditioneel in HOOFDLETTERS (SELECT, FROM, WHERE), tabel- en kolomnamen in kleine letters. Dit is geen verplichting, maar maakt queries veel leesbaarder.\n\n<strong>Voorbeeld volledig:</strong>\n<code>SELECT naam AS productnaam,\n       prijs AS euro_prijs\nFROM producten;</code>`
+          },
+          {
+            title: "WHERE — data filteren",
+            exampleOutput: {cols:['id','naam','categorie','prijs'],rows:[['2','Draadloze muis','Elektronica','39.99'],['3','USB-C Hub','Elektronica','49.99']]},
+            content: `Met <strong>WHERE</strong> filter je rijen op basis van een voorwaarde. Alleen rijen die aan de voorwaarde voldoen verschijnen in het resultaat.\n\n<strong>Vergelijkingsoperatoren:</strong> <code>=</code>, <code><></code> (niet gelijk), <code><</code>, <code>></code>, <code><=</code>, <code>>=</code>.\n\nTekstwaarden zet je altijd tussen enkele aanhalingstekens: <code>WHERE stad = 'Brussel'</code>.\n\nMeerdere voorwaarden combineer je met <strong>AND</strong>, <strong>OR</strong> en <strong>NOT</strong>:\n<code>SELECT * FROM producten\nWHERE prijs > 10 AND prijs < 50;</code>\n\n<strong>BETWEEN</strong> is een handige afkorting voor een bereik:\n<code>WHERE prijs BETWEEN 10 AND 50</code>\n\n<strong>IN</strong> controleert of een waarde in een lijst staat:\n<code>WHERE stad IN ('Gent', 'Brussel', 'Antwerpen')</code>\n\n<strong>LIKE</strong> zoekt op patronen: <code>%</code> = meerdere tekens, <code>_</code> = één teken.\n<code>WHERE naam LIKE 'A%'</code> — alle namen die beginnen met A.`
+          },
+          {
+            title: "ORDER BY — sorteren",
+            exampleOutput: {cols:['naam','categorie','prijs'],rows:[['Draadloze muis','Elektronica','39.99'],['USB-C Hub','Elektronica','49.99'],['Kantoorstoel','Meubels','249.00'],['Bureau','Meubels','399.00'],['Laptop Pro 15"','Elektronica','1299.99']]},
+            content: `Met <strong>ORDER BY</strong> sorteer je het resultaat op één of meerdere kolommen. Standaard sorteert SQL oplopend (<strong>ASC</strong>), voor aflopend gebruik je <strong>DESC</strong>.\n\n<code>SELECT naam, prijs FROM producten\nORDER BY prijs ASC;</code>\n\nGoedkoopste producten eerst. Wil je duurste eerst?\n<code>ORDER BY prijs DESC</code>\n\n<strong>Meerdere kolommen sorteren:</strong> je kunt op meerdere niveaus sorteren. Eerst op categorie, dan per categorie op prijs:\n<code>SELECT naam, categorie, prijs FROM producten\nORDER BY categorie ASC, prijs DESC;</code>\n\n<strong>NULL-waarden</strong> bij sorteren: standaard komen NULL-waarden bij ASC als laatste, bij DESC als eerste (dit kan per database-dialect verschillen).\n\n<strong>Tip:</strong> ORDER BY staat altijd als laatste clausule in een query (vóór LIMIT). De volgorde van clausules is: SELECT → FROM → WHERE → ORDER BY → LIMIT.`
+          },
+          {
+            title: "DISTINCT en LIMIT",
+            exampleOutput: {cols:['stad'],rows:[['Gent'],['Brussel'],['Antwerpen']]},
+            content: `<strong>DISTINCT</strong> verwijdert dubbele rijen uit het resultaat. Stel dat je alle steden wilt zien waar klanten wonen, zonder herhalingen:\n\n<code>SELECT DISTINCT stad FROM klanten;</code>\n\nZonder DISTINCT zou elke stad evenveel keer verschijnen als er klanten in die stad zijn.\n\n<strong>LIMIT</strong> beperkt het aantal teruggegeven rijen — handig voor previews of "top N"-lijsten:\n<code>SELECT naam, prijs FROM producten\nORDER BY prijs DESC\nLIMIT 5;</code>\nDit toont de 5 duurste producten.\n\n<strong>TOP (SQL Server):</strong> Microsoft SQL Server gebruikt <code>SELECT TOP 5</code> in plaats van <code>LIMIT 5</code> op het einde. SQLite, MySQL en PostgreSQL gebruiken LIMIT.\n\n<strong>Praktisch gebruik:</strong> gebruik LIMIT altijd bij het verkennen van een onbekende tabel om te voorkomen dat je accidenteel miljoenen rijen ophaalt. <code>SELECT * FROM grote_tabel LIMIT 100;</code> is een veilige verkenningsquery.`
+          }
+        ],
+        sqlExercises: [
+          {
+            title: "Alle producten",
+            description: "Toon alle kolommen van alle producten.",
+            hint: "Gebruik SELECT * FROM ...",
+            solution: "SELECT * FROM producten",
+            xp: 20
+          },
+          {
+            title: "Naam en prijs",
+            description: "Toon alleen de naam en prijs van alle producten.",
+            hint: "Geef de kolomnamen op na SELECT",
+            solution: "SELECT naam, prijs FROM producten",
+            xp: 20
+          },
+          {
+            title: "Dure producten",
+            description: "Toon alle producten die meer dan €50 kosten.",
+            hint: "Gebruik WHERE prijs > 50",
+            solution: "SELECT * FROM producten WHERE prijs > 50",
+            xp: 25
+          },
+          {
+            title: "Sorteren op prijs",
+            description: "Toon alle producten, gesorteerd van goedkoopst naar duurste.",
+            hint: "Gebruik ORDER BY prijs ASC",
+            solution: "SELECT * FROM producten ORDER BY prijs ASC",
+            xp: 25
+          },
+          {
+            title: "Klanten uit Gent",
+            description: "Toon alle klanten die wonen in 'Gent'.",
+            hint: "Gebruik WHERE stad = 'Gent'",
+            solution: "SELECT * FROM klanten WHERE stad = 'Gent'",
+            xp: 25
+          },
+          {
+            title: "Top 3 duurste producten",
+            description: "Toon de 3 duurste producten (naam en prijs).",
+            hint: "Gebruik ORDER BY prijs DESC en LIMIT 3",
+            solution: "SELECT naam, prijs FROM producten ORDER BY prijs DESC LIMIT 3",
+            xp: 30
+          },
+          {
+            title: "UPDATE — prijs aanpassen",
+            description: "Pas de prijs van het product 'Laptop' aan naar 849.99. ⚠️ Vergeet de WHERE-clausule niet — zonder WHERE pas je ALLE producten aan!",
+            hint: "UPDATE producten SET prijs = 849.99 WHERE naam = 'Laptop'  ← WHERE is verplicht!",
+            solution: "UPDATE producten SET prijs = 849.99 WHERE naam = 'Laptop'",
+            xp: 30
+          }
+        ],
+        freeSqlExamples: [
+          { label:'Alle producten', q:'SELECT * FROM producten' },
+          { label:'Alle klanten', q:'SELECT * FROM klanten' },
+          { label:'Producten < €50', q:"SELECT naam, prijs FROM producten WHERE prijs < 50 ORDER BY prijs" },
+          { label:'Klanten Gent/BXL', q:"SELECT * FROM klanten WHERE stad IN ('Gent','Brussel')" },
+          { label:'Duurste 3', q:'SELECT naam, prijs FROM producten ORDER BY prijs DESC LIMIT 3' },
+          { label:'Steden (uniek)', q:'SELECT DISTINCT stad FROM klanten' },
+        ],
+        quiz: [
+          {
+            type: "mc",
+            q: "Welk SQL-keyword gebruik je om data op te vragen?",
+            options: ["INSERT", "SELECT", "UPDATE", "DELETE"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Wat doet SELECT DISTINCT?",
+            options: ["Sorteert rijen", "Verwijdert duplicaten", "Filtert NULL-waarden", "Telt rijen"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Welke query toont producten goedkoper dan €25?",
+            options: [
+              "SELECT * FROM producten WHERE prijs < 25",
+              "SELECT * FROM producten HAVING prijs < 25",
+              "SELECT * FROM producten LIMIT 25",
+              "SELECT prijs FROM producten ORDER BY 25"
+            ],
+            answer: 0,
+            xp: 25
+          },
+          {
+            type: "mc",
+            q: "ORDER BY naam DESC sorteert...",
+            options: ["Alfabetisch A→Z", "Alfabetisch Z→A", "Numeriek klein→groot", "Op datum"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "fill",
+            q: "Schrijf het SQL-keyword om rijen te filteren:",
+            answer: ["WHERE"],
+            xp: 25
+          }
+        ]
+      },
+      {
+        id: 5,
+        title: "SQL Gevorderd",
+        week: "Week 5",
+        emoji: "⚙️",
+        color: "#7c3aed",
+        tagline: "GROUP BY, JOINs en aggregate functies",
+        type: "sql",
+        theory: [
+          {
+            title: "Aggregate functies",
+            exampleOutput: {cols:['totaal_producten','gemiddelde_prijs','duurste','goedkoopste'],rows:[['5','407.60','1299.99','39.99']]},
+            content: `<strong>Aggregate functies</strong> berekenen één waarde op basis van meerdere rijen. Ze zijn essentieel voor samenvattingen en rapportages.\n\n<strong>De belangrijkste aggregate functies:</strong>\n<code>COUNT(*)</code> — telt het totaal aantal rijen\n<code>SUM(kolom)</code> — telt de waarden van een kolom op\n<code>AVG(kolom)</code> — berekent het gemiddelde\n<code>MIN(kolom)</code> — geeft de kleinste waarde\n<code>MAX(kolom)</code> — geeft de grootste waarde\n\nZonder GROUP BY werken ze op de volledige tabel en geven één resultaatrij:\n<code>SELECT COUNT(*) AS totaal_producten,\n       AVG(prijs) AS gemiddelde_prijs,\n       MAX(prijs) AS duurste,\n       MIN(prijs) AS goedkoopste\nFROM producten;</code>\n\n<strong>Let op:</strong> <code>COUNT(*)</code> telt alle rijen, ook die met NULL. <code>COUNT(kolom)</code> telt alleen niet-NULL waarden in die kolom.`
+          },
+          {
+            title: "GROUP BY en HAVING",
+            exampleOutput: {cols:['categorie','aantal','gem_prijs'],rows:[['Elektronica','3','463.32'],['Meubels','2','324.00']]},
+            content: `<strong>GROUP BY</strong> groepeert rijen met dezelfde waarde in een kolom, zodat je aggregate functies per groep kunt berekenen.\n\n<code>SELECT categorie, COUNT(*) AS aantal, AVG(prijs) AS gem_prijs\nFROM producten\nGROUP BY categorie;</code>\n\nDit geeft één rij per categorie met het aantal producten en de gemiddelde prijs.\n\n<strong>HAVING</strong> filtert groepen, net zoals WHERE rijen filtert. Het verschil is cruciaal: WHERE werkt <em>vóór</em> de aggregatie, HAVING <em>erna</em>.\n\n<code>SELECT categorie, COUNT(*) AS aantal\nFROM producten\nGROUP BY categorie\nHAVING COUNT(*) > 3;</code>\n\nToont alleen categorieën met meer dan 3 producten.\n\n<strong>Volgorde van clausules:</strong> SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT. WHERE kan geen aggregate functies bevatten; daarvoor gebruik je HAVING.`
+          },
+          {
+            title: "JOINs — tabellen combineren",
+            exampleOutput: {cols:['naam','datum'],rows:[['Lotte Peeters','2024-01-15'],['Kobe Janssen','2024-01-18'],['Lotte Peeters','2024-02-03'],['Yasmine Demir','2024-02-14'],['Thomas Maes','2024-02-20'],['Amber Claes','2024-03-01']]},
+            content: `In een relationele database staan gegevens verspreid over meerdere tabellen om herhaling te vermijden. <strong>JOINs</strong> combineren die tabellen terug op basis van een gemeenschappelijke sleutel.\n\n<strong>INNER JOIN</strong> geeft alleen de rijen terug die een overeenkomst hebben in <em>beide</em> tabellen. Stel je twee overlappende cirkels voor (Venn-diagram): INNER JOIN is het overlappende gedeelte.\n\n<code>SELECT klanten.naam, orders.datum\nFROM orders\nINNER JOIN klanten ON orders.klant_id = klanten.id;</code>\n\n<strong>LEFT JOIN</strong> geeft alle rijen van de <em>linker</em> tabel, ook als er geen overeenkomst is in de rechter tabel. Ontbrekende waarden worden NULL.\n\n<code>SELECT klanten.naam, orders.datum\nFROM klanten\nLEFT JOIN orders ON klanten.id = orders.klant_id;</code>\n\nKlanten zónder bestellingen verschijnen ook, met NULL bij datum. Gebruik LEFT JOIN wanneer je "alle X en eventueel bijbehorende Y" wilt.`
+          },
+          {
+            title: "INNER JOIN in de praktijk",
+            exampleOutput: {cols:['k.naam','o.datum','o.status'],rows:[['Lotte Peeters','2024-01-15','geleverd'],['Kobe Janssen','2024-01-18','geleverd'],['Lotte Peeters','2024-02-03','geleverd'],['Yasmine Demir','2024-02-14','verzonden']]},
+            content: `De <strong>ON-clausule</strong> bepaalt op welke kolommen de tabellen gekoppeld worden. Gebruik tabelnamen of aliassen om duidelijk te maken welke kolom je bedoelt.\n\n<strong>Aliassen voor tabelnamen</strong> maken queries korter en leesbaarder:\n<code>SELECT k.naam, o.datum, o.status\nFROM orders o\nINNER JOIN klanten k ON o.klant_id = k.id;</code>\n\nHier is <code>o</code> een alias voor "orders" en <code>k</code> voor "klanten".\n\n<strong>Meerdere JOINs</strong> achter elkaar zijn mogelijk:\n<code>SELECT k.naam, p.naam AS product, or_.aantal\nFROM orderregels or_\nINNER JOIN orders o ON or_.order_id = o.id\nINNER JOIN klanten k ON o.klant_id = k.id\nINNER JOIN producten p ON or_.product_id = p.id;</code>\n\n<strong>JOIN-volgorde:</strong> de volgorde van JOINs bepaalt hoe tabellen gekoppeld worden. Begin altijd bij de centrale tabel (bijv. orderregels) en join de omliggende tabellen.`
+          },
+          {
+            title: "DML — Data manipuleren",
+            content: `<strong>DML</strong> staat voor <em>Data Manipulation Language</em>. INSERT kende je al — hier focussen we op <strong>UPDATE</strong> en <strong>DELETE</strong>.\n\n<strong>UPDATE ... SET</strong> — bestaande rij aanpassen:\n<code>UPDATE producten\nSET prijs = 69.99\nWHERE id = 100;</code>\n\n<strong>DELETE FROM</strong> — rij verwijderen:\n<code>DELETE FROM producten\nWHERE id = 100;</code>\n\n<strong>⚠️ Gevaar:</strong> vergeet nooit de <code>WHERE</code>-clausule bij UPDATE en DELETE! Zonder WHERE pas je <em>alle</em> rijen aan of verwijder je ze allemaal. Test altijd eerst met een SELECT met dezelfde WHERE-voorwaarde.`,
+            example: `-- Veilige werkwijze: test eerst met SELECT
+SELECT * FROM producten WHERE id = 100;
+
+-- Dan pas UPDATE of DELETE uitvoeren
+UPDATE producten SET prijs = 69.99 WHERE id = 100;
+DELETE FROM producten WHERE id = 100;`
+          },
+        ],
+        sqlExercises: [
+          {
+            title: "Aantal producten per categorie",
+            description: "Tel hoeveel producten er in elke categorie zitten.",
+            hint: "Gebruik GROUP BY categorie met COUNT(*)",
+            solution: "SELECT categorie, COUNT(*) AS aantal FROM producten GROUP BY categorie",
+            xp: 25
+          },
+          {
+            title: "Gemiddelde prijs per categorie",
+            description: "Bereken de gemiddelde prijs per productcategorie.",
+            hint: "Gebruik AVG(prijs) met GROUP BY categorie",
+            solution: "SELECT categorie, AVG(prijs) AS gemiddelde_prijs FROM producten GROUP BY categorie",
+            xp: 25
+          },
+          {
+            title: "Categorieën met meer dan 2 producten",
+            description: "Toon enkel categorieën met meer dan 2 producten.",
+            hint: "Gebruik HAVING COUNT(*) > 2 na GROUP BY",
+            solution: "SELECT categorie, COUNT(*) AS aantal FROM producten GROUP BY categorie HAVING COUNT(*) > 2",
+            xp: 30
+          },
+          {
+            title: "Orders met klantnaam",
+            description: "Toon elke order samen met de naam van de klant.",
+            hint: "JOIN orders met klanten op klant_id = klanten.id",
+            solution: "SELECT orders.id, klanten.naam, orders.datum, orders.status FROM orders INNER JOIN klanten ON orders.klant_id = klanten.id",
+            xp: 30
+          },
+          {
+            title: "Bestelde producten",
+            description: "Toon welke producten besteld zijn (naam + aantal).",
+            hint: "JOIN orderregels met producten op product_id = producten.id",
+            solution: "SELECT producten.naam, SUM(orderregels.aantal) AS totaal_besteld FROM orderregels INNER JOIN producten ON orderregels.product_id = producten.id GROUP BY producten.naam",
+            xp: 35
+          },
+          {
+            title: "Klanten met bestellingen",
+            description: "Toon alle klanten én het aantal bestellingen per klant (ook klanten zonder bestelling).",
+            hint: "Gebruik LEFT JOIN en COUNT(*)",
+            solution: "SELECT klanten.naam, COUNT(orders.id) AS aantal_orders FROM klanten LEFT JOIN orders ON klanten.id = orders.klant_id GROUP BY klanten.naam",
+            xp: 35
+          },
+          {
+            title: "UPDATE — prijs aanpassen",
+            description: "Pas de prijs van product met id=100 aan naar 69.99.",
+            hint: "UPDATE producten SET prijs = 69.99 WHERE id = 100",
+            solution: "UPDATE producten SET prijs = 69.99 WHERE id = 100",
+            xp: 25
+          },
+          {
+            title: "DELETE — product verwijderen",
+            description: "Verwijder het product met id=100 uit de tabel.",
+            hint: "DELETE FROM producten WHERE id = 100",
+            solution: "DELETE FROM producten WHERE id = 100",
+            xp: 25
+          }
+        ],
+        quiz: [
+          {
+            type: "mc",
+            q: "Wat doet COUNT(*)?",
+            options: ["Telt alle kolommen", "Telt alle rijen in het resultaat", "Telt alleen niet-NULL waarden", "Telt unieke waarden"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Verschil HAVING vs WHERE?",
+            options: ["Geen verschil", "WHERE filtert voor aggregatie, HAVING erna", "HAVING filtert rijen, WHERE groepen", "WHERE is sneller"],
+            answer: 1,
+            xp: 25
+          },
+          {
+            type: "mc",
+            q: "INNER JOIN geeft...",
+            options: [
+              "Alle rijen van beide tabellen",
+              "Enkel rijen met een overeenkomst in beide tabellen",
+              "Alle rijen van de linker tabel",
+              "Alle rijen van de rechter tabel"
+            ],
+            answer: 1,
+            xp: 25
+          },
+          {
+            type: "mc",
+            q: "Welke query telt het totaal aantal orders?",
+            options: ["SELECT SUM(*) FROM orders", "SELECT COUNT(*) FROM orders", "SELECT TOTAL(*) FROM orders", "SELECT NUMBER(*) FROM orders"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "fill",
+            q: "Het SQL-keyword om tabellen te verbinden heet een ___:",
+            answer: ["JOIN", "INNER JOIN", "join"],
+            xp: 25
+          }
+        ]
+      },
+      {
+        id: 6,
+        title: "Power BI & Dashboards",
+        week: "Week 6",
+        emoji: "📊",
+        color: "#1f416b",
+        tagline: "Van ruwe data naar interactief dashboard met Power BI en DAX",
+        type: "powerbi",
+        theory: [
+          {
+            title: "Wat is Business Intelligence?",
+            content: `<strong>Business Intelligence (BI)</strong> is het proces van het omzetten van ruwe data naar bruikbare inzichten voor besluitvorming. BI-tools verzamelen data uit verschillende bronnen, transformeren ze, en presenteren ze in dashboards en rapporten.\n\n<strong>Power BI vs alternatieven:</strong>\n- <strong>Power BI</strong> (Microsoft): diep geïntegreerd met Microsoft 365, sterk in bedrijfsomgevingen\n- <strong>Tableau</strong>: krachtig en visueel, maar duurder\n- <strong>Excel</strong>: vertrouwd, maar beperkt bij grote data en complexe visualisaties\n- <strong>Looker / Google Data Studio</strong>: cloud-native, gratis basisversie\n\n<strong>Microsoft ecosystem:</strong> Power BI werkt naadloos samen met Excel, SharePoint, Teams, Azure en SQL Server — een groot voordeel in organisaties die al Microsoft gebruiken.\n\n<strong>Gratis desktop versie:</strong> Power BI Desktop is volledig gratis te downloaden en te gebruiken voor het bouwen van rapporten. Power BI Service (online publiceren en delen) vereist een licentie, maar is gratis met een school- of werkaccount.`
+          },
+          {
+            title: "De Power BI-interface",
+            content: `Power BI Desktop heeft drie hoofdweergaven, bereikbaar via de iconen aan de linkerkant:\n\n<strong>Report View</strong> (standaard): hier bouw je visualisaties op een canvas. Je kunt meerdere pagina's (tabbladen) aanmaken, zoals sheets in Excel.\n\n<strong>Data View</strong>: toont de geladen data in tabelvorm. Je kunt kolomnamen aanpassen, datatypes wijzigen en berekende kolommen (met DAX) toevoegen.\n\n<strong>Model View</strong>: toont alle tabellen en de relaties ertussen als een schema. Essentieel voor meerdere gekoppelde tabellen.\n\n<strong>Rechter panelen:</strong>\n- <strong>Fields pane</strong>: alle beschikbare tabellen en kolommen — sleep naar het canvas\n- <strong>Visualizations pane</strong>: kies het grafiektype en stel X/Y-as, waarden, legenda in\n- <strong>Filters pane</strong>: stel filters in voor één visual, de pagina, of het hele rapport\n\n<strong>Tip:</strong> de interface is drag-and-drop-gebaseerd — de meeste acties doe je door velden te slepen naar de juiste sectie.`
+          },
+          {
+            title: "Data importeren in Power BI",
+            content: `Data importeren start je via <strong>Home → Get Data</strong>. Power BI ondersteunt honderden bronnen: Excel, CSV, SQL-databases, SharePoint, web-URL's, en meer.\n\n<strong>Stappenplan importeren:</strong>\n1. Klik "Get Data" → kies het brontype\n2. Navigeer naar het bestand of geef de verbindingsgegevens in\n3. Een voorbeeldvenster toont de data — klik "Load" om direct te laden, of "Transform Data" om eerst in Power Query te bewerken\n\n<strong>Power Query Editor</strong> is een krachtige tool voor datatransformatie:\n- Kolomnamen hernoemen\n- Datatypes instellen (getal, tekst, datum)\n- Lege rijen en foutieve waarden verwijderen\n- Kolommen splitsen (bijv. "Voornaam Achternaam" → twee kolommen)\n- Berekende kolommen toevoegen\n\n<strong>Loaded vs niet geladen:</strong> je kunt tabellen in Power Query laden zonder ze in het model op te nemen ("Enable Load" uitvinken). Handig voor tussentijdse transformatiestappen.`
+          },
+          {
+            title: "Eerste visualisaties maken",
+            content: `In <strong>Report View</strong> maak je visualisaties door velden te slepen naar het canvas.\n\n<strong>Stap-voor-stap:</strong>\n1. Klik op een leeg deel van het canvas (zodat geen bestaande visual geselecteerd is)\n2. Klik op een grafiektype in het Visualizations pane (bijv. "Clustered bar chart")\n3. Een leeg grafiekframe verschijnt op het canvas\n4. Sleep een veld uit het Fields pane naar "Axis" (categorische as) en een veld naar "Values" (numerieke waarden)\n\n<strong>Aanpassingen:</strong>\n- Verander het grafiektype door een ander icoon te kiezen in Visualizations\n- Pas de kleur, legenda en titel aan via het "Format visual" penseel-icoon\n- Resize: sleep de hoekpunten van de visual\n- Verplaatsen: klik en sleep de visual\n\n<strong>Tip:</strong> gebruik "Stacked bar chart" voor vergelijkingen, "Line chart" voor tijdreeksen, "Card" voor één KPI-getal, en "Table" voor gedetailleerde overzichten.`
+          },
+          {
+            title: "Relaties tussen tabellen",
+            content: `Als je meerdere tabellen hebt geladen, kun je in <strong>Model View</strong> de relaties tussen ze beheren.\n\n<strong>Automatische detectie:</strong> Power BI probeert zelf relaties te vinden op basis van overeenkomende kolomnamen. Dit werkt goed als je kolomnamen consistent zijn (bijv. "klant_id" in beide tabellen).\n\n<strong>Handmatig relaties leggen:</strong> sleep een veld van de ene tabel naar het overeenkomstige veld in een andere tabel. Er verschijnt een lijn tussen de tabellen.\n\n<strong>Kardinaliteit instellen:</strong>\n- <strong>1:N (één-op-veel)</strong>: de meest voorkomende relatie. Eén klant heeft meerdere orders. De "één"-kant heeft unieke waarden (primaire sleutel), de "veel"-kant bevat herhalingen (vreemde sleutel).\n- Power BI toont 1 en * aan de uiteinden van de relatiepijl\n\n<strong>Cross-filter richting:</strong> bepaalt of een filter in de ene tabel automatisch de andere tabel filtert. "Single" is de standaard en veiligste keuze; "Both" kan onverwachte effecten geven.`
+          },
+          {
+            title: "DAX — Data Analysis Expressions",
+            content: "DAX is de formuletaal van Power BI (en ook van Excel Power Pivot). Met DAX maak je berekeningen die verder gaan dan simpele aggregaties. Het grote verschil met een gewone Excel-formule: DAX werkt met tabellen en relaties, niet met cellen. Er zijn twee soorten DAX-berekeningen: een <strong>measure</strong> (meting) wordt dynamisch berekend op basis van de huidige filtercontext — elke keer dat je een slicer aanpast, herberekent Power BI de measure. Een <strong>berekende kolom</strong> wordt eenmalig berekend bij het laden van de data en opgeslagen in de tabel. Measures zijn de krachtigste en meest gebruikte vorm van DAX.",
+            example: "Measures aanmaken in Power BI:\n1. Ga naar het tabblad 'Modeling'\n2. Klik op 'New Measure'\n3. Typ je DAX-formule in de formulebalk\n4. De measure verschijnt in het Fields-paneel\n\nBerekende kolom:\nIn Table View → rechtsklik op tabel → New Column"
+          },
+          {
+            title: "Basis DAX-formules",
+            content: "De meest gebruikte DAX-functies: SUM() berekent de som van een kolom. AVERAGE() geeft het gemiddelde. COUNT() telt rijen met getallen, COUNTROWS() telt alle rijen in een tabel. CALCULATE() is de krachtigste DAX-functie — het evalueert een expressie in een aangepaste filtercontext. FORMAT() zet getallen om naar tekst met opmaak. Combineer CALCULATE() met filterfuncties zoals FILTER() of ALL() voor geavanceerde analyses zoals year-over-year vergelijkingen of aandelen van totalen.",
+            example: "Totale omzet = SUM(orderregels[bedrag])\nGemiddelde prijs = AVERAGE(producten[prijs])\nAantal orders = COUNTROWS(orders)\n\nOmzet Elektronica =\n  CALCULATE(\n    SUM(producten[prijs]),\n    producten[categorie] = \"Elektronica\"\n  )\n\nAandeel van totaal =\n  DIVIDE(\n    SUM(producten[prijs]),\n    CALCULATE(SUM(producten[prijs]), ALL(producten))\n  )"
+          }
+        ],
+        steps: [
+          {
+            nr: 1,
+            title: "Open Power BI Desktop",
+            description: "Start Power BI Desktop. Klik op 'Get Data' in het Home-lint. Kies 'Text/CSV' voor een CSV-bestand of 'Excel' voor een Excel-bestand.",
+            tip: "Power BI Desktop is gratis te downloaden via powerbi.microsoft.com"
+          },
+          {
+            nr: 2,
+            title: "Laad je data",
+            description: "Navigeer naar je bestand en klik 'Load'. Power BI leest de data in. Controleer in Data View of alle kolommen correct zijn ingeladen (datatypes, kolomnamen).",
+            tip: "Zie je verkeerde datatypes? Ga naar Transform Data (Power Query) om ze te corrigeren."
+          },
+          {
+            nr: 3,
+            title: "Controleer de datatypes",
+            description: "In Power Query Editor: selecteer een kolom en controleer het datatype (123 = getal, ABC = tekst, kalender = datum). Corrigeer indien nodig. Klik 'Close & Apply'.",
+            tip: "Een datumkolom als tekst behandelen zorgt voor problemen bij tijdsfilters!"
+          },
+          {
+            nr: 4,
+            title: "Leg relaties in Model View",
+            description: "Ga naar Model View. Controleer of Power BI automatisch de juiste relaties heeft gelegd. Sleep anders een sleutelveld van de ene tabel naar de andere om een relatie te maken.",
+            tip: "Controleer de kardinaliteit (1:N) en zorg dat de sleutelkolommen hetzelfde datatype hebben."
+          },
+          {
+            nr: 5,
+            title: "Maak je eerste grafiek",
+            description: "Ga naar Report View. Klik op een leeg canvas. Selecteer een visualisatietype (bijv. 'Clustered bar chart'). Sleep een veld naar 'Axis' en een veld naar 'Values'.",
+            tip: "Klik eerst op het canvas VOOR je een visualisatie kiest, anders wordt de bestaande aangepast."
+          },
+          {
+            nr: 6,
+            title: "Voeg een DAX measure toe",
+            description: "Ga naar Modeling → New Measure. Schrijf bijv. 'Totale omzet = SUM(orderregels[bedrag])'. De measure verschijnt in het Fields-paneel en kan je naar een grafiek slepen.",
+            tip: "Measures worden dynamisch herberekend bij elke filterwijziging — ideaal voor interactieve dashboards."
+          },
+          {
+            nr: 7,
+            title: "Publiceer en deel",
+            description: "Sla op als .pbix bestand. Via 'Publish' in het Home-lint kun je het rapport naar Power BI Service (online) sturen. Daar kun je dashboards maken en delen met collega's.",
+            tip: "Power BI Service vereist een Microsoft 365-account. Voor school gebruik je je Odisee-account."
+          }
+        ],
+        quiz: [
+          {
+            type: "mc",
+            q: "Welke view gebruik je om relaties tussen tabellen te leggen in Power BI?",
+            options: ["Report View", "Data View", "Model View", "Query View"],
+            answer: 2,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Wat is Power Query?",
+            options: ["Een programmeertaal", "Een tool om data te transformeren voor het laden", "Een grafiektype", "Een database"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Hoe maak je een grafiek in Power BI Report View?",
+            options: ["Code schrijven in Python", "Sleep velden naar een visualisatie op het canvas", "Importeer vanuit Excel", "Gebruik de SQL editor"],
+            answer: 1,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Wat staat DAX voor?",
+            options: ["Data Analysis Expressions", "Dashboard Analysis Extension", "Data Access Exchange", "Dynamic Analysis XML"],
+            answer: 0,
+            xp: 20
+          },
+          {
+            type: "mc",
+            q: "Wat is het verschil tussen een measure en een berekende kolom in DAX?",
+            options: ["Geen verschil", "Een measure wordt berekend bij elke rapportinteractie, een kolom is statisch opgeslagen", "Een measure is sneller", "Een berekende kolom werkt alleen met tekst"],
+            answer: 1,
+            xp: 25
+          },
+          {
+            type: "fill",
+            q: "De DAX-functie om een som te berekenen heet:",
+            answer: ["SUM", "SUM()", "sum"],
+            xp: 25
+          }
+        ]
+      },
+      {
+        id: 7,
+        title: "Eindproject",
+        week: "Week 7",
+        emoji: "🏆",
+        color: "#059669",
+        tagline: "Zelf een volledig traject doorlopen",
+        type: "project",
+        theory: [
+          {
+            title: "Het eindproject",
+            content: "In het eindproject doorloop je zelfstandig een volledig data-traject van begin tot einde. Je krijgt een realistische dataset en voert elke stap uit die je doorheen de cursus hebt geleerd: je schetst een ERD om de structuur van de data in kaart te brengen, schrijft SQL-queries om de data te verkennen en voor te bereiden, bouwt een Power BI dashboard om de inzichten te visualiseren, en presenteert het resultaat aan de groep. Het doel is de twee grote thema's van de cursus — data organiseren en data visualiseren — met elkaar te verbinden in één coherent project.",
+            example: "Stappen:\n1. Dataset ontvangen en analyseren\n2. ERD schetsen (entiteiten, attributen, relaties)\n3. Database aanmaken en data importeren\n4. SQL-queries schrijven (verkenning + voorbereiding)\n5. Power BI dashboard bouwen\n6. Bevindingen presenteren"
+          },
+          {
+            title: "De dataset",
+            content: "Kies uit de voorgestelde datasets of gebruik de webshop-dataset die je in de SQL-modules gebruikte. De dataset bevat bewust wat 'vuile' data: ontbrekende waarden, inconsistente schrijfwijzen (bijv. 'Gent', 'gent', 'GENT'), dubbele rijen of verkeerde datatypes. Het opschonen van deze data is deel van de opdracht. Documenteer welke problemen je vond en hoe je ze hebt opgelost — dit maakt deel uit van de beoordeling.",
+            example: "Voorbeeldproblemen in vuile data:\n- NULL-waarden in verplichte velden\n- Datum als tekst opgeslagen (\"15/01/2024\" i.p.v. DATE)\n- Inconsistente categoriënamen (\"Elektronica\" / \"elektronica\")\n- Dubbele rijen (zelfde order twee keer)\n- Prijs als tekst (\"€ 39,99\" i.p.v. 39.99)"
+          },
+          {
+            title: "Beoordeling",
+            content: "De beoordeling gebeurt op basis van een rubric met vier onderdelen. ERD: is het diagram correct en volledig? Zijn alle entiteiten, attributen, primaire en vreemde sleutels aanwezig? Is de kardinaliteit juist aangegeven? SQL: zijn de queries correct en syntactisch geldig? Zijn ze zinvol en beantwoorden ze een echte vraag? Power BI: is het dashboard leesbaar en visueel verzorgd? Zijn de juiste grafiektypes gekozen en verantwoord? Presentatie: kan je de gemaakte keuzes uitleggen en verdedigen? Welke inzichten haal je uit de data?",
+            example: "Rubric (elk onderdeel /25 = totaal /100):\n✓ ERD        — correct, volledig, kardinaliteit juist\n✓ SQL        — queries werken, zijn zinvol\n✓ Power BI   — dashboard leesbaar, grafiekkeuze verantwoord\n✓ Presentatie — keuzes uitgelegd, inzichten geformuleerd"
+          }
+        ],
+        checklist: [
+          {
+            phase: "ERD",
+            items: [
+              "Dataset gedownload en bekeken",
+              "ERD getekend met alle entiteiten",
+              "Primaire sleutels geïdentificeerd",
+              "Verwijssleutels (FK's) en relaties getekend",
+              "Kardinaliteit correct aangegeven"
+            ]
+          },
+          {
+            phase: "SQL",
+            items: [
+              "Database aangemaakt (SQLite/MySQL)",
+              "Tabellen aangemaakt met CREATE TABLE",
+              "Data geïmporteerd",
+              "Minimaal 3 SELECT-queries met WHERE",
+              "Minimaal 1 GROUP BY query",
+              "Minimaal 1 JOIN tussen 2 tabellen"
+            ]
+          },
+          {
+            phase: "Power BI",
+            items: [
+              "Dataset geladen in Power BI",
+              "Datatypes gecorrigeerd",
+              "Relaties gelegd in Model View",
+              "Minimaal 3 verschillende grafiektypes gebruikt",
+              "KPI-kaart of samenvatting toegevoegd",
+              "Dashboard heeft duidelijke titel en labels"
+            ]
+          },
+          {
+            phase: "Presentatie",
+            items: [
+              "ERD kort toegelicht",
+              "Minimum 2 SQL-queries gedemonstreerd",
+              "Dashboard live getoond",
+              "Grafiekkeuzes verantwoord",
+              "Inzichten geformuleerd uit de data"
+            ]
+          }
+        ],
+        quiz: []
+      },
+    ]; // close MODULES array
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DATABASE — Webshop dataset (AlaSQL)
+// ══════════════════════════════════════════════════════════════════════════════
+const PRODUCTEN = [
+  {id:1,naam:'Laptop Pro 15"',categorie:'Elektronica',prijs:1299.99},
+  {id:2,naam:'Draadloze muis',categorie:'Elektronica',prijs:39.99},
+  {id:3,naam:'USB-C Hub',categorie:'Elektronica',prijs:49.99},
+  {id:4,naam:'Kantoorstoel',categorie:'Meubels',prijs:249.00},
+  {id:5,naam:'Bureau',categorie:'Meubels',prijs:399.00},
+  {id:6,naam:'Monitorarm',categorie:'Meubels',prijs:89.00},
+  {id:7,naam:'Notitieboek A4',categorie:'Papierwerk',prijs:4.99},
+  {id:8,naam:'Balpennenset',categorie:'Papierwerk',prijs:7.99},
+  {id:9,naam:'Sticky notes',categorie:'Papierwerk',prijs:3.49},
+  {id:10,naam:'Webcam HD',categorie:'Elektronica',prijs:79.99},
+];
+const KLANTEN = [
+  {id:1,naam:'Lotte Peeters',stad:'Gent',leeftijd:28},
+  {id:2,naam:'Kobe Janssen',stad:'Brussel',leeftijd:34},
+  {id:3,naam:'Yasmine Demir',stad:'Gent',leeftijd:22},
+  {id:4,naam:'Thomas Maes',stad:'Antwerpen',leeftijd:41},
+  {id:5,naam:'Amber Claes',stad:'Brussel',leeftijd:29},
+  {id:6,naam:'Remi Dubois',stad:'Leuven',leeftijd:19},
+];
+const ORDERS = [
+  {id:1,klant_id:1,datum:'2024-01-15',status:'geleverd'},
+  {id:2,klant_id:2,datum:'2024-01-18',status:'geleverd'},
+  {id:3,klant_id:1,datum:'2024-02-03',status:'geleverd'},
+  {id:4,klant_id:3,datum:'2024-02-14',status:'verzonden'},
+  {id:5,klant_id:4,datum:'2024-02-20',status:'geleverd'},
+  {id:6,klant_id:5,datum:'2024-03-01',status:'in behandeling'},
+  {id:7,klant_id:2,datum:'2024-03-05',status:'geleverd'},
+];
+const ORDERREGELS = [
+  {id:1,order_id:1,product_id:1,aantal:1},
+  {id:2,order_id:1,product_id:2,aantal:2},
+  {id:3,order_id:2,product_id:4,aantal:1},
+  {id:4,order_id:3,product_id:3,aantal:1},
+  {id:5,order_id:3,product_id:8,aantal:3},
+  {id:6,order_id:4,product_id:10,aantal:1},
+  {id:7,order_id:5,product_id:5,aantal:1},
+  {id:8,order_id:5,product_id:6,aantal:2},
+  {id:9,order_id:6,product_id:7,aantal:5},
+  {id:10,order_id:7,product_id:2,aantal:1},
+  {id:11,order_id:7,product_id:9,aantal:10},
+];
+
+let _dbReady = false;
+function initDB(force=false) {
+  if (_dbReady && !force) return;
+  try {
+    ['producten','klanten','orders','orderregels'].forEach(t => {
+      try { delete alasql.tables[t]; } catch(e) {}
+      try { alasql(`DROP TABLE IF EXISTS ${t}`); } catch(e) {}
+    });
+    alasql('CREATE TABLE producten (id INT, naam STRING, categorie STRING, prijs FLOAT)');
+    alasql('CREATE TABLE klanten (id INT, naam STRING, stad STRING, leeftijd INT)');
+    alasql('CREATE TABLE orders (id INT, klant_id INT, datum STRING, status STRING)');
+    alasql('CREATE TABLE orderregels (id INT, order_id INT, product_id INT, aantal INT)');
+    alasql.tables['producten'].data   = PRODUCTEN.map(r=>({...r}));
+    alasql.tables['klanten'].data     = KLANTEN.map(r=>({...r}));
+    alasql.tables['orders'].data      = ORDERS.map(r=>({...r}));
+    alasql.tables['orderregels'].data = ORDERREGELS.map(r=>({...r}));
+    _dbReady = true;
+  } catch(e) { console.warn('DB init error:',e); _dbReady=false; }
+}
+
+// Boot DB onmiddellijk bij laden
+initDB();
+
+function validateDDL(query, checks) {
+  if (!checks) return [];
+  const q = query.toLowerCase();
+  const errors = [];
+  const nameMatch = q.match(/create\s+table\s+(\w+)/);
+  const usedName = nameMatch?.[1] || '?';
+  if (usedName !== checks.tableName.toLowerCase()) {
+    errors.push(`Verkeerde tabelnaam: verwacht '${checks.tableName}', jij schreef '${usedName}'`);
+  }
+  for (const col of checks.requiredCols || []) {
+    if (!new RegExp('\\b' + col.toLowerCase() + '\\b').test(q)) {
+      errors.push(`Kolom '${col}' ontbreekt`);
+    }
+  }
+  if (checks.primaryKey && !/primary\s+key/i.test(query)) {
+    errors.push(`PRIMARY KEY ontbreekt`);
+  }
+  for (const ref of checks.references || []) {
+    if (!new RegExp('references\\s+' + ref.toLowerCase()).test(q)) {
+      errors.push(`REFERENCES ${ref}(...) ontbreekt — verwijssleutel vereist`);
+    }
+  }
+  return errors;
+}
+
+function friendlyError(msg, query) {
+  const q = (query||'').toUpperCase();
+  if (!msg) return 'Onbekende fout.';
+  if (/columns|reading 'col|undefined/i.test(msg)) {
+    if (/REFERENCES/i.test(query))
+      return 'AlaSQL ondersteunt REFERENCES niet volledig in de browser. Syntactisch is je query correct — in MySQL/PostgreSQL zou dit werken. Je antwoord is goedgekeurd!';
+    return 'Interne fout bij uitvoeren. Controleer je syntax.';
+  }
+  if (/Table.*already exist|already exist/i.test(msg))
+    return 'Tabel bestaat al. Gebruik DROP TABLE IF EXISTS <naam> om eerst te verwijderen.';
+  if (/Table.*not exist|does not exist|Unknown table/i.test(msg)) {
+    const m = msg.match(/['":]?\s*(\w+)\s*['"]?\s*$/);
+    const tbl = m ? m[1] : '';
+    return `Tabel '${tbl}' bestaat niet. Beschikbare tabellen: producten, klanten, orders, orderregels.`;
+  }
+  if (/column.*not found|unknown column/i.test(msg))
+    return `Kolom niet gevonden: ${msg}`;
+  if (/syntax|parse/i.test(msg))
+    return `Syntaxfout: ${msg}`;
+  if (/primary key/i.test(msg))
+    return `PRIMARY KEY fout: ${msg}`;
+  return msg;
+}
+
+function runSQL(query) {
+  try {
+    initDB();
+    const q = query.trim();
+    if (!q) return { error:'Voer een query in.' };
+    const result = alasql(q);
+    if (!Array.isArray(result)) return { rows:[], message:`Klaar. (${result} rij(en) beïnvloed)` };
+    return { rows: result };
+  } catch(e) {
+    try { initDB(true); const r2 = alasql(query.trim()); if(Array.isArray(r2)) return {rows:r2}; } catch(_) {}
+    return { error: friendlyError(e.message, query) };
+  }
+}
+
+function getQueryTables(sql) {
+  const tables = new Set();
+  const re = /(?:FROM|JOIN)\s+(\w+)/gi;
+  let m;
+  while ((m = re.exec(sql)) !== null) tables.add(m[1].toLowerCase());
+  return [...tables];
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  XP & PROGRESS SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'dataflow_progress_v1';
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function saveProgress(p) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ERD VIEWER COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+const ERD_SCHEMA = {
+  entities: [
+    { id:'klanten', name:'KLANTEN', x:20, y:20, attrs:[
+      {name:'id',type:'INT',pk:true},{name:'naam',type:'STRING'},{name:'stad',type:'STRING'},{name:'leeftijd',type:'INT'}
+    ]},
+    { id:'orders', name:'ORDERS', x:290, y:20, attrs:[
+      {name:'id',type:'INT',pk:true},{name:'klant_id',type:'INT',fk:true},{name:'datum',type:'DATE'},{name:'status',type:'STRING'}
+    ]},
+    { id:'producten', name:'PRODUCTEN', x:560, y:20, attrs:[
+      {name:'id',type:'INT',pk:true},{name:'naam',type:'STRING'},{name:'categorie',type:'STRING'},{name:'prijs',type:'DECIMAL'}
+    ]},
+    { id:'orderregels', name:'ORDERREGELS', x:290, y:260, attrs:[
+      {name:'id',type:'INT',pk:true},{name:'order_id',type:'INT',fk:true},{name:'product_id',type:'INT',fk:true},{name:'aantal',type:'INT'}
+    ]},
+  ],
+  relationships:[
+    {from:'klanten',to:'orders',label:'1:N',x1:185,y1:110,x2:290,y2:110},
+    {from:'orders',to:'orderregels',label:'1:N',x1:372,y1:190,x2:372,y2:260},
+    {from:'producten',to:'orderregels',label:'1:N',x1:642,y1:190,x2:642,y2:410,x3:454,y3:410},
+  ]
+};
+
+function ERDViewer({ highlightTables=[] }) {
+  const EW=165, HROW=32, HHEAD=40;
+  const getH = (e) => HHEAD + e.attrs.length * HROW;
+  const isHL = (id) => highlightTables.length===0 || highlightTables.includes(id);
+
+  return (
+    <div style={{overflowX:'auto'}}>
+      <svg viewBox="0 0 760 460" style={{width:'100%',maxWidth:760,display:'block',margin:'0 auto',minWidth:500}}>
+        <defs>
+          <marker id="erd-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#3cb497"/>
+          </marker>
+        </defs>
+
+        {/* Relationships */}
+        {/* klanten → orders */}
+        <line x1="185" y1="108" x2="290" y2="108" stroke="#3cb497" strokeWidth="2" markerEnd="url(#erd-arrow)" opacity={isHL('klanten')&&isHL('orders')?1:0.2}/>
+        <text x="200" y="100" fill="#3cb497" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="600" opacity={isHL('klanten')&&isHL('orders')?1:0.2}>1</text>
+        <text x="268" y="100" fill="#3cb497" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="600" opacity={isHL('klanten')&&isHL('orders')?1:0.2}>N</text>
+
+        {/* orders → orderregels */}
+        <line x1="372" y1="190" x2="372" y2="260" stroke="#3cb497" strokeWidth="2" markerEnd="url(#erd-arrow)" opacity={isHL('orders')&&isHL('orderregels')?1:0.2}/>
+        <text x="378" y="230" fill="#3cb497" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="600" opacity={isHL('orders')&&isHL('orderregels')?1:0.2}>1:N</text>
+
+        {/* producten → orderregels (L-shape) */}
+        <polyline points="642,190 642,415 454,415" stroke="#3cb497" strokeWidth="2" fill="none" markerEnd="url(#erd-arrow)" opacity={isHL('producten')&&isHL('orderregels')?1:0.2}/>
+        <text x="590" y="410" fill="#3cb497" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="600" opacity={isHL('producten')&&isHL('orderregels')?1:0.2}>1:N</text>
+
+        {/* Entity boxes */}
+        {ERD_SCHEMA.entities.map(e => {
+          const h = getH(e);
+          const active = isHL(e.id);
+          return (
+            <g key={e.id} style={{transition:'opacity .3s'}} opacity={active?1:0.35}>
+              {/* Header */}
+              <rect x={e.x} y={e.y} width={EW} height={HHEAD} rx="6" ry="0"
+                fill={active?'#1f416b':'#334155'} stroke={active?'#3cb497':'#475569'} strokeWidth="1.5"/>
+              <text x={e.x+EW/2} y={e.y+HHEAD/2+5} textAnchor="middle"
+                fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">{e.name}</text>
+              {/* Body */}
+              <rect x={e.x} y={e.y+HHEAD} width={EW} height={e.attrs.length*HROW}
+                rx="0" ry="0" fill="#0f172a" stroke={active?'#3cb497':'#334155'} strokeWidth="1.5"/>
+              {e.attrs.map((a,i) => (
+                <g key={a.name}>
+                  <line x1={e.x} y1={e.y+HHEAD+i*HROW} x2={e.x+EW} y2={e.y+HHEAD+i*HROW}
+                    stroke={active?'#1e3a5f':'#1e293b'} strokeWidth="1"/>
+                  <text x={e.x+10} y={e.y+HHEAD+i*HROW+HROW/2+5} fill={a.pk?'#fcd34d':a.fk?'#60a5fa':'#94a3b8'}
+                    fontSize="11" fontFamily="Fira Code,monospace">
+                    {a.pk?'🔑 ':a.fk?'🔗 ':''}{a.name}
+                  </text>
+                  <text x={e.x+EW-8} y={e.y+HHEAD+i*HROW+HROW/2+5} textAnchor="end"
+                    fill="#475569" fontSize="10" fontFamily="Fira Code,monospace">{a.type}</text>
+                </g>
+              ))}
+              {/* Border bottom */}
+              <rect x={e.x} y={e.y} width={EW} height={h} rx="6" fill="none"
+                stroke={active?'#3cb497':'#334155'} strokeWidth="1.5"/>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  N:M VISUALISATIE COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+function NMVisual() {
+  return (
+    <div style={{background:'#080c14',borderRadius:12,padding:16,marginTop:8}}>
+      <div style={{color:'#94a3b8',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:1,marginBottom:14}}>
+        🔗 N:M relatie → koppeltabel
+      </div>
+      {/* Stap 1: N:M */}
+      <div style={{marginBottom:16}}>
+        <div style={{color:'#dc2626',fontSize:11,fontWeight:700,marginBottom:8}}>❌ N:M kan niet rechtstreeks in een relationele DB:</div>
+        <svg viewBox="0 0 420 80" style={{width:'100%',maxWidth:420,display:'block'}}>
+          <rect x="10" y="20" width="120" height="40" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+          <text x="70" y="45" textAnchor="middle" fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">STUDENT</text>
+          <rect x="290" y="20" width="120" height="40" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+          <text x="350" y="45" textAnchor="middle" fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">CURSUS</text>
+          <line x1="130" y1="40" x2="290" y2="40" stroke="#dc2626" strokeWidth="2" strokeDasharray="6,3"/>
+          <text x="210" y="32" textAnchor="middle" fill="#dc2626" fontSize="13" fontFamily="Sora,sans-serif" fontWeight="800">N : M</text>
+          <text x="145" y="56" fill="#dc2626" fontSize="10" fontFamily="Sora,sans-serif">N</text>
+          <text x="272" y="56" fill="#dc2626" fontSize="10" fontFamily="Sora,sans-serif">M</text>
+        </svg>
+      </div>
+      {/* Stap 2: Oplossing */}
+      <div>
+        <div style={{color:'#3cb497',fontSize:11,fontWeight:700,marginBottom:8}}>✅ Oplossing: koppeltabel met 2× FK</div>
+        <svg viewBox="0 0 580 110" style={{width:'100%',maxWidth:580,display:'block'}}>
+          {/* STUDENT */}
+          <rect x="10" y="30" width="130" height="50" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+          <text x="75" y="50" textAnchor="middle" fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">STUDENT</text>
+          <text x="75" y="68" textAnchor="middle" fill="#fcd34d" fontSize="10" fontFamily="Fira Code,monospace">🔑 id (PK)</text>
+          {/* INSCHRIJVING */}
+          <rect x="210" y="15" width="160" height="80" rx="6" fill="#163256" stroke="#60a5fa" strokeWidth="2"/>
+          <rect x="210" y="15" width="160" height="28" rx="6" fill="#1e3a5f" stroke="#60a5fa" strokeWidth="1"/>
+          <text x="290" y="33" textAnchor="middle" fill="#60a5fa" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="700">INSCHRIJVING</text>
+          <text x="290" y="56" textAnchor="middle" fill="#60a5fa" fontSize="10" fontFamily="Fira Code,monospace">🔗 student_id (FK)</text>
+          <text x="290" y="72" textAnchor="middle" fill="#60a5fa" fontSize="10" fontFamily="Fira Code,monospace">🔗 cursus_id  (FK)</text>
+          <text x="290" y="88" textAnchor="middle" fill="#475569" fontSize="9" fontFamily="Fira Code,monospace">datum, cijfer…</text>
+          {/* CURSUS */}
+          <rect x="440" y="30" width="130" height="50" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+          <text x="505" y="50" textAnchor="middle" fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">CURSUS</text>
+          <text x="505" y="68" textAnchor="middle" fill="#fcd34d" fontSize="10" fontFamily="Fira Code,monospace">🔑 id (PK)</text>
+          {/* Arrows */}
+          <line x1="140" y1="55" x2="210" y2="55" stroke="#3cb497" strokeWidth="2" markerEnd="url(#erd-arrow)"/>
+          <text x="148" y="50" fill="#3cb497" fontSize="10" fontFamily="Sora,sans-serif" fontWeight="700">1</text>
+          <text x="196" y="50" fill="#3cb497" fontSize="10" fontFamily="Sora,sans-serif" fontWeight="700">N</text>
+          <line x1="370" y1="55" x2="440" y2="55" stroke="#3cb497" strokeWidth="2" markerEnd="url(#erd-arrow)"/>
+          <text x="378" y="50" fill="#3cb497" fontSize="10" fontFamily="Sora,sans-serif" fontWeight="700">N</text>
+          <text x="428" y="50" fill="#3cb497" fontSize="10" fontFamily="Sora,sans-serif" fontWeight="700">1</text>
+        </svg>
+        <div style={{display:'flex',gap:12,marginTop:10,flexWrap:'wrap'}}>
+          <div style={{fontSize:12,color:'#60a5fa'}}>🔗 = Foreign Key (FK)</div>
+          <div style={{fontSize:12,color:'#fcd34d'}}>🔑 = Primary Key (PK)</div>
+          <div style={{fontSize:12,color:'#3cb497'}}>N:M wordt 2× 1:N via koppeltabel</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  FORMAT DEMO COMPONENT (Module 1)
+// ══════════════════════════════════════════════════════════════════════════════
+const FORMAT_SAMPLE = {
+  csv: `id,naam,categorie,prijs\n1,Laptop Pro,Elektronica,1299.99\n2,Draadloze muis,Elektronica,39.99\n3,Bureau,Meubels,399.00`,
+  json: `[\n  {\n    "id": 1,\n    "naam": "Laptop Pro",\n    "categorie": "Elektronica",\n    "prijs": 1299.99\n  },\n  {\n    "id": 2,\n    "naam": "Draadloze muis",\n    "categorie": "Elektronica",\n    "prijs": 39.99\n  }\n]`,
+  xml: `<?xml version="1.0" encoding="UTF-8"?>\n<producten>\n  <product>\n    <id>1</id>\n    <naam>Laptop Pro</naam>\n    <categorie>Elektronica</categorie>\n    <prijs>1299.99</prijs>\n  </product>\n  <product>\n    <id>2</id>\n    <naam>Draadloze muis</naam>\n    <categorie>Elektronica</categorie>\n    <prijs>39.99</prijs>\n  </product>\n</producten>`
+};
+
+function FormatDemo() {
+  const [active, setActive] = useState('csv');
+  const formats = [
+    { key:'csv', label:'CSV', color:'#3cb497', pros:'Eenvoudig, Excel-compatibel', cons:'Geen datatypes, geen nesting' },
+    { key:'json', label:'JSON', color:'#00639c', pros:'Web-standaard, ondersteunt nesting', cons:'Verbooser dan CSV' },
+    { key:'xml', label:'XML', color:'#7c3aed', pros:'Zelfbeschrijvend, enterprise-standaard', cons:'Zeer verbose, groot bestandsformaat' },
+  ];
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        {formats.map(f=>(
+          <button key={f.key} onClick={()=>setActive(f.key)}
+            style={{padding:'8px 20px',borderRadius:8,border:`2px solid ${f.color}`,
+              background:active===f.key?f.color:'transparent',
+              color:active===f.key?'#fff':f.color,
+              fontFamily:'Sora,sans-serif',fontWeight:700,cursor:'pointer',fontSize:14,transition:'all .2s'}}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+      {formats.filter(f=>f.key===active).map(f=>(
+        <div key={f.key} className="fade-in" style={{display:'flex',flexDirection:'column',gap:12}}>
+          <pre style={{background:'#0d1117',color:'#e2e8f0',borderRadius:12,padding:'16px 20px',
+            fontFamily:'Fira Code,monospace',fontSize:13,overflowX:'auto',margin:0,
+            border:`1px solid ${f.color}40`}}>{FORMAT_SAMPLE[f.key]}</pre>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            <div style={{flex:1,background:'#0d2b1a',border:'1px solid #3cb49740',borderRadius:8,padding:'10px 14px'}}>
+              <div style={{color:'#3cb497',fontWeight:700,fontSize:12,marginBottom:4}}>✓ VOORDELEN</div>
+              <div style={{color:'#94a3b8',fontSize:13}}>{f.pros}</div>
+            </div>
+            <div style={{flex:1,background:'#2b0a0a',border:'1px solid #dc262640',borderRadius:8,padding:'10px 14px'}}>
+              <div style={{color:'#dc2626',fontWeight:700,fontSize:12,marginBottom:4}}>✗ NADELEN</div>
+              <div style={{color:'#94a3b8',fontSize:13}}>{f.cons}</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SQL EDITOR COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+function SQLEditor({ module, onXP, savedQuery, onQueryChange }) {
+  const exercises = module.sqlExercises || [];
+  const defaultQ = exercises[0]?.solution ? '' : 'SELECT * FROM producten';
+  const [query, setQuery] = useState(savedQuery !== undefined ? savedQuery : defaultQ);
+  const [result, setResult] = useState(null);
+  const [activeEx, setActiveEx] = useState(0);
+  const [solvedEx, setSolvedEx] = useState({});
+  const [showHint, setShowHint] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
+  const highlightTables = result ? getQueryTables(query) : [];
+
+  const handleQueryChange = (v) => { setQuery(v); onQueryChange?.(v); };
+
+  const execute = () => {
+    const ex = exercises[activeEx];
+    const q = query.trim();
+
+    // DDL exercises: only accept CREATE TABLE statements
+    if (ex?.type === 'ddl') {
+      if (!/^CREATE\s+TABLE/i.test(q)) {
+        setResult({ error: 'Dit is geen CREATE TABLE statement. Schrijf een CREATE TABLE query voor deze oefening.' });
+        return;
+      }
+      // Extract table name and drop it first so "already exists" never occurs
+      const m = q.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/i);
+      if (m) {
+        try { alasql(`DROP TABLE IF EXISTS ${m[1]}`); } catch(e) {}
+      }
+    }
+
+    // Validate content against exercise requirements before executing
+    if (ex?.type === 'ddl' && ex.checks) {
+      const valErrors = validateDDL(q, ex.checks);
+      if (valErrors.length > 0) {
+        setResult({ error: 'Controleer je query:\n' + valErrors.map(e => '• ' + e).join('\n') });
+        return;
+      }
+    }
+
+    // Strip REFERENCES for AlaSQL execution (not enforced in browser), keep for grading
+    const execQ = ex?.type === 'ddl'
+      ? q.replace(/\s+REFERENCES\s+\w+\s*\([^)]*\)/gi, '')
+      : q;
+
+    const r = runSQL(execQ);
+    const hasRefs = ex?.type === 'ddl' && /REFERENCES/i.test(q);
+    const finalResult = (r.message && hasRefs)
+      ? { ...r, message: r.message + ' (REFERENCES herkend — in een echte DB zou de FK worden afgedwongen.)' }
+      : r;
+
+    setResult(finalResult);
+    if (!finalResult.error && ex && !solvedEx[activeEx]) {
+      setSolvedEx(prev => ({...prev,[activeEx]:true}));
+      onXP && onXP(ex.xp || 25);
+    }
+
+    // Restore main DB tables after DDL so webshop data stays intact
+    if (ex?.type === 'ddl') {
+      setTimeout(() => initDB(true), 50);
+    }
+  };
+
+  const loadExercise = (i) => {
+    setActiveEx(i);
+    setQuery('');
+    setResult(null);
+    setShowHint(false);
+    setShowSolution(false);
+  };
+
+  const cols = result?.rows?.length > 0 ? Object.keys(result.rows[0]) : [];
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      {/* Exercise selector */}
+      {exercises.length > 0 && (
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {exercises.map((ex,i)=>(
+            <button key={i} onClick={()=>loadExercise(i)}
+              style={{padding:'6px 14px',borderRadius:8,border:`1.5px solid ${activeEx===i?module.color:'var(--border)'}`,
+                background:activeEx===i?module.color+'22':'var(--card)',
+                color:activeEx===i?module.color:'var(--text2)',
+                fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:12,cursor:'pointer',
+                position:'relative'}}>
+              {solvedEx[i] && <span style={{position:'absolute',top:-4,right:-4,fontSize:10}}>✅</span>}
+              {i+1}. {ex.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Current exercise */}
+      {exercises[activeEx] && (
+        <div style={{background:'#0d1b2e',border:`1px solid ${module.color}40`,borderRadius:10,padding:'12px 16px'}}>
+          <div style={{color:module.color,fontWeight:700,fontSize:13,marginBottom:6}}>
+            Oefening {activeEx+1}: {exercises[activeEx].title}
+          </div>
+          <div style={{color:'#94a3b8',fontSize:13,lineHeight:1.6}}>{exercises[activeEx].description}</div>
+          <div style={{display:'flex',gap:8,marginTop:10}}>
+            <button onClick={()=>setShowHint(!showHint)}
+              style={{padding:'4px 12px',borderRadius:6,border:'1px solid #d9770640',
+                background:showHint?'#d9770620':'transparent',color:'#d97706',fontSize:12,cursor:'pointer'}}>
+              💡 {showHint?'Hint verbergen':'Hint tonen'}
+            </button>
+            <button onClick={()=>setShowSolution(!showSolution)}
+              style={{padding:'4px 12px',borderRadius:6,border:'1px solid #dc262640',
+                background:showSolution?'#dc262620':'transparent',color:'#dc2626',fontSize:12,cursor:'pointer'}}>
+              👁 {showSolution?'Oplossing verbergen':'Oplossing tonen'}
+            </button>
+          </div>
+          {showHint && <div style={{marginTop:8,padding:'8px 12px',background:'#d9770615',borderRadius:6,color:'#d97706',fontSize:12}}>💡 {exercises[activeEx].hint}</div>}
+          {showSolution && <pre style={{marginTop:8,padding:'8px 12px',background:'#0d1117',borderRadius:6,color:'#3cb497',fontSize:12,fontFamily:'Fira Code,monospace',margin:'8px 0 0'}}>{exercises[activeEx].solution}</pre>}
+        </div>
+      )}
+
+      {/* ERD: exercise-specifieke weergave */}
+      {exercises[activeEx] && (exercises[activeEx].erdFocus?.length>0 || exercises[activeEx].customERD) && (
+        <div style={{background:'#080c14',border:'1px solid #1e293b',borderRadius:12,padding:12}}>
+          <div style={{color:'#3cb497',fontSize:11,fontWeight:700,marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>
+            🗂️ Schema — {exercises[activeEx].title}
+          </div>
+          {module.simpleErd ? (
+            <SimpleTwoTableERD highlight={exercises[activeEx].erdFocus || []}/>
+          ) : exercises[activeEx].customERD ? (
+            /* Oefening 4: inschrijvingen N:M mini-ERD */
+            <svg viewBox="0 0 500 140" style={{width:'100%',maxWidth:500,display:'block',margin:'0 auto'}}>
+              {/* STUDENTEN */}
+              <rect x="10" y="20" width="140" height="100" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+              <rect x="10" y="20" width="140" height="36" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+              <text x="80" y="44" textAnchor="middle" fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">STUDENTEN</text>
+              <text x="22" y="72" fill="#fcd34d" fontSize="11" fontFamily="Fira Code,monospace">🔑 id</text>
+              <text x="22" y="98" fill="#94a3b8" fontSize="11" fontFamily="Fira Code,monospace">naam</text>
+              {/* N:M arrow left */}
+              <line x1="150" y1="70" x2="180" y2="70" stroke="#3cb497" strokeWidth="2"/>
+              <text x="156" y="64" fill="#3cb497" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="600">N</text>
+              {/* INSCHRIJVINGEN */}
+              <rect x="180" y="10" width="140" height="120" rx="6" fill="#0f3a2e" stroke="#3cb497" strokeWidth="2"/>
+              <rect x="180" y="10" width="140" height="36" rx="6" fill="#1a5c46" stroke="#3cb497" strokeWidth="2"/>
+              <text x="250" y="34" textAnchor="middle" fill="white" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="700">INSCHRIJVINGEN</text>
+              <text x="192" y="62" fill="#fcd34d" fontSize="11" fontFamily="Fira Code,monospace">🔑 id</text>
+              <text x="192" y="84" fill="#94a3b8" fontSize="11" fontFamily="Fira Code,monospace">student_id</text>
+              <text x="192" y="106" fill="#94a3b8" fontSize="11" fontFamily="Fira Code,monospace">vak_id</text>
+              <text x="192" y="124" fill="#94a3b8" fontSize="11" fontFamily="Fira Code,monospace">datum</text>
+              {/* N:M arrow right */}
+              <line x1="320" y1="70" x2="350" y2="70" stroke="#3cb497" strokeWidth="2"/>
+              <text x="334" y="64" fill="#3cb497" fontSize="11" fontFamily="Sora,sans-serif" fontWeight="600">M</text>
+              {/* VAKKEN */}
+              <rect x="350" y="20" width="140" height="100" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+              <rect x="350" y="20" width="140" height="36" rx="6" fill="#1f416b" stroke="#3cb497" strokeWidth="1.5"/>
+              <text x="420" y="44" textAnchor="middle" fill="white" fontSize="12" fontFamily="Sora,sans-serif" fontWeight="700">VAKKEN</text>
+              <text x="362" y="72" fill="#fcd34d" fontSize="11" fontFamily="Fira Code,monospace">🔑 id</text>
+              <text x="362" y="98" fill="#94a3b8" fontSize="11" fontFamily="Fira Code,monospace">naam</text>
+            </svg>
+          ) : (
+            <ERDViewer highlightTables={exercises[activeEx].erdFocus || []}/>
+          )}
+        </div>
+      )}
+
+      {/* SQL input */}
+      <div style={{background:'#0d1117',borderRadius:12,border:'1px solid var(--border)',overflow:'hidden'}}>
+        <div style={{background:'#080c14',padding:'8px 14px',borderBottom:'1px solid #1e293b',
+          fontSize:11,color:'#475569',fontFamily:'Fira Code,monospace'}}>
+          SQL Editor — beschikbare tabellen: {module.freeSqlExamples ? 'producten, klanten' : 'producten, klanten, orders, orderregels'}
+        </div>
+        <textarea value={query} onChange={e=>handleQueryChange(e.target.value)}
+          onKeyDown={e=>{ if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();execute();} }}
+          style={{width:'100%',minHeight:100,background:'#0d1117',color:'#e2e8f0',border:'none',
+            padding:'14px 16px',fontFamily:'Fira Code,monospace',fontSize:13,resize:'vertical',outline:'none',
+            boxSizing:'border-box'}}
+          placeholder="Schrijf hier je SQL-query... (Ctrl+Enter om uit te voeren)"/>
+        <div style={{padding:'8px 14px',borderTop:'1px solid #1e293b',display:'flex',gap:8,alignItems:'center'}}>
+          <button onClick={execute}
+            style={{padding:'8px 20px',borderRadius:8,border:'none',
+              background:module.color,color:'#fff',fontFamily:'Sora,sans-serif',
+              fontWeight:700,fontSize:13,cursor:'pointer'}}>
+            ▶ Uitvoeren
+          </button>
+          <span style={{fontSize:11,color:'#475569'}}>of Ctrl+Enter</span>
+          <button onClick={()=>{setQuery('');setResult(null);}}
+            style={{marginLeft:'auto',padding:'6px 12px',borderRadius:6,border:'1px solid var(--border)',
+              background:'transparent',color:'var(--text3)',cursor:'pointer',fontSize:12}}>↺ Reset</button>
+        </div>
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div className="fade-in">
+          {result.error ? (
+            <div style={{background:'#2b0a0a',border:'1px solid #dc262640',borderRadius:10,padding:'12px 16px',color:'#f87171',fontFamily:'Fira Code,monospace',fontSize:13}}>
+              ❌ {result.error}
+            </div>
+          ) : result.message ? (
+            <div style={{background:'#0d2b1a',border:'1px solid #3cb49740',borderRadius:10,padding:'12px 16px',color:'#3cb497',fontSize:13}}>
+              ✓ {result.message}
+            </div>
+          ) : (
+            <div style={{background:'#080c14',border:'1px solid #1e293b',borderRadius:10,overflow:'hidden'}}>
+              <div style={{background:'#0d1b2e',padding:'8px 14px',borderBottom:'1px solid #1e293b',
+                fontSize:11,color:'#3cb497',fontWeight:700}}>
+                ✓ {result.rows.length} rij(en) gevonden
+              </div>
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,background:'#080c14'}}>
+                  <thead>
+                    <tr style={{background:'#0f172a'}}>
+                      {cols.map(c=>(
+                        <th key={c} style={{padding:'8px 12px',textAlign:'left',color:'#3cb497',
+                          fontFamily:'Fira Code,monospace',fontWeight:600,borderBottom:'1px solid #1e3a5f',
+                          whiteSpace:'nowrap'}}>{c}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.rows.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:'1px solid #1e293b',background:i%2===0?'#0d1117':'#0a1628'}}>
+                        {cols.map(c=>(
+                          <td key={c} style={{padding:'7px 12px',color:'#cbd5e1',fontFamily:'Fira Code,monospace'}}>{String(row[c]??'')}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SIMPLE TWO-TABLE SCHEMA (Week 2: klanten + producten, geen relaties)
+// ══════════════════════════════════════════════════════════════════════════════
+function SimpleTwoTableERD({ highlight = [] }) {
+  const tables = [
+    { name:'KLANTEN', attrs:[{label:'🔑 id',note:'INT PK',pk:true},{label:'naam',note:'STRING'},{label:'stad',note:'STRING'},{label:'leeftijd',note:'INT'}] },
+    { name:'PRODUCTEN', attrs:[{label:'🔑 id',note:'INT PK',pk:true},{label:'naam',note:'STRING'},{label:'categorie',note:'STRING'},{label:'prijs',note:'FLOAT'}] },
+  ];
+  return (
+    <div style={{display:'flex',gap:24,justifyContent:'center',flexWrap:'wrap',padding:'8px 0'}}>
+      {tables.map(t => {
+        const hl = highlight.includes(t.name.toLowerCase());
+        return (
+          <div key={t.name} style={{display:'flex',flexDirection:'column',
+            border:`2px solid ${hl?'#3cb497':'#1e3a5f'}`,borderRadius:10,overflow:'hidden',
+            minWidth:175,opacity:highlight.length>0&&!hl?0.4:1,
+            boxShadow:hl?'0 0 12px rgba(60,180,151,0.3)':'none',transition:'all .2s'}}>
+            <div style={{background:hl?'#3cb497':'#1e3a5f',color:'#fff',textAlign:'center',
+              padding:'7px 18px',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:13,
+              letterSpacing:'0.1em',textTransform:'uppercase'}}>{t.name}</div>
+            {t.attrs.map((a,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+                padding:'5px 14px',fontFamily:'Fira Code,monospace',fontSize:12,
+                borderTop:'1px solid #1e3a5f',color:a.pk?'#7dd3fc':'#94a3b8',
+                fontWeight:a.pk?700:400,background:'#0d1117'}}>
+                <span>{a.label}</span><span style={{color:'#475569',fontSize:11}}>{a.note}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  VRIJE SQL EDITOR (geen oefeningen, volledige vrijheid + ERD naast elkaar)
+// ══════════════════════════════════════════════════════════════════════════════
+const FREE_SQL_EXAMPLES = [
+  { label:'Alle producten', q:'SELECT * FROM producten' },
+  { label:'Alle klanten', q:'SELECT * FROM klanten' },
+  { label:'Alle orders', q:'SELECT * FROM orders' },
+  { label:'Orderregels', q:'SELECT * FROM orderregels' },
+  { label:'Producten < €50', q:"SELECT naam, prijs FROM producten WHERE prijs < 50 ORDER BY prijs" },
+  { label:'Klanten Gent/BXL', q:"SELECT * FROM klanten WHERE stad IN ('Gent','Brussel')" },
+  { label:'Orders + klant', q:'SELECT orders.id, klanten.naam, orders.datum, orders.status\nFROM orders\nINNER JOIN klanten ON orders.klant_id = klanten.id' },
+  { label:'Omzet per categorie', q:'SELECT producten.categorie, COUNT(*) AS aantal_orders, SUM(orderregels.aantal) AS totaal\nFROM orderregels\nINNER JOIN producten ON orderregels.product_id = producten.id\nGROUP BY producten.categorie\nORDER BY totaal DESC' },
+];
+
+function FreeSQLEditor({ module, savedQuery, onQueryChange }) {
+  const [query, setQuery] = useState(savedQuery !== undefined ? savedQuery : 'SELECT * FROM producten');
+  const [result, setResult] = useState(null);
+  const handleQueryChange = (v) => { setQuery(v); onQueryChange?.(v); };
+  // Only highlight after user runs a query; [] = all entities visible
+  const highlightTables = result ? getQueryTables(query) : [];
+
+  const execute = () => setResult(runSQL(query));
+  const cols = result?.rows?.length > 0 ? Object.keys(result.rows[0]) : [];
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      {/* Snelknoppen */}
+      <div>
+        <div style={{color:'var(--text3)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>
+          Voorbeeldqueries (klik om te laden)
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {(module.freeSqlExamples || FREE_SQL_EXAMPLES).map((ex,i)=>(
+            <button key={i} onClick={()=>{ setQuery(ex.q); setResult(null); }}
+              style={{padding:'5px 11px',borderRadius:6,border:'1px solid var(--border)',
+                background:'var(--card)',color:'var(--text2)',fontSize:12,cursor:'pointer',
+                fontFamily:'DM Sans,sans-serif',transition:'all .15s'}}
+              onMouseOver={e=>e.target.style.borderColor=module.color}
+              onMouseOut={e=>e.target.style.borderColor='var(--border)'}>
+              {ex.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Schema — eenvoudig of volledig ERD */}
+      {!module.hideFreeERD && <div style={{background:'#080c14',border:'1px solid #1e293b',borderRadius:12,padding:16}}>
+        <div style={{color:'var(--text3)',fontSize:11,fontWeight:700,marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>
+          🗂️ Database schema{highlightTables.length>0 && <span style={{color:'#3cb497'}}> — actief: {highlightTables.join(', ')}</span>}
+        </div>
+        {module.simpleErd
+          ? <SimpleTwoTableERD highlight={highlightTables}/>
+          : <ERDViewer highlightTables={[]}/>
+        }
+      </div>}
+
+      {/* SQL editor */}
+      <div style={{background:'#0d1117',borderRadius:12,border:'1px solid var(--border)',overflow:'hidden'}}>
+        <div style={{background:'#080c14',padding:'8px 14px',borderBottom:'1px solid #1e293b',
+          fontSize:11,color:'#475569',fontFamily:'Fira Code,monospace'}}>
+          SQL Editor — beschikbare tabellen: {module.freeSqlExamples ? 'producten · klanten' : 'producten · klanten · orders · orderregels'}
+        </div>
+        <textarea value={query} onChange={e=>handleQueryChange(e.target.value)}
+          onKeyDown={e=>{ if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();execute();} }}
+          style={{width:'100%',minHeight:130,background:'#0d1117',color:'#e2e8f0',border:'none',
+            padding:'14px 16px',fontFamily:'Fira Code,monospace',fontSize:13,resize:'vertical',
+            outline:'none',boxSizing:'border-box'}}/>
+        <div style={{padding:'8px 14px',borderTop:'1px solid #1e293b',display:'flex',gap:8,alignItems:'center'}}>
+          <button onClick={execute}
+            style={{padding:'8px 20px',borderRadius:8,border:'none',
+              background:module.color,color:'#fff',fontFamily:'Sora,sans-serif',
+              fontWeight:700,fontSize:13,cursor:'pointer'}}>
+            ▶ Uitvoeren
+          </button>
+          <span style={{fontSize:11,color:'#475569'}}>of Ctrl+Enter</span>
+          <button onClick={()=>{setQuery('');setResult(null);}}
+            style={{marginLeft:'auto',padding:'6px 12px',borderRadius:6,border:'1px solid var(--border)',
+              background:'transparent',color:'var(--text3)',cursor:'pointer',fontSize:12}}>↺ Reset</button>
+        </div>
+      </div>
+
+      {/* Resultaten */}
+      {result && (
+        <div className="fade-in">
+          {result.error ? (
+            <div style={{background:'#2b0a0a',border:'1px solid #dc262640',borderRadius:10,padding:'12px 16px',
+              color:'#f87171',fontFamily:'Fira Code,monospace',fontSize:13}}>
+              ❌ {result.error}
+            </div>
+          ) : result.message ? (
+            <div style={{background:'#0d2b1a',border:'1px solid #3cb49740',borderRadius:10,padding:'12px 16px',
+              color:'#3cb497',fontSize:13}}>✓ {result.message}</div>
+          ) : (
+            <div style={{background:'#080c14',border:'1px solid #1e293b',borderRadius:10,overflow:'hidden'}}>
+              <div style={{background:'#0d1b2e',padding:'8px 14px',borderBottom:'1px solid #1e3a5f',
+                fontSize:11,color:'#3cb497',fontWeight:700}}>
+                ✓ {result.rows.length} rij(en) — {cols.length} kolom(men)
+              </div>
+              <div style={{overflowX:'auto',maxHeight:350,overflowY:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,background:'#080c14'}}>
+                  <thead>
+                    <tr style={{background:'#0f172a',position:'sticky',top:0}}>
+                      {cols.map(c=>(
+                        <th key={c} style={{padding:'8px 12px',textAlign:'left',color:'#3cb497',
+                          fontFamily:'Fira Code,monospace',fontWeight:600,
+                          borderBottom:'1px solid #1e3a5f',whiteSpace:'nowrap'}}>{c}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.rows.map((row,i)=>(
+                      <tr key={i} style={{borderBottom:'1px solid #1e293b',background:i%2===0?'#0d1117':'#0a1628'}}>
+                        {cols.map(c=>(
+                          <td key={c} style={{padding:'7px 12px',color:'#cbd5e1',
+                            fontFamily:'Fira Code,monospace',whiteSpace:'nowrap'}}>{String(row[c]??'')}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CHART SELECTOR GAME (Module 6)
+// ══════════════════════════════════════════════════════════════════════════════
+const CHART_ICONS = { bar:'📊', line:'📈', pie:'🥧', map:'🗺️' };
+
+function ChartSelectorGame({ module }) {
+  const scenarios = module.chartScenarios || [];
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [answered, setAnswered] = useState([]);
+
+  const sc = scenarios[current];
+  if (!sc) return null;
+
+  const choose = (opt) => {
+    if (selected) return;
+    setSelected(opt);
+    setAnswered(prev=>[...prev,{scenario:current,correct:opt.correct}]);
+  };
+
+  const next = () => {
+    if (current < scenarios.length-1) { setCurrent(c=>c+1); setSelected(null); }
+  };
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{display:'flex',gap:8,marginBottom:4}}>
+        {scenarios.map((_,i)=>(
+          <div key={i} style={{width:28,height:28,borderRadius:'50%',
+            background:answered[i]?.correct?'#3cb497':answered[i]?'#dc2626':i===current?module.color+'40':'var(--bg2)',
+            border:`2px solid ${i===current?module.color:'var(--border)'}`,
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,
+            color:answered[i]?'#fff':i===current?module.color:'var(--text3)'}}>
+            {answered[i]?.correct?'✓':answered[i]?'✗':i+1}
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:'#0d1b2e',border:`1px solid ${module.color}40`,borderRadius:12,padding:'16px 20px'}}>
+        <div style={{color:'#64748b',fontSize:11,fontWeight:700,marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>
+          Scenario {current+1} / {scenarios.length}
+        </div>
+        <p style={{color:'#e2e8f0',fontSize:15,lineHeight:1.7,margin:0}}>{sc.scenario}</p>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
+        {sc.options.map((opt,i)=>{
+          const state = selected ? (opt===selected?(opt.correct?'correct':'wrong'):(opt.correct&&selected?'correct-missed':'neutral')) : 'idle';
+          const bg = state==='correct'?'#0d2b1a':state==='wrong'?'#2b0a0a':state==='correct-missed'?'#0d2b1a':'#0d1b2e';
+          const border = state==='correct'?'#3cb497':state==='wrong'?'#dc2626':state==='correct-missed'?'#3cb49740':'#1e3a5f';
+          return (
+            <button key={i} onClick={()=>choose(opt)} disabled={!!selected}
+              style={{padding:'14px 16px',borderRadius:10,border:`2px solid ${border}`,
+                background:bg,cursor:selected?'default':'pointer',textAlign:'left',transition:'all .2s'}}>
+              <div style={{fontSize:24,marginBottom:6}}>{CHART_ICONS[opt.type]}</div>
+              <div style={{fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14,color:'#e2e8f0',marginBottom:4}}>{opt.label}</div>
+              {selected && <div style={{fontSize:12,color:'#94a3b8',lineHeight:1.5}}>{opt.reason}</div>}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected && current < scenarios.length-1 && (
+        <button onClick={next}
+          style={{padding:'10px 24px',borderRadius:8,border:'none',background:module.color,
+            color:'#fff',fontFamily:'Sora,sans-serif',fontWeight:700,cursor:'pointer',alignSelf:'flex-start'}}>
+          Volgende scenario →
+        </button>
+      )}
+      {selected && current === scenarios.length-1 && (
+        <div style={{background:'#0d2b1a',border:'1px solid #3cb49740',borderRadius:10,padding:'14px 18px',color:'#3cb497',fontWeight:700}}>
+          🎉 Klaar! {answered.filter(a=>a.correct).length}/{scenarios.length} correct
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  POWER BI STAPPENPLAN COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+function PowerBIGuide({ module }) {
+  const steps = module.steps || [];
+  const [activeStep, setActiveStep] = useState(0);
+  return (
+    <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
+      <div style={{display:'flex',flexDirection:'column',gap:4,minWidth:180}}>
+        {steps.map((s,i)=>(
+          <button key={i} onClick={()=>setActiveStep(i)}
+            style={{padding:'10px 14px',borderRadius:8,border:`1.5px solid ${activeStep===i?module.color:'var(--border)'}`,
+              background:activeStep===i?module.color+'22':'var(--card)',
+              color:activeStep===i?module.color:'var(--text2)',
+              fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:13,cursor:'pointer',textAlign:'left'}}>
+            Stap {s.nr}: {s.title}
+          </button>
+        ))}
+      </div>
+      {steps[activeStep] && (
+        <div className="fade-in" style={{flex:1,minWidth:280,background:'#0d1b2e',
+          border:`1px solid ${module.color}40`,borderRadius:12,padding:'20px 24px'}}>
+          <div style={{width:40,height:40,borderRadius:'50%',background:module.color,
+            display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Sora,sans-serif',
+            fontWeight:800,fontSize:18,color:'#fff',marginBottom:14}}>{steps[activeStep].nr}</div>
+          <h3 style={{fontFamily:'Sora,sans-serif',color:'var(--text)',marginBottom:10,fontSize:17}}>{steps[activeStep].title}</h3>
+          <p style={{color:'#94a3b8',lineHeight:1.7,fontSize:14,marginBottom:14}}>{steps[activeStep].description}</p>
+          <div style={{background:'#d9770615',border:'1px solid #d9770640',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#d97706'}}>
+            💡 {steps[activeStep].tip}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PROJECT CHECKLIST COMPONENT
+// ══════════════════════════════════════════════════════════════════════════════
+function ProjectChecklist({ module }) {
+  const [checked, setChecked] = useState({});
+  const toggle = (key) => setChecked(prev=>({...prev,[key]:!prev[key]}));
+  const total = module.checklist?.reduce((s,ph)=>s+ph.items.length,0)||0;
+  const done = Object.values(checked).filter(Boolean).length;
+
+  const PHASE_COLORS = {ERD:'#3cb497',SQL:'#00639c','Power BI':'#d97706',Presentatie:'#7c3aed'};
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,padding:'16px 20px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,color:'var(--text)'}}>Voortgang eindproject</span>
+          <span style={{fontFamily:'Sora,sans-serif',fontWeight:800,color:'#059669',fontSize:18}}>{done}/{total}</span>
+        </div>
+        <div style={{height:8,background:'var(--bg2)',borderRadius:4,overflow:'hidden'}}>
+          <div style={{height:'100%',width:`${total?done/total*100:0}%`,background:'#059669',borderRadius:4,transition:'width .4s'}}/>
+        </div>
+      </div>
+      {(module.checklist||[]).map(phase=>(
+        <div key={phase.phase} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
+          <div style={{background:`${PHASE_COLORS[phase.phase]||'#3cb497'}22`,
+            padding:'10px 16px',borderBottom:'1px solid var(--border)'}}>
+            <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,color:PHASE_COLORS[phase.phase]||'#3cb497'}}>{phase.phase}</span>
+          </div>
+          <div style={{padding:'12px 16px',display:'flex',flexDirection:'column',gap:8}}>
+            {phase.items.map((item,i)=>{
+              const key=`${phase.phase}-${i}`;
+              return (
+                <label key={key} style={{display:'flex',alignItems:'flex-start',gap:10,cursor:'pointer'}}>
+                  <input type="checkbox" checked={!!checked[key]} onChange={()=>toggle(key)}
+                    style={{marginTop:2,accentColor:PHASE_COLORS[phase.phase]||'#3cb497',width:16,height:16}}/>
+                  <span style={{color:checked[key]?'var(--text3)':'var(--text)',fontSize:14,
+                    textDecoration:checked[key]?'line-through':'none',lineHeight:1.5}}>{item}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CHART VISUAL COMPONENT (mini grafieken voor theorie)
+// ══════════════════════════════════════════════════════════════════════════════
+function ChartVisual() {
+  const charts = [
+    {
+      label: '📊 Staafgrafiek', color: '#3cb497', sub: 'Categorieën vergelijken',
+      svg: (
+        <svg viewBox="0 0 120 75" style={{width:'100%',display:'block'}}>
+          {[[10,50],[32,68],[54,35],[76,58],[98,42]].map(([x,h],i)=>(
+            <rect key={i} x={x} y={75-h} width={18} height={h} fill="#3cb497" rx="2" opacity={0.85+i*0.03}/>
+          ))}
+          <line x1="6" y1="75" x2="118" y2="75" stroke="#334155" strokeWidth="1"/>
+        </svg>
+      )
+    },
+    {
+      label: '📈 Lijndiagram', color: '#60a5fa', sub: 'Trends over tijd',
+      svg: (
+        <svg viewBox="0 0 120 75" style={{width:'100%',display:'block'}}>
+          <polyline points="8,62 28,48 48,38 68,22 88,32 108,15" fill="none" stroke="#60a5fa" strokeWidth="2.5"/>
+          {[[8,62],[28,48],[48,38],[68,22],[88,32],[108,15]].map(([x,y],i)=>(
+            <circle key={i} cx={x} cy={y} r="3.5" fill="#60a5fa"/>
+          ))}
+          <line x1="6" y1="75" x2="118" y2="75" stroke="#334155" strokeWidth="1"/>
+        </svg>
+      )
+    },
+    {
+      label: '🥧 Taartdiagram', color: '#f59e0b', sub: 'Aandelen van een geheel',
+      svg: (
+        <svg viewBox="0 0 120 75" style={{width:'100%',display:'block'}}>
+          {/* 40% mint, 30% amber, 20% blue, 10% red — center (60,38) r=30 */}
+          <path d="M60,38 L60,8 A30,30,0,0,1,77.6,64.3 Z" fill="#3cb497"/>
+          <path d="M60,38 L77.6,64.3 A30,30,0,0,1,31.5,49.3 Z" fill="#f59e0b"/>
+          <path d="M60,38 L31.5,49.3 A30,30,0,0,1,42.4,15.7 Z" fill="#60a5fa"/>
+          <path d="M60,38 L42.4,15.7 A30,30,0,0,1,60,8 Z" fill="#dc2626"/>
+        </svg>
+      )
+    },
+    {
+      label: '🗺️ Kaart', color: '#f97316', sub: 'Geografische data',
+      svg: (
+        <svg viewBox="0 0 120 75" style={{width:'100%',display:'block'}}>
+          <polygon points="10,22 48,16 52,36 42,56 14,50" fill="#3cb497" opacity="0.75"/>
+          <polygon points="48,16 82,12 86,32 52,36" fill="#f97316" opacity="0.75"/>
+          <polygon points="82,12 108,22 103,46 86,32" fill="#60a5fa" opacity="0.75"/>
+          <polygon points="42,56 52,36 86,32 103,46 92,66 28,68" fill="#c084fc" opacity="0.75"/>
+          <circle cx="30" cy="36" r="3" fill="white"/>
+          <circle cx="67" cy="26" r="3" fill="white"/>
+          <circle cx="88" cy="52" r="3" fill="white"/>
+        </svg>
+      )
+    }
+  ];
+  return (
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(155px,1fr))',gap:12,marginBottom:16}}>
+      {charts.map(c=>(
+        <div key={c.label} style={{background:'#080c14',border:'1px solid #1e293b',borderRadius:10,padding:'12px 14px'}}>
+          <div style={{color:c.color,fontWeight:700,fontSize:12,marginBottom:2}}>{c.label}</div>
+          <div style={{color:'#64748b',fontSize:11,marginBottom:8}}>{c.sub}</div>
+          {c.svg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EntityVisual() {
+  const attrs = [
+    {label:'🔑 id', note:'INT PK', pk:true},
+    {label:'naam', note:'STRING', pk:false},
+    {label:'email', note:'STRING', pk:false},
+    {label:'stad', note:'STRING', pk:false},
+  ];
+  return (
+    <div style={{display:'flex',justifyContent:'center',margin:'12px 0 16px'}}>
+      <div style={{display:'inline-flex',flexDirection:'column',
+        border:'2px solid var(--navy)',borderRadius:10,overflow:'hidden',
+        minWidth:190,boxShadow:'0 2px 8px rgba(0,0,0,0.15)'}}>
+        <div style={{background:'var(--navy)',color:'#fff',textAlign:'center',
+          padding:'6px 18px',fontFamily:'Sora,sans-serif',fontWeight:700,
+          fontSize:13,letterSpacing:'0.1em',textTransform:'uppercase'}}>
+          KLANT
+        </div>
+        {attrs.map((a,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+            padding:'5px 14px',fontFamily:'Fira Code,monospace',fontSize:12,
+            borderTop:'1px solid var(--border)',
+            color:a.pk?'var(--navy)':'var(--text-2)',fontWeight:a.pk?700:400,
+            background:a.pk?'rgba(31,65,107,0.06)':'#fff'}}>
+            <span>{a.label}</span>
+            <span style={{color:'var(--text-3)',fontSize:11}}>{a.note}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  THEORY TAB
+// ══════════════════════════════════════════════════════════════════════════════
+function TheoryTab({ module }) {
+  const [open, setOpen] = useState(0);
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      {module.theory.map((sec,i)=>(
+        <div key={i} style={{background:'var(--card)',border:`1px solid ${open===i?module.color+'60':'var(--border)'}`,
+          borderRadius:12,overflow:'hidden',transition:'border-color .2s'}}>
+          <button onClick={()=>setOpen(open===i?-1:i)}
+            style={{width:'100%',padding:'14px 20px',background:'none',border:'none',cursor:'pointer',
+              display:'flex',justifyContent:'space-between',alignItems:'center',textAlign:'left'}}>
+            <span style={{fontFamily:'Sora,sans-serif',fontWeight:700,color:open===i?module.color:'var(--text)',fontSize:15}}>
+              {i+1}. {sec.title}
+            </span>
+            <span style={{color:module.color,fontSize:18,transform:open===i?'rotate(90deg)':'none',transition:'transform .2s'}}>›</span>
+          </button>
+          {open===i && (
+            <div className="fade-in" style={{padding:'0 20px 20px'}}>
+              <div style={{color:'var(--text2)',lineHeight:1.8,fontSize:14,marginBottom:16}}
+                dangerouslySetInnerHTML={{__html:sec.content.replace(/\n/g,'<br/>')
+                  .replace(/<strong>/g,'<strong style="color:var(--text);font-weight:700">')
+                  .replace(/<code>/g,'<code style="font-family:\'Fira Code\',monospace;background:#1e293b;padding:1px 5px;border-radius:4px;font-size:12px;color:#7dd3fc">')
+                  .replace(/<em>/g,'<em style="color:#a5b4fc;font-style:italic">')}} />
+              {/* Inline visualisaties op basis van visualType */}
+              {sec.visualType==='charts' && <ChartVisual/>}
+              {sec.visualType==='nm' && <NMVisual/>}
+              {sec.visualType==='entity' && <EntityVisual/>}
+              {sec.visualType==='erd' && (
+                <div style={{background:'#080c14',borderRadius:12,padding:12,marginBottom:12}}>
+                  <div style={{color:'#3cb497',fontSize:11,fontWeight:700,marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>
+                    🗂️ Webshop ERD — van diagram naar DDL
+                  </div>
+                  <ERDViewer/>
+                </div>
+              )}
+              {sec.example && (
+                <pre style={{background:'#0d1117',color:'#e2e8f0',borderRadius:10,
+                  padding:'14px 16px',fontFamily:'Fira Code,monospace',fontSize:12.5,
+                  overflowX:'auto',margin:0,border:`1px solid ${module.color}30`}}>
+                  {sec.example}
+                </pre>
+              )}
+              {sec.exampleOutput && (
+                <div style={{marginTop:8,borderRadius:8,overflow:'hidden',border:`1px solid ${module.color}40`}}>
+                  <div style={{background:'#1e293b',padding:'5px 12px',fontSize:11,
+                    color:module.color,fontFamily:'Sora,sans-serif',fontWeight:700,
+                    textTransform:'uppercase',letterSpacing:.8}}>
+                    📋 Voorbeeld resultaat
+                  </div>
+                  <div style={{overflowX:'auto'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',background:'#0d1117',
+                      fontFamily:'Fira Code,monospace',fontSize:12}}>
+                      <thead>
+                        <tr>{sec.exampleOutput.cols.map(c=>(
+                          <th key={c} style={{padding:'6px 12px',textAlign:'left',
+                            color:'#94a3b8',fontWeight:600,fontSize:11,
+                            borderBottom:'1px solid #2d3748',whiteSpace:'nowrap'}}>{c}</th>
+                        ))}</tr>
+                      </thead>
+                      <tbody>
+                        {sec.exampleOutput.rows.map((r,i)=>(
+                          <tr key={i} style={{background:i%2===0?'#0d1117':'#111827'}}>
+                            {r.map((v,j)=>(
+                              <td key={j} style={{padding:'5px 12px',color:'#e2e8f0',
+                                borderBottom:'1px solid #1a2234',whiteSpace:'nowrap'}}>{v}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  QUIZ TAB
+// ══════════════════════════════════════════════════════════════════════════════
+function QuizTab({ module, onXP, progress }) {
+  const [idx, setIdx] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [fillVal, setFillVal] = useState('');
+  const [done, setDone] = useState(false);
+
+  const q = module.quiz[idx];
+  if (!q && module.quiz.length === 0) return (
+    <div style={{textAlign:'center',padding:40,color:'var(--text3)'}}>
+      <div style={{fontSize:48,marginBottom:12}}>🏆</div>
+      <p>Dit is het eindproject — geen quiz hier. Gebruik de checklist!</p>
+    </div>
+  );
+  if (done) {
+    const score = Object.values(answers).filter(Boolean).length;
+    return (
+      <div className="fade-in" style={{textAlign:'center',padding:40}}>
+        <div style={{fontSize:56,marginBottom:8}}>🎉</div>
+        <h2 style={{fontFamily:'Sora,sans-serif',color:module.color,marginBottom:8}}>{score}/{module.quiz.length} correct</h2>
+        <p style={{color:'var(--text2)',marginBottom:20}}>{score===module.quiz.length?'Perfect! Alle vragen correct.':score>=module.quiz.length*0.7?'Goed gedaan! Bijna perfect.':'Bekijk de theorie nog eens en probeer opnieuw.'}</p>
+        <button onClick={()=>{setIdx(0);setAnswers({});setDone(false);setFillVal('');}}
+          style={{padding:'10px 24px',borderRadius:8,border:'none',background:module.color,
+            color:'#fff',fontFamily:'Sora,sans-serif',fontWeight:700,cursor:'pointer'}}>
+          ↺ Opnieuw proberen
+        </button>
+      </div>
+    );
+  }
+  if (!q) return null;
+
+  const answered = answers[idx] !== undefined;
+
+  const submitMC = (i) => {
+    if (answered) return;
+    const correct = i === q.answer;
+    setAnswers(prev=>({...prev,[idx]:correct}));
+    if (correct) onXP && onXP(q.xp||20);
+  };
+
+  const submitFill = () => {
+    if (answered) return;
+    const val = fillVal.trim().toLowerCase().replace(/^\./, '');
+    const correct = (q.answer||[]).some(a=>a.toLowerCase().replace(/^\./,'')===val || a.toLowerCase()===fillVal.trim().toLowerCase());
+    setAnswers(prev=>({...prev,[idx]:correct}));
+    if (correct) onXP && onXP(q.xp||25);
+  };
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:20,maxWidth:700}}>
+      {/* Progress */}
+      <div style={{display:'flex',gap:6}}>
+        {module.quiz.map((_,i)=>(
+          <div key={i} style={{flex:1,height:4,borderRadius:2,
+            background:answers[i]===true?'#3cb497':answers[i]===false?'#dc2626':i===idx?module.color:'var(--bg3)',
+            transition:'background .3s'}}/>
+        ))}
+      </div>
+
+      <div style={{background:'var(--card)',border:`1px solid ${module.color}40`,borderRadius:12,padding:'20px 24px'}}>
+        <div style={{color:'var(--text3)',fontSize:11,fontWeight:700,marginBottom:10,textTransform:'uppercase',letterSpacing:1}}>
+          Vraag {idx+1} / {module.quiz.length} — {q.xp||20} XP
+        </div>
+        <p style={{fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:16,color:'var(--text)',
+          lineHeight:1.6,marginBottom:20,whiteSpace:'pre-line'}}>{q.q}</p>
+
+        {q.type==='mc' && (
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {q.options.map((opt,i)=>{
+              const state = !answered?'idle':i===q.answer?'correct':answers[idx]===false&&i===Object.keys(answers).length-1?'wrong':'idle';
+              const isChosen = answered && answers[idx]===false && i!==q.answer && /* highlight wrong: */ false;
+              const bg = !answered?'var(--bg2)':i===q.answer?'#0d2b1a':'var(--bg2)';
+              const border = !answered?'var(--border)':i===q.answer?'#3cb497':'var(--border)';
+              return (
+                <button key={i} onClick={()=>submitMC(i)} disabled={answered}
+                  style={{padding:'12px 16px',borderRadius:8,border:`1.5px solid ${border}`,
+                    background:bg,color:'var(--text)',fontSize:14,cursor:answered?'default':'pointer',
+                    textAlign:'left',transition:'all .2s',fontFamily:'DM Sans,sans-serif'}}>
+                  <span style={{color:i===q.answer&&answered?'#3cb497':'var(--text3)',fontWeight:700,marginRight:8}}>
+                    {String.fromCharCode(65+i)}.
+                  </span>{opt}
+                  {i===q.answer&&answered&&<span style={{float:'right',color:'#3cb497'}}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {q.type==='fill' && (
+          <div style={{display:'flex',gap:8}}>
+            <input value={fillVal} onChange={e=>setFillVal(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&submitFill()}
+              disabled={answered}
+              style={{flex:1,background:'var(--bg2)',border:`1.5px solid ${answered?(answers[idx]?'#3cb497':'#dc2626'):'var(--border)'}`,
+                borderRadius:8,padding:'10px 14px',color:'var(--text)',fontFamily:'Fira Code,monospace',
+                fontSize:14,outline:'none'}}
+              placeholder="Jouw antwoord..."/>
+            {!answered && <button onClick={submitFill}
+              style={{padding:'10px 18px',borderRadius:8,border:'none',background:module.color,
+                color:'#fff',fontFamily:'Sora,sans-serif',fontWeight:700,cursor:'pointer'}}>OK</button>}
+          </div>
+        )}
+
+        {answered && (
+          <div className="fade-in" style={{marginTop:12,padding:'10px 14px',borderRadius:8,
+            background:answers[idx]?'#0d2b1a':'#2b0a0a',
+            border:`1px solid ${answers[idx]?'#3cb49740':'#dc262640'}`,
+            color:answers[idx]?'#3cb497':'#f87171',fontSize:13}}>
+            {answers[idx]?`✓ Correct! +${q.xp||20} XP`:'✗ Niet correct. Bekijk het juiste antwoord hierboven.'}
+          </div>
+        )}
+      </div>
+
+      {answered && idx < module.quiz.length-1 && (
+        <button onClick={()=>{setIdx(i=>i+1);setFillVal('');}}
+          style={{padding:'10px 24px',borderRadius:8,border:'none',background:module.color,
+            color:'#fff',fontFamily:'Sora,sans-serif',fontWeight:700,cursor:'pointer',alignSelf:'flex-start'}}>
+          Volgende vraag →
+        </button>
+      )}
+      {answered && idx === module.quiz.length-1 && (
+        <button onClick={()=>setDone(true)}
+          style={{padding:'10px 24px',borderRadius:8,border:'none',background:'#059669',
+            color:'#fff',fontFamily:'Sora,sans-serif',fontWeight:700,cursor:'pointer',alignSelf:'flex-start'}}>
+          Bekijk resultaat →
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MODULE VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+function ModuleView({ module, onBack, onXP, progress }) {
+  const tabs = useMemo(()=>{
+    const t = [{key:'theory',label:'📖 Theorie'}];
+    if (module.type==='format') t.push({key:'demo',label:'🔍 Formaten vergelijken'});
+    if (module.type==='erd' && !module.hideErdViewer) t.push({key:'erd',label:'🗂️ ERD Viewer'});
+    if (module.sqlExercises?.length>0) t.push({key:'sql', label: module.type==='erd' ? (module.hasDML ? '🏗️ DDL & DML Oefeningen' : '🏗️ DDL Oefeningen') : '💻 SQL Oefeningen'});
+    if (module.type==='sql' || module.type==='erd') t.push({key:'freesql', label: module.type==='erd' ? (module.hasDML ? '🔓 Vrije DDL / DML Editor' : '🔓 Vrije DDL Editor') : '🔓 Vrije SQL Editor'});
+    if (module.type==='powerbi') t.push({key:'steps',label:'📋 Stappenplan'});
+    if (module.type==='chartguide' || module.chartScenarios?.length>0) t.push({key:'charts',label:'🎯 Grafiek Kiezen'});
+    if (module.type==='project') t.push({key:'checklist',label:'✅ Checklist'});
+    if (module.quiz?.length>0) t.push({key:'quiz',label:'🧠 Quiz'});
+    return t;
+  },[module]);
+
+  const [tab, setTab] = useState('theory');
+  const [queries, setQueries] = useState({});
+  const setQ = (key) => (v) => setQueries(p=>({...p,[key]:v}));
+
+  return (
+    <div style={{maxWidth:1000,margin:'0 auto',padding:'24px 20px'}}>
+      {/* Back + header */}
+      <button onClick={onBack}
+        style={{marginBottom:16,padding:'6px 14px',borderRadius:8,border:'1px solid var(--border)',
+          background:'var(--card)',color:'var(--text2)',cursor:'pointer',fontSize:13,
+          fontFamily:'Sora,sans-serif',fontWeight:600}}>
+        ← Alle modules
+      </button>
+      <div style={{background:`linear-gradient(135deg,${module.color}22,${module.color}08)`,
+        border:`1px solid ${module.color}40`,borderRadius:16,padding:'20px 24px',marginBottom:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:36}}>{module.emoji}</span>
+          <div>
+            <div style={{color:module.color,fontSize:12,fontWeight:700,letterSpacing:1,textTransform:'uppercase'}}>{module.week}</div>
+            <h1 style={{fontFamily:'Sora,sans-serif',color:'var(--text)',fontSize:22,fontWeight:800,margin:'2px 0'}}>{module.title}</h1>
+            <p style={{color:'var(--text2)',fontSize:14,margin:0}}>{module.tagline}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:4,background:'var(--bg2)',borderRadius:10,padding:3,
+        border:'1px solid var(--border)',marginBottom:20,flexWrap:'wrap'}}>
+        {tabs.map(t=>(
+          <button key={t.key} onClick={()=>setTab(t.key)}
+            style={{padding:'8px 14px',borderRadius:8,border:'none',cursor:'pointer',
+              background:tab===t.key?'var(--card)':'transparent',
+              color:tab===t.key?module.color:'var(--text3)',
+              fontFamily:'Sora,sans-serif',fontWeight:600,fontSize:13,transition:'all .2s'}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="fade-in" key={tab}>
+        {tab==='theory' && <TheoryTab module={module}/>}
+        {tab==='demo' && <FormatDemo/>}
+        {tab==='freesql' && <FreeSQLEditor module={module} savedQuery={queries.freesql} onQueryChange={setQ('freesql')}/>}
+        {tab==='erd' && (
+          <div style={{background:'#080c14',borderRadius:12,padding:20}}>
+            <h3 style={{fontFamily:'Sora,sans-serif',color:'#3cb497',marginBottom:12}}>Webshop Database — ERD</h3>
+            <ERDViewer/>
+            <div style={{marginTop:16,display:'flex',gap:12,flexWrap:'wrap'}}>
+              {[{c:'#fcd34d',l:'🔑 Primaire sleutel (PK)'},{c:'#60a5fa',l:'🔗 Verwijssleutel (FK)'},{c:'#94a3b8',l:'Gewoon attribuut'}].map(i=>(
+                <div key={i.l} style={{fontSize:12,color:i.c,fontFamily:'Fira Code,monospace'}}>{i.l}</div>
+              ))}
+            </div>
+          </div>
+        )}
+        {tab==='sql' && <SQLEditor module={module} onXP={onXP} savedQuery={queries.sql} onQueryChange={setQ('sql')}/>}
+        {tab==='steps' && <PowerBIGuide module={module}/>}
+        {tab==='charts' && <ChartSelectorGame module={module}/>}
+        {tab==='checklist' && <ProjectChecklist module={module}/>}
+        {tab==='quiz' && <QuizTab module={module} onXP={onXP} progress={progress}/>}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  HOME PAGE
+// ══════════════════════════════════════════════════════════════════════════════
+function HomePage({ onSelect, progress, totalXP }) {
+  const themes = [
+    { label:'Thema 1 — Data Organiseren', modules:[1,2,3,4,5], color:'#1f416b' },
+    { label:'Thema 2 — Data Visualiseren', modules:[6], color:'#d97706' },
+    { label:'Eindproject', modules:[7], color:'#059669' },
+  ];
+  return (
+    <div style={{maxWidth:1100,margin:'0 auto',padding:'32px 20px'}}>
+      {/* Header */}
+      <div style={{textAlign:'center',marginBottom:40}}>
+        <div style={{fontSize:48,marginBottom:8}}>🗃️</div>
+        <h1 style={{fontFamily:'Sora,sans-serif',fontSize:32,fontWeight:800,color:'var(--text)',marginBottom:8}}>
+          DataFlow
+        </h1>
+        <p style={{color:'var(--text2)',fontSize:16,maxWidth:520,margin:'0 auto 16px'}}>
+          Data Organisatie &amp; Visualisatie — Odisee Graduaat Programmeren
+        </p>
+        <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'var(--card)',
+          border:'1px solid var(--border)',borderRadius:20,padding:'6px 16px'}}>
+          <span style={{color:'#d97706',fontWeight:700,fontFamily:'Sora,sans-serif'}}>⭐ {totalXP} XP</span>
+        </div>
+      </div>
+
+      {/* Module grid */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:14}}>
+        {[1,2,3,4,5,6,7].map(mid=>MODULES.find(m=>m.id===mid)).filter(Boolean).map(m=>{
+          const xp = progress[m.id]?.xp || 0;
+          return (
+            <button key={m.id} onClick={()=>onSelect(m)}
+              style={{background:'var(--card)',border:`1.5px solid ${progress[m.id]?m.color+'60':'var(--border)'}`,
+                borderRadius:14,padding:'18px 20px',cursor:'pointer',textAlign:'left',
+                transition:'all .2s',boxShadow:progress[m.id]?`0 0 16px ${m.color}20`:'none'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                <span style={{fontSize:28}}>{m.emoji}</span>
+                <span style={{fontSize:10,padding:'3px 8px',borderRadius:10,
+                  background:m.color+'20',color:m.color,fontWeight:700,fontFamily:'Sora,sans-serif'}}>{m.week}</span>
+              </div>
+              <h3 style={{fontFamily:'Sora,sans-serif',fontWeight:800,fontSize:15,color:'var(--text)',margin:'0 0 4px'}}>{m.title}</h3>
+              <p style={{color:'var(--text3)',fontSize:12,margin:'0 0 12px',lineHeight:1.4}}>{m.tagline}</p>
+              <div style={{height:3,background:'var(--bg2)',borderRadius:2,overflow:'hidden'}}>
+                <div style={{height:'100%',width:xp>0?'60%':progress[m.id]?'30%':'0%',background:m.color,borderRadius:2,transition:'width .6s'}}/>
+              </div>
+              {xp>0 && <div style={{marginTop:6,fontSize:11,color:m.color,fontWeight:700}}>⭐ {xp} XP verdiend</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  TOP BAR
+// ══════════════════════════════════════════════════════════════════════════════
+function TopBar({ totalXP, currentModule }) {
+  return (
+    <div style={{background:'var(--navy)',borderBottom:'1px solid #163256',
+      padding:'0 24px',height:52,display:'flex',alignItems:'center',
+      justifyContent:'space-between',position:'sticky',top:0,zIndex:100}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:20}}>🗃️</span>
+        <span style={{fontFamily:'Sora,sans-serif',fontWeight:800,color:'#fff',fontSize:16}}>DataFlow</span>
+        {currentModule && (
+          <span style={{color:'#ffffff60',fontSize:13,marginLeft:4}}>— {currentModule.title}</span>
+        )}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <span style={{color:'#d97706',fontFamily:'Sora,sans-serif',fontWeight:700,fontSize:14}}>⭐ {totalXP} XP</span>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  XP POPUP
+// ══════════════════════════════════════════════════════════════════════════════
+function XPPopup({ amount, onDone }) {
+  useEffect(()=>{ const t=setTimeout(onDone,1800); return()=>clearTimeout(t); },[]);
+  return (
+    <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+      background:'#1f416b',border:'2px solid #3cb497',borderRadius:16,
+      padding:'20px 32px',zIndex:9999,textAlign:'center',
+      animation:'xpGain 1.8s ease both',pointerEvents:'none'}}>
+      <div style={{fontSize:32,marginBottom:4}}>⭐</div>
+      <div style={{fontFamily:'Sora,sans-serif',fontWeight:800,color:'#3cb497',fontSize:24}}>+{amount} XP</div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  APP
+// ══════════════════════════════════════════════════════════════════════════════
+function App() {
+  const [currentModule, setCurrentModule] = useState(null);
+  const [progress, setProgress] = useState(()=>loadProgress());
+  const [xpPopup, setXpPopup] = useState(null);
+
+  const totalXP = Object.values(progress).reduce((s,v)=>(s+(v?.xp||0)),0);
+
+  const addXP = useCallback((amount, moduleId) => {
+    setProgress(prev=>{
+      const updated = {...prev, [moduleId]:{...(prev[moduleId]||{}), xp:((prev[moduleId]?.xp)||0)+amount}};
+      saveProgress(updated);
+      return updated;
+    });
+    setXpPopup(amount);
+  },[]);
+
+  return (
+    <div style={{minHeight:'100vh',background:'var(--bg)'}}>
+      <TopBar totalXP={totalXP} currentModule={currentModule}/>
+      {xpPopup && <XPPopup amount={xpPopup} onDone={()=>setXpPopup(null)}/>}
+      {currentModule ? (
+        <ModuleView
+          module={currentModule}
+          onBack={()=>setCurrentModule(null)}
+          onXP={(xp)=>addXP(xp, currentModule.id)}
+          progress={progress}
+        />
+      ) : (
+        <HomePage onSelect={setCurrentModule} progress={progress} totalXP={totalXP}/>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
