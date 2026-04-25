@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\joris.vandroogenbroe\\\\OneDrive - ODISEE\\\\odisee25-26\\\\oo-leerplatform\")",
+      "Bash(dir \"C:\\\\Users\\\\joris.vandroogenbroe\\\\OneDrive - ODISEE\\\\odisee25-26\"\")",
+      "Bash(find . -maxdepth 3 \\\\\\(-name package.json -o -name vite.config.* -o -name next.config.* -o -name nuxt.config.* -o -name angular.json -o -name vue.config.* -o -name webpack.config.* -o -name manage.py -o -name Makefile -o -name docker-compose.* -o -name Cargo.toml -o -name pyproject.toml -o -name requirements.txt \\\\\\))",
+      "Bash(netstat -tlnp)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(New-Item -ItemType Directory -Force vendor)",
+      "Bash(Out-Null)",
+      "Bash(Write-Host \"vendor/ aangemaakt\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\joris.vandroogenbroe\\\\OneDrive - ODISEE\\\\odisee25-26\\\\oo-leerplatform''; New-Item -ItemType Directory -Force vendor | Out-Null; Write-Host ''vendor/ aangemaakt''\")",
+      "Bash(powershell.exe -Command \":*)"
+    ]
+  }
+}
